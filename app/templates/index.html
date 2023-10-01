@@ -1,5 +1,18 @@
 {% extends "base.html" %}
 {% block title %}Home Page{% endblock %}
 {% block content %}
-<h1>Test</h1>
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+<div id="viewport">
+    <!-- Content -->
+    <div id="content">
+      <div class="container-fluid">
+        <h1>Simple Sidebar</h1>
+        <p>
+          Make sure to keep all page content within the 
+          <code>#content</code>.
+        </p>
+      </div>
+    </div>
+  </div>
 {% endblock %}
