@@ -1,17 +1,30 @@
 {% extends "base.html" %}
 {% block title %}Home Page{% endblock %}
+{% set show_sidebar = True %}
 {% block content %}
-<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 
 <div id="viewport">
     <!-- Content -->
     <div id="content">
-      <div class="container-fluid">
-        <h1>Simple Sidebar</h1>
-        <p>
-          Make sure to keep all page content within the 
-          <code>#content</code>.
-        </p>
+      <div id="centered-box">
+        <form method="POST">
+          <h2 class="text-center">Запрос</h2>
+          <div class="mb-3">
+            <label for="patientname" class="form-label">Пациент</label>
+            <input type="text" class="form-control" id="patientname" placeholder="Иван Иванов Иванович">
+          </div>
+          <div class="mb-3">
+            <label for="symptoms" class="form-label">Симптомы</label>
+            <select class="select2-multiple form-control" id="symptoms" data-placeholder="Выберите что-нибудь" multiple >
+              <option>Высокая температура</option>
+              <option>Кашель</option>
+              <option>Насморк</option>
+            </select>
+          </div>
+          <div class="text-end">
+            <button type="submit" class="btn btn-primary">Отправить</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
