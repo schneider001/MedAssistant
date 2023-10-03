@@ -1,6 +1,8 @@
 body{
-    margin-top:20px;
     background: #f6f9fc;
+    overflow-x: hidden;
+    font-family: 'Roboto', sans-serif;
+    font-size: 16px;
 }
 .account-block {
     padding: 0;
@@ -45,12 +47,6 @@ body{
 
 @import url('https://fonts.googleapis.com/css?family=Roboto:300,400,400i,500');
 
-body {
-  overflow-x: hidden;
-  font-family: 'Roboto', sans-serif;
-  font-size: 16px;
-}
-
 /* Toggle Styles */
 
 #viewport {
@@ -65,6 +61,23 @@ body {
   width: 100%;
   position: relative;
   margin-right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+#centered-box {
+  background-color: #ccd9ef;
+  border-radius: 10px;
+  padding: 20px;
+  max-width: 80%;
+  max-height: 80vh;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.select2-container {
+  width: 100% !important;
 }
 
 /* Sidebar Styles */
@@ -101,11 +114,19 @@ body {
   color: #fff;
 }
 
-#sidebar .nav{
-  
+#sidebar .nav {
+  width: 100%;
 }
 
-#sidebar .nav a{
+#sidebar .nav-item {
+  width: 100%;
+}
+
+#sidebar .nav-link {
+  width: 100%;
+}
+
+#sidebar .nav a {
   background: none;
   border-bottom: 1px solid #455A64;
   color: #CFD8DC;
@@ -113,11 +134,11 @@ body {
   padding: 16px 24px;
 }
 
-#sidebar .nav a:hover{
+#sidebar .nav a:hover {
   background: none;
   color: #ECEFF1;
 }
 
-#sidebar .nav a i{
+#sidebar .nav a i {
   margin-right: 16px;
 }
