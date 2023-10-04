@@ -1,10 +1,16 @@
 $(document).ready(function() {
-    $('.select2-multiple').select2({
+    $('#symptoms').select2({
       theme: 'bootstrap-5',
       closeOnSelect: false,
-      width: 'resolve',
       tags: false,
       allowHtml: true,
 			allowClear: true
     });
+})
+
+$(document).ready(function() {
+  $('#patientname').select2({
+    theme: 'bootstrap-5',
+    closeOnSelect: false,
+  });
 })

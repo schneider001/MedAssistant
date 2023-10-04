@@ -7,18 +7,22 @@
     <!-- Content -->
     <div id="content">
       <div id="centered-box">
-        <form method="POST">
+        <form method="POST" action="/process_neural_network">
           <h2 class="text-center">Запрос</h2>
           <div class="mb-3">
             <label for="patientname" class="form-label">Пациент</label>
-            <input type="text" class="form-control" id="patientname" placeholder="Иван Иванов Иванович">
+            <select id="patientname" name="patientname" class="form-select" data-placeholder="Выберите пациента" >
+              {% for patient in patients %}
+                <option value="{{patient}}">{{patient}}</option>
+              {% endfor %}
+          </select>
           </div>
           <div class="mb-3">
             <label for="symptoms" class="form-label">Симптомы</label>
-            <select class="select2-multiple form-control" id="symptoms" data-placeholder="Выберите что-нибудь" multiple >
-              <option>Высокая температура</option>
-              <option>Кашель</option>
-              <option>Насморк</option>
+            <select class="form-select" id="symptoms" data-placeholder="Выберите что-нибудь" multiple >
+              {% for symptom in symptoms %}
+                <option value="{{symptom}}">{{symptom}}</option>
+              {% endfor %}
             </select>
           </div>
           <div class="text-end">
