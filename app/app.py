@@ -34,11 +34,29 @@ def main():
         "Смирнов Алексей Андреевич",
         "Козлов Владимир Дмитриевич",
         "Морозов Олег Игоревич"
-    ] #TODO Получить из БД
+    ] #TODO Получить ФИО из БД
 
     symptoms = ['Высокая температура', 'Кашель', 'Насморк'] #TODO Получить из БД
 
     return render_template('index.html', patients=patients, symptoms=symptoms)
+
+
+@app.route('/patients')
+def patients():
+    patients = [] #TODO Получить ФИО из БД
+    return render_template('patients.html')
+
+@app.route('/patient_card', methods=['POST'])
+def patient_card():
+    patientID = 0 #как то получается id пациента, потом доделаю
+    #TODO Получить всю информацию о пациенте из БД, которая будет отображаться (возраст, и т.п., история запросов для этого пациента)
+    return #Как то потом отобразится 
+
+
+@app.route('/history')
+def history():
+    #TODO получить историю всех запросов для текущего авторизованного врача
+    return render_template('history.html')
 
 
 @app.route('/process_neural_network', methods=['POST'])
