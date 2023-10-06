@@ -43,8 +43,9 @@ def main():
 
 @app.route('/patients')
 def patients():
-    patients = [] #TODO Получить ФИО из БД
-    return render_template('patients.html')
+    columns = ['id', 'name']
+
+    return render_template('patients.html', columns=columns)
 
 @app.route('/patient_card', methods=['POST'])
 def patient_card():
@@ -63,6 +64,20 @@ def history():
 def process_neural_network():
     patientname = request.form['patientname']
     symptoms = request.form.getlist('symptoms')
+
+
+@app.route('/load_data', methods=['GET'])
+def load_data():
+    data = [{'id': i, 'name': f'Name {i}'} for i in range(1, 101)] #Пример какой то таблицы
+
+    page = int(request.args.get('page'))
+    per_page = int(request.args.get('per_page'))
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    paginated_data = data[start:end]
+
+    return jsonify(paginated_data)
 
 
 if __name__ == "__main__":
