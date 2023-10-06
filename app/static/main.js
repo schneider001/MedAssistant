@@ -17,10 +17,12 @@ $(document).ready(function() {
 
 $(document).ready(function() {
   let searchTimeout;
+
+  const currentPage = window.location.pathname;
+  
   function createLazyLoadTable(tableId, dataUrl) {
     let page = 1;
     const perPage = 15;
-    let columns = [];
     let noMoreData = false;
     let searchData = '';
 
@@ -34,14 +36,10 @@ $(document).ready(function() {
         method: 'GET',
         success: function(data) {
           if (data.length > 0) {
-            if (columns.length === 0 && data[0]) {
-              columns = Object.keys(data[0]);
-            }
-
             data.forEach(row => {
               const $row = $('<tr>');
-              columns.forEach(column => {
-                $row.append(`<td>${row[column]}</td>`);
+              row.forEach(value => {
+                $row.append(`<td>${value}</td>`);
               });
               $(`#${tableId} tbody`).append($row);
             });
@@ -62,16 +60,13 @@ $(document).ready(function() {
       noMoreData = false;
       searchData = searchText;
       loadMoreData();
-      console.log('filter')
     }
 
     loadMoreData();
-    console.log('init')
 
     $(`#${tableId}`).scroll(function() {
       if (page != 1 && $(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
         loadMoreData();
-        console.log('scroll')
       }
     });
 
@@ -85,6 +80,9 @@ $(document).ready(function() {
     });
   }
 
-  createLazyLoadTable('patients-table', '/load_data_patients');
-  createLazyLoadTable('request-history-table', '/load_data_requests');
+  if (currentPage === '/patients') {
+    createLazyLoadTable('patients-table', '/load_data_patients');
+  } else if (currentPage === '/history') {
+    createLazyLoadTable('request-history-table', '/load_data_requests');
+  }
 });
