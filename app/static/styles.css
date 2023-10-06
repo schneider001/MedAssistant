@@ -78,7 +78,7 @@ body{
 }
 
 .tbodycontainer { 
-  max-height: 400px; 
+  height: 400px; 
   width: 100%; 
   margin: 0; 
   overflow-y: auto; 

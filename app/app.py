@@ -69,14 +69,24 @@ def process_neural_network():
 
 @app.route('/load_data_patients', methods=['GET'])
 def load_data_patients():
-    data = [[i, f'Name {i}'] for i in range(1, 101)] #Пример какой то таблицы
+    data = [[i, f'Name {i}'] for i in range(1, 101)]  # Пример какой-то таблицы
+    search_text = request.args.get('search', '').lower()
+
+    if search_text == '':
+        filtered_data = data
+    else:
+        filtered_data = [] #TODO тут нужно реализовать поиск по бд с учетом страницы, я тут фильтрую и отбираю нужные элементы из массива для примера, но в идеале, если это возможно, это надо сделать средствами SQL
+        for row in data:
+            row_text = ' '.join(map(str, row)).lower()
+            if search_text in row_text:
+                filtered_data.append(row)
 
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
     start = (page - 1) * per_page
     end = start + per_page
 
-    paginated_data = data[start:end]
+    paginated_data = filtered_data[start:end]
 
     return jsonify(paginated_data)
 
@@ -84,13 +94,23 @@ def load_data_patients():
 @app.route('/load_data_requests', methods=['GET'])
 def load_data_requests():
     data = [[i, f'Name {i}', f'Date {i}', f'Result {i}'] for i in range(1, 156)] #Пример какой то таблицы
+    search_text = request.args.get('search', '').lower()
+
+    if search_text == '':
+        filtered_data = data
+    else:
+        filtered_data = [] #TODO тут нужно реализовать поиск по бд с учетом страницы, я тут фильтрую и отбираю нужные элементы из массива для примера, но в идеале, если это возможно, это надо сделать средствами SQL
+        for row in data:
+            row_text = ' '.join(map(str, row)).lower()
+            if search_text in row_text:
+                filtered_data.append(row)
 
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
     start = (page - 1) * per_page
     end = start + per_page
 
-    paginated_data = data[start:end]
+    paginated_data = filtered_data[start:end]
 
     return jsonify(paginated_data)
 

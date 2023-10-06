@@ -16,11 +16,13 @@ $(document).ready(function() {
 })
 
 $(document).ready(function() {
+  let searchTimeout;
   function createLazyLoadTable(tableId, dataUrl) {
     let page = 1;
-    const perPage = 10;
+    const perPage = 15;
     let columns = [];
     let noMoreData = false;
+    let searchData = '';
 
     function loadMoreData() {
       if (noMoreData) {
@@ -28,7 +30,7 @@ $(document).ready(function() {
       }
 
       $.ajax({
-        url: `${dataUrl}?page=${page}&per_page=${perPage}`,
+        url: `${dataUrl}?page=${page}&per_page=${perPage}&search=${searchData}`,
         method: 'GET',
         success: function(data) {
           if (data.length > 0) {
@@ -54,12 +56,32 @@ $(document).ready(function() {
       });
     }
 
+    function filterData(searchText) {
+      $(`#${tableId} tbody`).empty();
+      page = 1;
+      noMoreData = false;
+      searchData = searchText;
+      loadMoreData();
+      console.log('filter')
+    }
+
     loadMoreData();
+    console.log('init')
 
     $(`#${tableId}`).scroll(function() {
-      if ($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
+      if (page != 1 && $(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
         loadMoreData();
+        console.log('scroll')
       }
+    });
+
+    $('#search-input').on('input', function() {
+      const searchText = $(this).val();
+      clearTimeout(searchTimeout);
+
+      searchTimeout = setTimeout(function() {
+        filterData(searchText);
+      }, 300);
     });
   }
 
