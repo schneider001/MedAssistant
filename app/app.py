@@ -69,7 +69,7 @@ def process_neural_network():
 
 @app.route('/load_data_patients', methods=['GET'])
 def load_data_patients():
-    data = [{'id': i, 'name': f'Name {i}'} for i in range(1, 101)] #Пример какой то таблицы
+    data = [[i, f'Name {i}'] for i in range(1, 101)] #Пример какой то таблицы
 
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
@@ -83,7 +83,7 @@ def load_data_patients():
 
 @app.route('/load_data_requests', methods=['GET'])
 def load_data_requests():
-    data = [{'id': i, 'name': f'Name {i}', 'date': f'Date {i}', 'result': f'Result {i}'} for i in range(1, 156)] #Пример какой то таблицы
+    data = [[i, f'Name {i}', f'Date {i}', f'Result {i}'] for i in range(1, 156)] #Пример какой то таблицы
 
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
