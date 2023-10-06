@@ -56,8 +56,9 @@ def patient_card():
 
 @app.route('/history')
 def history():
+    columns = ['id', 'name', 'date', 'result']
     #TODO получить историю всех запросов для текущего авторизованного врача
-    return render_template('history.html')
+    return render_template('history.html', columns=columns)
 
 
 @app.route('/process_neural_network', methods=['POST'])
@@ -66,9 +67,23 @@ def process_neural_network():
     symptoms = request.form.getlist('symptoms')
 
 
-@app.route('/load_data', methods=['GET'])
-def load_data():
+@app.route('/load_data_patients', methods=['GET'])
+def load_data_patients():
     data = [{'id': i, 'name': f'Name {i}'} for i in range(1, 101)] #Пример какой то таблицы
+
+    page = int(request.args.get('page'))
+    per_page = int(request.args.get('per_page'))
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    paginated_data = data[start:end]
+
+    return jsonify(paginated_data)
+
+
+@app.route('/load_data_requests', methods=['GET'])
+def load_data_requests():
+    data = [{'id': i, 'name': f'Name {i}', 'date': f'Date {i}', 'result': f'Result {i}'} for i in range(1, 156)] #Пример какой то таблицы
 
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))

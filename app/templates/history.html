@@ -1,6 +1,40 @@
 {% extends "base.html" %}
-{% block title %}Home Page{% endblock %}
+{% block title %}History Page{% endblock %}
 {% set show_sidebar = True %}
 {% block content %}
 
+<div id="viewport">
+    <!-- Content -->
+    <div id="content">
+      <div id="centered-box">
+        <form>
+          <h2 class="text-center">История запросов</h2>
+          <div class="table-responsive">
+            <table class="table table-striped table-hover table-scrollable">
+              <thead>
+                <tr>
+                  {% for column in columns %}
+                    <th scope="col">{{ column }}</th>
+                  {% endfor %}
+                </tr>
+              </thead>
+            </table>
+            <div class="tbodycontainer scrollable" id="request-history-table">
+              <table class="table table-striped table-hover table-scrollable">
+                <tbody>
+                  {% for row in data %}
+                  <tr>
+                    {% for key, value in row.items() %}
+                    <td>{{ value }}</td>
+                    {% endfor %}
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
 {% endblock %}

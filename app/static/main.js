@@ -16,35 +16,53 @@ $(document).ready(function() {
 })
 
 $(document).ready(function() {
-  let page = 1;
-  const perPage = 10;
+  function createLazyLoadTable(tableId, dataUrl) {
+    let page = 1;
+    const perPage = 10;
+    let columns = [];
+    let noMoreData = false;
 
-  function loadMoreData() {
+    function loadMoreData() {
+      if (noMoreData) {
+        return;
+      }
+      
       $.ajax({
-          url: `/load_data?page=${page}&per_page=${perPage}`,
-          method: 'GET',
-          success: function(data) {
-            if (data.length > 0) {
-              $('#patients-table tbody').append(data.map(row => `
-                  <tr>
-                      <td>${row.id}</td>
-                      <td>${row.name}</td>
-                  </tr>
-              `).join(''));
-              page++;
+        url: `${dataUrl}?page=${page}&per_page=${perPage}`,
+        method: 'GET',
+        success: function(data) {
+          if (data.length > 0) {
+            if (columns.length === 0 && data[0]) {
+              columns = Object.keys(data[0]);
             }
-          },
-          error: function(xhr, status, error) {
-            console.error(`Error fetching data: ${error}`);
+
+            data.forEach(row => {
+              const $row = $('<tr>');
+              columns.forEach(column => {
+                $row.append(`<td>${row[column]}</td>`);
+              });
+              $(`#${tableId} tbody`).append($row);
+            });
+            page++;
+          } else {
+            noMoreData = true;
           }
+        },
+        error: function(xhr, status, error) {
+          console.error(`Error fetching data: ${error}`);
+        }
       });
+    }
+
+    loadMoreData();
+
+    $(`#${tableId}`).scroll(function() {
+      if ($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
+        loadMoreData();
+      }
+    });
   }
 
-  loadMoreData();
-
-  $('#patients-table').scroll(function() {
-    if ($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight) {
-        loadMoreData();
-    }
-  });
+  createLazyLoadTable('patients-table', '/load_data_patients');
+  createLazyLoadTable('request-history-table', '/load_data_requests');
 });
