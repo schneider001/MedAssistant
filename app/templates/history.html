@@ -24,7 +24,7 @@
                 <tbody>
                   {% for row in data %}
                   <tr>
-                    {% for key, value in row.items() %}
+                    {% for value in row.items() %}
                     <td>{{ value }}</td>
                     {% endfor %}
                   </tr>

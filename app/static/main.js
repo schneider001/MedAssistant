@@ -26,7 +26,7 @@ $(document).ready(function() {
       if (noMoreData) {
         return;
       }
-      
+
       $.ajax({
         url: `${dataUrl}?page=${page}&per_page=${perPage}`,
         method: 'GET',
