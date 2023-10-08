@@ -17,6 +17,7 @@ $(document).ready(function() {
 
 $(document).ready(function() {
   let searchTimeout;
+  let isLoading = false;
 
   const currentPage = window.location.pathname;
   
@@ -31,30 +32,43 @@ $(document).ready(function() {
         return;
       }
 
-      $.ajax({
-        url: `${dataUrl}?page=${page}&per_page=${perPage}&search=${searchData}`,
-        method: 'GET',
-        success: function(data) {
-          if ($(`#${tableId} tbody`).is(':empty') && data.length === 0) {
-            $(`#${tableId} tbody`).html('<tr><td style="text-align: center;">Ничего не найдено</td></tr>');
-          }
-          if (data.length > 0) {
-            data.forEach(row => {
-              const $row = $('<tr>');
-              row.forEach(value => {
-                $row.append(`<td>${value}</td>`);
+      const numColumns = $(`#${tableId} tbody tr:first td`).length;
+      const $loadingRow = $('<tr style="opacity: 0;"><td colspan="' + numColumns + '" style="text-align: center;"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Загрузка...</span></div></td></tr>');
+
+      if (!isLoading) {
+          $loadingRow.animate({ opacity: 1 }, 1000);
+          $(`#${tableId} tbody`).append($loadingRow);
+        isLoading = true;
+
+        $.ajax({
+          url: `${dataUrl}?page=${page}&per_page=${perPage}&search=${searchData}`,
+          method: 'GET',
+          success: function(data) {
+            $loadingRow.remove();
+
+            if ($(`#${tableId} tbody`).is(':empty') && data.length === 0) {
+              $(`#${tableId} tbody`).html('<tr><td style="text-align: center;">Ничего не найдено</td></tr>');
+            }
+            if (data.length > 0) {
+              data.forEach(row => {
+                const $row = $('<tr>');
+                row.forEach(value => {
+                  $row.append(`<td>${value}</td>`);
+                });
+                $(`#${tableId} tbody`).append($row);
               });
-              $(`#${tableId} tbody`).append($row);
-            });
-            page++;
-          } else {
-            noMoreData = true;
+              page++;
+            } else {
+              noMoreData = true;
+            }
+
+            isLoading = false;
+          },
+          error: function(xhr, status, error) {
+            console.error(`Error fetching data: ${error}`);
           }
-        },
-        error: function(xhr, status, error) {
-          console.error(`Error fetching data: ${error}`);
-        }
-      });
+        });
+      }
     }
 
     function filterData(searchText) {
