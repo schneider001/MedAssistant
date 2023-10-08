@@ -1,5 +1,6 @@
 from flask import Flask, request, redirect, url_for, render_template, jsonify
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
+import time
 
 app = Flask(__name__)
 app.static_folder = 'static'
@@ -111,6 +112,8 @@ def load_data_requests():
     end = start + per_page
 
     paginated_data = filtered_data[start:end]
+
+    time.sleep(2) # Эмуляция задержки ответа от сервера, для тестов
 
     return jsonify(paginated_data)
 

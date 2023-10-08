@@ -110,9 +110,18 @@ body {
   background-color: white;
 }
 
+.table-responsive {
+  border-radius: 7px;
+}
+
 .table-scrollable { 
   margin: 0; 
-  padding: 0; 
+  padding: 0;
+}
+
+.fade-in {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
 }
 
 .select2-container {
