@@ -1,5 +1,7 @@
 import mysql.connector
-#NOTE conn and cursor should be established before invoking the functions
+#!NOTE! conn and cursor should be established before invoking the functions (at least for now)
+# EXAMPLE: conn = connect_to_database()
+#          cursor = conn.cursor()
 
 # Establish a connection to the MySQL database
 def connect_to_database():
@@ -86,3 +88,124 @@ def get_symptom_id_by_name(symptom_name):
     cursor.execute(query, (symptom_name,))
     symptom_id = cursor.fetchone()
     return symptom_id
+# Get a list of available patients for a doctor by doctor ID
+def get_available_patients_for_doctor(doctor_id):
+
+    query = """
+    SELECT patients.id, patients.name
+    FROM patients
+    INNER JOIN doctor_patients ON patients.id = doctor_patients.patient_id
+    WHERE doctor_patients.doctor_id = %s
+    """
+
+    cursor.execute(query, (doctor_id,))
+    available_patients = cursor.fetchall()
+
+    return available_patients
+
+# Check if the provided doctor's password is correct
+def check_doctor_password(doctorname, password):
+
+    query = "SELECT password FROM doctors WHERE doctorname = %s"
+
+    cursor.execute(query, (doctorname,))
+    result = cursor.fetchone()
+
+    if result:
+        stored_password = result[0]
+        if stored_password == password:
+            return True
+    return False
+
+# Add symptoms to a request
+def add_request_symptoms(request_id, symptom_ids):
+
+    try:
+        insert_query = "INSERT INTO request_symptoms (request_id, symptom_id) VALUES (%s, %s)"
+
+        # Insert each symptom for the request
+        for symptom_id in symptom_ids:
+            cursor.execute(insert_query, (request_id, symptom_id))
+
+        conn.commit()
+        print("Symptoms added to the request successfully.")
+
+    except Exception as e:
+        print("Error adding symptoms to the request:", str(e))
+
+# Add diseases to a request
+def add_request_diseases(request_id, disease_ids):
+
+    try:
+        insert_query = "INSERT INTO request_diseases (request_id, disease_id) VALUES (%s, %s)"
+
+        # Insert each disease for the request
+        for disease_id in disease_ids:
+            cursor.execute(insert_query, (request_id, disease_id))
+
+        conn.commit()
+        print("Diseases added to the request successfully.")
+
+    except Exception as e:
+        print("Error adding diseases to the request:", str(e))# Get a list of available patients for a doctor by doctor ID
+
+#Get a list of patients that are visible for the doctor
+def get_available_patients_for_doctor(doctor_id):
+
+    query = """
+    SELECT patients.id, patients.name
+    FROM patients
+    INNER JOIN doctor_patients ON patients.id = doctor_patients.patient_id
+    WHERE doctor_patients.doctor_id = %s
+    """
+
+    cursor.execute(query, (doctor_id,))
+    available_patients = cursor.fetchall()
+
+    return available_patients
+
+# Check if the provided doctor's password is correct
+def check_doctor_password(doctorname, password):
+
+    query = "SELECT password FROM doctors WHERE doctorname = %s"
+
+    cursor.execute(query, (doctorname,))
+    result = cursor.fetchone()
+
+    if result:
+        stored_password = result[0]
+        if stored_password == password:
+            return True
+    return False
+
+# Add symptoms to a request
+def add_request_symptoms(request_id, symptom_ids):
+
+    try:
+        insert_query = "INSERT INTO request_symptoms (request_id, symptom_id) VALUES (%s, %s)"
+
+        # Insert each symptom for the request
+        for symptom_id in symptom_ids:
+            cursor.execute(insert_query, (request_id, symptom_id))
+
+        conn.commit()
+        print("Symptoms added to the request successfully.")
+
+    except Exception as e:
+        print("Error adding symptoms to the request:", str(e))
+
+# Add diseases to a request
+def add_request_diseases(request_id, disease_ids):
+
+    try:
+        insert_query = "INSERT INTO request_diseases (request_id, disease_id) VALUES (%s, %s)"
+
+        # Insert each disease for the request
+        for disease_id in disease_ids:
+            cursor.execute(insert_query, (request_id, disease_id))
+
+        conn.commit()
+        print("Diseases added to the request successfully.")
+
+    except Exception as e:
+        print("Error adding diseases to the request:", str(e))
