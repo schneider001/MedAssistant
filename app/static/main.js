@@ -35,6 +35,9 @@ $(document).ready(function() {
         url: `${dataUrl}?page=${page}&per_page=${perPage}&search=${searchData}`,
         method: 'GET',
         success: function(data) {
+          if ($(`#${tableId} tbody`).is(':empty') && data.length === 0) {
+            $(`#${tableId} tbody`).html('<tr><td style="text-align: center;">Ничего не найдено</td></tr>');
+          }
           if (data.length > 0) {
             data.forEach(row => {
               const $row = $('<tr>');
