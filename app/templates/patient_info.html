@@ -1,0 +1,60 @@
+<div class="modal-header">
+  <h5 class="modal-title" id="patientModalLabel">Информация о пациенте</h5>
+  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+</div>
+<div class="modal-body">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="info-item">
+        <span class="info-label">Имя:</span>
+        <span class="info-value">{{ patient.name }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Дата рождения:</span>
+        <span class="info-value">{{ patient.birthDate }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Возраст:</span>
+        <span class="info-value">{{ patient.age }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">СНИЛС:</span>
+        <span class="info-value">{{ patient.snils }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Предсказанная дата смерти:</span>
+        <span class="info-value">{{ patient.deathDate }}</span>
+      </div>
+    </div>
+    <div class="col-md-4 text-end">
+      <img src="/static/testPatientCardPhoto.jpg" alt="Фотография пациента" class="patient-photo">
+    </div>
+  </div>
+  <h2 class="text-center mt-4">История запросов</h2>
+  <div class="table-responsive">
+    <table class="table table-striped table-hover table-scrollable">
+      <thead>
+        <tr>
+          <th scope="col">Id</th>
+          <th scope="col">Doctor Name</th>
+          <th scope="col">Date</th>
+          <th scope="col">Predicted Result</th>
+          <th scope="col">Doctor Verdict</th>
+          <!-- TODO сделать везде либо заданные вручную столбцы, либо придумать, как не отображать id и задавать каждому столбцу свою ширину
+          {% for column in columns %}
+          <th scope="col">{{ column }}</th>
+          {% endfor %}-->
+        </tr>
+      </thead>
+    </table>
+    <div class="tbodycontainer scrollable" id="patient-history-table">
+      <table class="table table-striped table-hover table-scrollable">
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+</div>
