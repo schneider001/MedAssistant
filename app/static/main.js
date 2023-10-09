@@ -21,11 +21,10 @@ $(document).ready(function() {
 
   const currentPage = window.location.pathname;
   
-  function createLazyLoadTable(tableId, dataUrl) {
+  function createLazyLoadTable(tableId, dataUrl, searchData = '') {
     let page = 1;
     const perPage = 15;
     let noMoreData = false;
-    let searchData = '';
 
     function loadMoreData() {
       if (noMoreData) {
@@ -95,6 +94,12 @@ $(document).ready(function() {
         filterData(searchText);
       }, 300);
     });
+
+    document.getElementById('search-input').addEventListener('keydown', function(event) {
+      if (event.keyCode === 13) {
+        event.preventDefault();
+      }
+    });
   }
 
   if (currentPage === '/patients') {
@@ -102,4 +107,22 @@ $(document).ready(function() {
   } else if (currentPage === '/history') {
     createLazyLoadTable('request-history-table', '/load_data_requests');
   }
+
+  $('#patients-table').on('click', 'tr', function() {
+    var patientId = $(this).find('td:first').text();
+
+    $.ajax({
+        url: '/get_patient_info',
+        method: 'GET',
+        data: { patient_id: patientId },
+        success: function(newContent) {
+          $('#patientModal .modal-content').html(newContent);
+          createLazyLoadTable('patient-history-table', '/load_patient_history', patientId);
+          $('#patientModal').modal('show');
+        },
+        error: function(xhr, status, error) {
+            console.error('Ошибка при получении HTML-кода модального окна: ' + error);
+        }
+    });
+  });
 });

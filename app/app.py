@@ -2,6 +2,7 @@ from flask import Flask, request, redirect, url_for, render_template, jsonify
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
 import time
 
+
 app = Flask(__name__)
 app.static_folder = 'static'
 #login_manager = LoginManager(app)
@@ -116,6 +117,36 @@ def load_data_requests():
     time.sleep(2) # Эмуляция задержки ответа от сервера, для тестов
 
     return jsonify(paginated_data)
+
+
+@app.route('/get_patient_info', methods=['GET'])
+def get_patient_info():
+    patient_id = request.args.get('patient_id')
+
+    patient_data = { #TODO как то получаем информацию о пациенте из БД
+        'id': patient_id,
+        'name': 'Иванов Иван Иванович',
+        'birthDate': '1990-05-15',
+        'age': 33, #TODO вычислить возраст
+        'snils': '480 953 512 08',
+        'deathDate': '2023-10-30'
+    }
+
+    return render_template('patient_info.html', patient=patient_data)
+
+
+@app.route('/load_patient_history', methods=['GET'])
+def load_patient_history():
+    patient_id = int(request.args.get('search'))
+
+    data = [[i, f'Doctor Name {i}', f'Date {i}', f'Predicted Result {i}', f'Doctor Verdict {i}'] for i in range(1, 17)] #Пример какой то таблицы
+
+    page = int(request.args.get('page'))
+    per_page = int(request.args.get('per_page'))
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    return jsonify(data[start:end])
 
 
 if __name__ == "__main__":
