@@ -2,10 +2,38 @@ from flask import Flask, request, redirect, url_for, render_template, jsonify
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
 import time
 
+import sys
+sys.path.append("..")
+
+from DB.database import Database
+
+db = Database()
+db.insert_doctor_credentials("Petrovich", "12345") #для теста login_post
 
 app = Flask(__name__)
 app.static_folder = 'static'
 #login_manager = LoginManager(app)
+
+
+class Doctor(UserMixin):
+    def __init__(self, id, username, password, last_login):
+        self.id = id
+        self.username = username
+        self.password = password
+        self.last_login = last_login
+
+    @staticmethod
+    def find_by_id(id):
+        user_data = db.select_doctor_by_id(id)
+        if user_data:
+            return Doctor(*user_data)
+
+    @staticmethod
+    def find_by_username(username):
+        user_data = db.select_doctor_by_username(username)
+        if user_data:
+            return Doctor(*user_data)
+
 
 @app.route("/")
 def login():
@@ -17,8 +45,8 @@ def login_post():
     username = request.form['username']
     password = request.form['password']
 
-    #TODO
-    authorized = True
+    doctor = Doctor.find_by_username(username)
+    authorized = doctor and doctor.password == password
  
     if authorized:
         return redirect(url_for('main'))
