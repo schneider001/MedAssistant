@@ -1,31 +1,31 @@
 CREATE TABLE `doctors` (
   `id` integer AUTO_INCREMENT PRIMARY KEY,
-  `username` varchar(255),
-  `password` varchar(255),
+  `username` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
   `last_login` timestamp
 );
 
 CREATE TABLE `patients` (
-  `id` integer PRIMARY KEY,
-  `name` varchar(255),
+  `id` integer AUTO_INCREMENT PRIMARY KEY,
+  `name` varchar(255) NOT NULL,
   `age` integer,
   `sex` ENUM ('male', 'female')
 );
 
 CREATE TABLE `symptoms` (
-  `id` integer PRIMARY KEY,
-  `name` varchar(255)
+  `id` integer AUTO_INCREMENT PRIMARY KEY,
+  `name` varchar(255) NOT NULL
 );
 
 CREATE TABLE `diseases` (
-  `id` integer PRIMARY KEY,
-  `name` varchar(255)
+  `id` integer AUTO_INCREMENT PRIMARY KEY,
+  `name` varchar(255) NOT NULL
 );
 
 CREATE TABLE `requests` (
-  `id` integer PRIMARY KEY,
-  `doctor_id` integer,
-  `patient_id` integer,
+  `id` integer AUTO_INCREMENT PRIMARY KEY,
+  `doctor_id` integer NOT NULL,
+  `patient_id` integer NOT NULL,
   `doctor_disease_id` integer,
   `status` ENUM ('in_progress', 'ready', 'error'),
   `date` timestamp,
