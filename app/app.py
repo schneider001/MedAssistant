@@ -1,5 +1,6 @@
 from flask import Flask, request, redirect, url_for, render_template, jsonify
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
+from flask_bcrypt import Bcrypt
 import time
 
 import sys
@@ -7,20 +8,31 @@ sys.path.append("..")
 
 from DB.database import Database
 
-db = Database()
-db.insert_doctor_credentials("Petrovich", "12345") #для теста login_post
-
 app = Flask(__name__)
 app.static_folder = 'static'
-#login_manager = LoginManager(app)
+app.config.update(SECRET_KEY = 'some secret key')
+
+bcrypt = Bcrypt(app)
+def gen_hashed_password(password : str):
+    return bcrypt.generate_password_hash(password).decode('utf8')
+
+def check_password_hash(hashed_password, password) :
+    return bcrypt.check_password_hash(hashed_password, password)
+
+db = Database()
+db.insert_doctor_credentials("Petrovich", gen_hashed_password("simple_password")) #для теста login_post
+
+login_manager = LoginManager(app)
 
 
 class Doctor(UserMixin):
-    def __init__(self, id, username, password, last_login):
+    def __init__(self, id, username, name, password_hash, last_login, is_blocked):
         self.id = id
         self.username = username
-        self.password = password
+        self.name = name
+        self.password_hash = password_hash
         self.last_login = last_login
+        self.is_blocked = is_blocked
 
     @staticmethod
     def find_by_id(id):
@@ -34,6 +46,9 @@ class Doctor(UserMixin):
         if user_data:
             return Doctor(*user_data)
 
+@login_manager.user_loader
+def load_user(user_id):
+    return Doctor.find_by_id(user_id)
 
 @app.route("/")
 def login():
@@ -46,16 +61,23 @@ def login_post():
     password = request.form['password']
 
     doctor = Doctor.find_by_username(username)
-    authorized = doctor and doctor.password == password
+    authorized = doctor and check_password_hash(doctor.password_hash, password)
  
     if authorized:
+        login_user(doctor)
         return redirect(url_for('main'))
     else:
         return redirect(url_for('login'))
+    
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('login'))
 
 
 @app.route('/main')
-#@login_required
+@login_required
 def main():
     patients = [
         "Иванов Иван Иванович",

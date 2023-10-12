@@ -1,5 +1,5 @@
 import mysql.connector
-from db_operations import connect_to_database()
+from db_operations import connect_to_database
 
 # Establish a connection to the MySQL database
 conn = connect_to_database()

@@ -1,0 +1,97 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+
+
+Table doctors {
+  id integer [primary key]
+  username varchar
+  name varchar
+  password_hash blob
+  last_login timestamp
+  is_blocked IsBlocked
+}
+
+enum IsBlocked {
+  blocked
+  not_blocked
+}
+
+Table patients {
+  id integer [primary key]
+  name varchar
+  born_date timestamp
+  Sex Sex
+}
+
+enum Sex {
+  male
+  female
+}
+
+Table symptoms {
+  id integer [primary key]
+  name varchar
+}
+
+Table diseases {
+  id integer [primary key]
+  name varchar
+}
+
+Table requests {
+  id integer [primary key]
+  doctor_id integer
+  patient_id integer
+  predicted_disease_id integer
+  status RequestStatus
+  date timestamp
+  ml_model_id integer
+}
+
+enum RequestStatus {
+  in_progress
+  ready
+  error
+}
+
+Table request_symptoms {
+  symptom_id integer
+  request_id integer
+}
+
+
+Table ml_model {
+  id integer [primary key]
+  hash blob
+  version varchar
+}
+
+Table administrators {
+  id integer [primary key]
+  username varchar
+  name varchar
+  password_hash blob
+}
+
+Table comments {
+  doctor_id integer
+  request_id integer
+  comment varchar
+}
+
+
+Ref: request_symptoms.symptom_id > symptoms.id
+
+Ref: request_symptoms.request_id > requests.id
+
+Ref: requests.doctor_id > doctors.id
+
+Ref: requests.patient_id > patients.id
+
+Ref: requests.predicted_disease_id > diseases.id
+
+Ref: requests.ml_model_id > ml_model.id
+
+Ref: comments.doctor_id > doctors.id
+
+Ref: comments.request_id > requests.id
