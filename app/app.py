@@ -3,52 +3,9 @@ from flask_login import LoginManager, UserMixin, login_required, login_user, log
 from flask_bcrypt import Bcrypt
 import time
 
-import sys
-sys.path.append("..")
+from init import *
+from db_model import *
 
-from DB.database import Database
-
-app = Flask(__name__)
-app.static_folder = 'static'
-app.config.update(SECRET_KEY = 'some secret key')
-
-bcrypt = Bcrypt(app)
-def gen_hashed_password(password : str):
-    return bcrypt.generate_password_hash(password).decode('utf8')
-
-def check_password_hash(hashed_password, password) :
-    return bcrypt.check_password_hash(hashed_password, password)
-
-db = Database()
-db.insert_doctor_credentials("Petrovich", gen_hashed_password("simple_password")) #для теста login_post
-
-login_manager = LoginManager(app)
-
-
-class Doctor(UserMixin):
-    def __init__(self, id, username, name, password_hash, last_login, is_blocked):
-        self.id = id
-        self.username = username
-        self.name = name
-        self.password_hash = password_hash
-        self.last_login = last_login
-        self.is_blocked = is_blocked
-
-    @staticmethod
-    def find_by_id(id):
-        user_data = db.select_doctor_by_id(id)
-        if user_data:
-            return Doctor(*user_data)
-
-    @staticmethod
-    def find_by_username(username):
-        user_data = db.select_doctor_by_username(username)
-        if user_data:
-            return Doctor(*user_data)
-
-@login_manager.user_loader
-def load_user(user_id):
-    return Doctor.find_by_id(user_id)
 
 @app.route("/")
 def login():
