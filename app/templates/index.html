@@ -4,32 +4,47 @@
 {% block content %}
 
 <div id="viewport">
-    <!-- Content -->
-    <div id="content">
-      <div id="centered-box">
-        <form method="POST" action="/process_neural_network">
-          <h2 class="text-center">Запрос</h2>
-          <div class="mb-3">
-            <label for="patientname" class="form-label">Пациент</label>
-            <select id="patientname" name="patientname" class="form-select" data-placeholder="Выберите пациента" >
-              {% for patient in patients %}
-                <option value="{{patient}}">{{patient}}</option>
-              {% endfor %}
+  <!-- Content -->
+  <div class="vh-100 d-flex justify-content-center align-items-center align-self-center">
+    <div id="centered-box">
+      <form method="POST">
+        <h2 class="text-center">Запрос</h2>
+        <div class="mb-3">
+          <label for="patientname" class="form-label">Пациент</label>
+          <select id="patientname" name="patientname" class="form-select" data-placeholder="Выберите пациента" >
+            {% for patient in patients %}
+              <option value="{{patient}}">{{patient}}</option>
+            {% endfor %}
+        </select>
+        </div>
+        <div class="mb-3">
+          <label for="symptoms" class="form-label">Симптомы</label>
+          <select class="form-select" id="symptoms" data-placeholder="Выберите что-нибудь" multiple >
+            {% for symptom in symptoms %}
+              <option value="{{symptom}}">{{symptom}}</option>
+            {% endfor %}
           </select>
-          </div>
-          <div class="mb-3">
-            <label for="symptoms" class="form-label">Симптомы</label>
-            <select class="form-select" id="symptoms" data-placeholder="Выберите что-нибудь" multiple >
-              {% for symptom in symptoms %}
-                <option value="{{symptom}}">{{symptom}}</option>
-              {% endfor %}
-            </select>
-          </div>
-          <div class="text-end">
-            <button type="submit" class="btn btn-primary">Отправить</button>
-          </div>
-        </form>
+        </div>
+        <div class="text-end">
+          <button type="submit" class="btn btn-primary" data-toggle="modal" data-target="#requestModal">Отправить</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="requestModalLabel">Запрос</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
       </div>
     </div>
   </div>
+</div>
 {% endblock %}

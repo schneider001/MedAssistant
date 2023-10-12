@@ -63,10 +63,21 @@ def history():
     return render_template('history.html', columns=columns)
 
 
-@app.route('/process_neural_network', methods=['POST'])
-def process_neural_network():
+@app.route('/process_request', methods=['POST'])
+def process_request():
     patientname = request.form['patientname']
     symptoms = request.form.getlist('symptoms')
+    time.sleep(5)
+    diagnosis = "Some Diagnosis"
+    doctor_comments = [{"doctor": "Dr. Smith", "time": "10:30 AM", "comment": "Comment 1"},
+                      {"doctor": "Dr. Johnson", "time": "11:15 AM", "comment": "Comment 2"}]
+    
+    response_data = {
+        "diagnosis": diagnosis,
+        "doctor_comments": doctor_comments
+    }
+    
+    return jsonify(response_data)
 
 
 @app.route('/load_data_patients', methods=['GET'])
@@ -95,7 +106,7 @@ def load_data_patients():
 
 @app.route('/load_data_requests', methods=['GET'])
 def load_data_requests():
-    data = [[i, f'Name {i}', f'Date {i}', f'Result {i}'] for i in range(1, 156)] #Пример какой то таблицы
+    data = [[i, f'Name {i}', f'Date {i}', f'Result {i}'] for i in range(1, 156)] #Пример какой то таблицы TODO нужен еще столбец с id пациента для запросов на сервер
     search_text = request.args.get('search', '').lower()
 
     if search_text == '':
@@ -128,11 +139,10 @@ def get_patient_info():
         'name': 'Иванов Иван Иванович',
         'birthDate': '1990-05-15',
         'age': 33, #TODO вычислить возраст
-        'snils': '480 953 512 08',
-        'deathDate': '2023-10-30'
+        'snils': '480 953 512 08'
     }
 
-    return render_template('patient_info.html', patient=patient_data)
+    return jsonify(patient_data)
 
 
 @app.route('/load_patient_history', methods=['GET'])

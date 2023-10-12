@@ -115,8 +115,11 @@ $(document).ready(function() {
         url: '/get_patient_info',
         method: 'GET',
         data: { patient_id: patientId },
-        success: function(newContent) {
-          $('#patientModal .modal-content').html(newContent);
+        success: function(data) {
+          $('#name').html(data.name);
+          $('#birth-date').html(data.birthDate);
+          $('#age').html(data.age);
+          $('#snils').html(data.snils);
           createLazyLoadTable('patient-history-table', '/load_patient_history', patientId);
           $('#patientModal').modal('show');
         },
@@ -124,5 +127,33 @@ $(document).ready(function() {
             console.error('Ошибка при получении HTML-кода модального окна: ' + error);
         }
     });
+  });
+
+
+  $('form').submit(function(e) {
+    e.preventDefault();
+
+    var spinner = '<div class="spinner-container text-center"><div class="spinner-border spinner-border-lg" role="status"><span class="visually-hidden">Загрузка...</span></div></div>';
+    $('#requestModal .modal-body').html(spinner);
+
+    $.ajax({
+      url: '/process_request',
+      method: 'POST',
+      data: $(this).serialize(),
+      success: function(response) {
+        $('#requestModal .modal-body').html('<h5 class="text-center">Диагноз</h5><p>' + response.diagnosis + '</p>');
+        var commentsHtml = '<h5 class="text-center mt-4">Комментарии врачей</h5><ul>';
+        response.doctor_comments.forEach(function(comment) {
+          commentsHtml += '<li>' + comment.doctor + ' (' + comment.time + '): ' + comment.comment + '</li>';
+        });
+        commentsHtml += '</ul>';
+        $('#requestModal .modal-body').append(commentsHtml);
+      },
+      error: function(xhr, status, error) {
+        console.error('Ошибка при отправке запроса: ' + error);
+      }
+    });
+
+    $('#requestModal').modal('show');
   });
 });
