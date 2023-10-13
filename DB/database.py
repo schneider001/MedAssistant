@@ -1,7 +1,8 @@
 import mysql.connector
-
+from hashlib import sha256
 
 class Database:
+    # Establish a connection to the MySQL database
     def __init__(self):
 
         config = { #TODO забирать эти данные из конфиг файла
@@ -14,9 +15,9 @@ class Database:
 
         self.conn = mysql.connector.connect(**config)
         self.cursor = self.conn.cursor()
-        self.execute_sql_script("../DB/create_db_script.sql") #TODO добавить проверку перед выполнением, созданы ли все таблицы и связи
+        #self.execute_sql_script("../DB/create_db_script.sql") #TODO добавить проверку перед выполнением, созданы ли все таблицы и связи
 
-
+    # Establish MySQL database
     def execute_sql_script(self, script_file):
         try:
             with open(script_file, 'r') as file:
@@ -48,7 +49,7 @@ class Database:
             self.cursor.execute(query, values)
             self.conn.commit()
         except Exception as e:
-            self.conn.rollback()
+            self.conn.rollback() #db rolls back by itself generally
             print(f"Failed to insert doctor's credentials: {str(e)}")
 
     def close(self):
