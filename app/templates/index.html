@@ -7,7 +7,7 @@
   <!-- Content -->
   <div class="vh-100 d-flex justify-content-center align-items-center align-self-center">
     <div id="centered-box">
-      <form method="POST">
+      <form method="POST" id="requestForm">
         <h2 class="text-center">Запрос</h2>
         <div class="mb-3">
           <label for="patientname" class="form-label">Пациент</label>
@@ -40,6 +40,8 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
       <div class="modal-body">
+        <div id="diagnosis-section"></div>
+        <div id="comments-section"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>

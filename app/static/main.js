@@ -130,24 +130,24 @@ $(document).ready(function() {
   });
 
 
-  $('form').submit(function(e) {
+  $('#requestForm').submit(function(e) {
     e.preventDefault();
-
-    var spinner = '<div class="spinner-container text-center"><div class="spinner-border spinner-border-lg" role="status"><span class="visually-hidden">Загрузка...</span></div></div>';
-    $('#requestModal .modal-body').html(spinner);
+    console.info("a");
+    const spinner = '<div class="spinner-container text-center"><div class="spinner-border spinner-border-lg" role="status"><span class="visually-hidden">Загрузка...</span></div></div>';
+    $('#diagnosis-section').html(spinner);
 
     $.ajax({
       url: '/process_request',
       method: 'POST',
       data: $(this).serialize(),
       success: function(response) {
-        $('#requestModal .modal-body').html('<h5 class="text-center">Диагноз</h5><p>' + response.diagnosis + '</p>');
+        $('#diagnosis-section').html('<h5 class="text-center">Диагноз</h5><p>' + response.diagnosis + '</p>');
         var commentsHtml = '<h5 class="text-center mt-4">Комментарии врачей</h5><ul>';
         response.doctor_comments.forEach(function(comment) {
           commentsHtml += '<li>' + comment.doctor + ' (' + comment.time + '): ' + comment.comment + '</li>';
         });
         commentsHtml += '</ul>';
-        $('#requestModal .modal-body').append(commentsHtml);
+        $('#diagnosis-section').append(commentsHtml);
       },
       error: function(xhr, status, error) {
         console.error('Ошибка при отправке запроса: ' + error);
@@ -156,4 +156,35 @@ $(document).ready(function() {
 
     $('#requestModal').modal('show');
   });
+
+  function createCommentCard(username, avatar, upvotes, upvoted) {
+    const commentCard = document.createElement('div');
+    commentCard.classList.add('card', 'mb-4');
+  
+    commentCard.innerHTML = `
+      <div class="card-body">
+        <p>Type your note, and hit enter to add it</p>
+  
+        <div class="d-flex justify-content-between">
+          <div class="d-flex flex-row align-items-center">
+            <img src="${avatar}" alt="avatar" width="25" height="25" />
+            <p class="small mb-0 ms-2">${username}</p>
+          </div>
+          <div class="d-flex flex-row align-items-center">
+            <p class="small text-muted mb-0">Upvote?</p>
+            <i class="far fa-thumbs-up mx-2 fa-xs text-black" style="margin-top: -0.16rem;"></i>
+            <p class="small text-muted mb-0">${upvotes}</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    return commentCard;
+  }
+
+  function addCommentToSection(username, comment, time) {
+    const commentSection = document.getElementById('comment-section');
+    const commentCard = createCommentCard(username, avatar, upvotes, upvoted);
+    commentSection.appendChild(commentCard);
+  }
 });
