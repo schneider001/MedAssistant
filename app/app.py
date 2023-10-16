@@ -43,6 +43,13 @@ def main():
     return render_template('index.html', patients=patients, symptoms=symptoms)
 
 
+@app.route('/logout')
+def logout():
+
+
+    return render_template('login.html')
+
+
 @app.route('/patients')
 def patients():
     columns = ['id', 'name']
@@ -61,12 +68,18 @@ def history():
 def get_request_info():
     patientname = request.form['patientname']
     symptoms = request.form.getlist('symptoms')
-    time.sleep(5)
-    diagnosis = "Some Diagnosis"
-    doctor_comments = [{"doctor": "Dr. Smith", "time": "10:30", "comment": "Comment 1"},
-                      {"doctor": "Dr. Johnson", "time": "11:15", "comment": "Comment 2"}]
+    time.sleep(2)
+    symptoms = ["Кашель", "Высокая температура"]
+    diagnosis = "Cancer"
+    doctor_comments = [{"doctor": "Dr. Smith", "time": "10:30", "comment": "Hmm, This diagnosis looks cool", "editable": True},
+                      {"doctor": "Dr. Johnson", "time": "11:15", "comment": "Really cool", "editable": False},
+                      {"doctor": "Dr. Hudson", "time": "12:05", "comment": "Thanks", "editable": False},
+                      {"doctor": "Dr. Mycac", "time": "12:06", "comment": "WTF", "editable": False},
+                      {"doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
     
     response_data = {
+        "patient_name": "Иван Иванов Иванович",
+        "symptoms": symptoms,
         "diagnosis": diagnosis,
         "doctor_comments": doctor_comments
     }
