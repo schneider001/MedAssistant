@@ -47,7 +47,7 @@ def main():
 def logout():
 
 
-    return render_template('login.html')
+    return redirect(url_for("login"))
 
 
 @app.route('/patients')
