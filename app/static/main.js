@@ -170,31 +170,7 @@ $(document).ready(function() {
                                       <div class="row">\
                                         <div class="col">';
         response.doctor_comments.forEach(function(comment) {
-          commentsHtml += `<div class="card mb-3">\
-                            <div class="card-body">\
-                              <div class="d-flex flex-start">\
-                                <img class="rounded-circle shadow-1-strong me-3"\
-                                  src="/static/testPatientCardPhoto.jpg" alt="avatar" width="65"\
-                                  height="64" />\
-                                <div class="flex-grow-1 flex-shrink-1">\
-                                  <div>\
-                                    <div class="d-flex justify-content-between align-items-center mb-3">\
-                                      <h6 class="text-primary fw-bold mb-0">${escapeHtml(comment.doctor)}\
-                                        <span class="text-dark ms-2">${escapeHtml(comment.comment)}</span>\
-                                      </h6>\
-                                      <p class="mb-0">${escapeHtml(comment.time)}</p>\
-                                    </div>\
-                                    ${comment.editable ? '\
-                                    <div class="d-flex justify-content-between align-items-center">\
-                                      <p class="small mb-0" style="color: #aaa;">\
-                                      <a href="#!" class="link-grey">Удалить</a> •\
-                                      <a href="#!" class="link-grey">Изменить</a>\
-                                    </div>' : ''}\
-                                  </div>\
-                                </div>\
-                              </div>\
-                            </div>\
-                          </div>`;
+          commentsHtml += generateCommentHtml(comment);
         });
         commentsHtml += '</div></div></div></div></div></div></div>';
         $('#diagnosis-section').append(commentsHtml);
@@ -207,17 +183,111 @@ $(document).ready(function() {
     $('#requestModal').modal('show');
   });
 
-  function escapeHtml(unsafe)
-  {
-    if (typeof unsafe === 'string') {
-      return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    } else {
-      return unsafe;
-    }
- }
+  
 });
+
+
+function generateCommentHtml(comment) {
+  return `<div class="card mb-3" ${escapeHtml(comment.editable) ? 'id="editable-comment"' : ''}>\
+            <div class="card-body">\
+              <div class="d-flex flex-start">\
+                <img class="rounded-circle shadow-1-strong me-3"\
+                  src="/static/testPatientCardPhoto.jpg" alt="avatar" width="65"\
+                  height="64" />\
+                <div class="flex-grow-1 flex-shrink-1">\
+                  <div ${escapeHtml(comment.editable) ? 'id="editable-comment-content"' : ''}>\
+                    <div class="d-flex justify-content-between align-items-center mb-3">\
+                      <h6 class="text-primary fw-bold mb-0">${escapeHtml(comment.doctor)}\
+                        <span class="text-dark ms-2">${escapeHtml(comment.comment)}</span>\
+                      </h6>\
+                      <p class="mb-0">${escapeHtml(comment.time)}</p>\
+                    </div>\
+                    ${escapeHtml(comment.editable) ? `\
+                    <div class="d-flex justify-content-between align-items-center">\
+                      <p class="small mb-0" style="color: #aaa;">\
+                      <a href="#!" class="link-grey" onclick="deleteComment(${escapeHtml(comment.id)})">Удалить</a> •\
+                      <a href="#!" class="link-grey" onclick="editComment(${escapeHtml(comment.id)}, \'${escapeHtml(comment.doctor)}\', \'${escapeHtml(comment.comment)}\', \'${escapeHtml(comment.time)}\')">Изменить</a>\
+                    </div>` : ''}\
+                  </div>\
+                </div>\
+              </div>\
+            </div>\
+          </div>`;
+}
+
+function editComment(id, doctor, comment, time) {
+  const commentSection = document.getElementById('editable-comment-content');
+  commentSection.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3">\
+                                <h6 class="text-primary fw-bold mb-0">${doctor}</h6>\
+                                <p class="mb-0">${time}</p>\
+                              </div>\
+                              <textarea class="form-control" id="comment-textarea">${comment}</textarea>\
+                              <div class="d-flex justify-content-between align-items-center mt-3">\
+                                <p class="small" style="color: #aaa;">\
+                                <button href="#!" class="btn btn-theme text-end mx-1" onclick="saveComment(${id})">Сохранить</button>\
+                                <button href="#!" class="btn test-end mx-1" onclick="cancelEditComment(${id}, \'${doctor}\', \'${comment}\', \'${time}\')">Отменить</button>\
+                              </div>`;
+}
+
+function saveComment(id) {
+  const commentInput = document.getElementById('comment-textarea');
+  const updatedComment = commentInput.value;
+
+  $.ajax({
+    url: `/edit_comment/${id}`,
+    method: 'POST',
+    data: { comment: updatedComment },
+    success: function(comment) {
+      const commentSection = document.getElementById('editable-comment');
+      commentSection.innerHTML = generateCommentHtml(comment);
+    },
+    error: function(xhr, status, error) {
+      console.error('Ошибка при обновлении комментария:', error);
+    }
+  });
+}
+
+function deleteComment(id) {
+  $.ajax({
+    url: `/delete_comment/${id}`,
+    method: 'POST',
+    success: function(response) {
+      const elementToRemove = document.getElementById('editable-comment');
+      if (elementToRemove) {
+        elementToRemove.remove();
+      }
+    },
+    error: function(xhr, status, error) {
+      console.error('Ошибка при удалении комментария:', error);
+    }
+  });
+}
+
+function cancelEditComment(id, doctor, comment, time) {
+  const commentSection = document.getElementById('editable-comment-content');
+  commentSection.innerHTML = `<div class="d-flex justify-content-between align-items-center mb-3">\
+                        <h6 class="text-primary fw-bold mb-0">${doctor}\
+                          <span class="text-dark ms-2">${comment}</span>\
+                        </h6>\
+                        <p class="mb-0">${time}</p>\
+                      </div>\
+                      <div class="d-flex justify-content-between align-items-center">\
+                        <p class="small mb-0" style="color: #aaa;">\
+                        <a href="#!" class="link-grey" onclick="deleteComment(${id})">Удалить</a> •\
+                        <a href="#!" class="link-grey" onclick="editComment(${id}, \'${doctor}\', \'${comment}\', \'${time}\')">Изменить</a>\
+                      </div>`;
+}
+
+function escapeHtml(unsafe)
+{
+  if (typeof unsafe === 'string') {
+    return unsafe
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  } else {
+    return unsafe;
+  }
+}

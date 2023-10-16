@@ -71,11 +71,11 @@ def get_request_info():
     time.sleep(2)
     symptoms = ["Кашель", "Высокая температура"]
     diagnosis = "Cancer"
-    doctor_comments = [{"doctor": "Dr. Smith", "time": "10:30", "comment": "Hmm, This diagnosis looks cool", "editable": True},
-                      {"doctor": "Dr. Johnson", "time": "11:15", "comment": "Really cool", "editable": False},
-                      {"doctor": "Dr. Hudson", "time": "12:05", "comment": "Thanks", "editable": False},
-                      {"doctor": "Dr. Mycac", "time": "12:06", "comment": "WTF", "editable": False},
-                      {"doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
+    doctor_comments = [{"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": "Hmm, This diagnosis looks cool", "editable": True},
+                       {"id": 2, "doctor": "Dr. Johnson", "time": "11:15", "comment": "Really cool", "editable": False},
+                       {"id": 3, "doctor": "Dr. Hudson", "time": "12:05", "comment": "Thanks", "editable": False},
+                       {"id": 4, "doctor": "Dr. Mycac", "time": "12:06", "comment": "WTF", "editable": False},
+                       {"id": 5, "doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
     
     response_data = {
         "patient_name": "Иван Иванов Иванович",
@@ -164,6 +164,19 @@ def load_patient_history():
     end = start + per_page
 
     return jsonify(data[start:end])
+
+
+@app.route('/delete_comment/<int:comment_id>', methods=['POST'])
+def delete_comment(comment_id):
+    #TODO удалить коммент из БД
+    return jsonify()
+
+
+@app.route('/edit_comment/<int:comment_id>', methods=['POST'])
+def edit_comment(comment_id):
+    updated_comment = request.form.get('comment')
+    #TODO изменить коммента в БД и после вернуть его
+    return jsonify({"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment, "editable": True})
 
 
 if __name__ == "__main__":
