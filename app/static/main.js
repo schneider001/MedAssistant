@@ -168,12 +168,17 @@ $(document).ready(function() {
                                     <div class="card-body p-4" style="color #bbb; background-color: #f7f6f6; overflow-y: auto; height: 35vh">\
                                       <h5 class="text-center mb-4 pb-2">Комментарии врачей</h4>\
                                       <div class="row">\
-                                        <div class="col">';
+                                        <div class="col" id="comments-container">';
         response.doctor_comments.forEach(function(comment) {
           commentsHtml += generateCommentHtml(comment);
         });
         commentsHtml += '</div></div></div></div></div></div></div>';
         $('#diagnosis-section').append(commentsHtml);
+
+        const hasEditableComment = response.doctor_comments.some(comment => comment.editable === true);
+        if (!hasEditableComment) {
+          createCommentInputBlock("Doctor name");
+        }
       },
       error: function(xhr, status, error) {
         console.error('Ошибка при отправке запроса: ' + error);
@@ -182,8 +187,6 @@ $(document).ready(function() {
 
     $('#requestModal').modal('show');
   });
-
-  
 });
 
 
@@ -221,12 +224,60 @@ function editComment(id, doctor, comment, time) {
                                 <h6 class="text-primary fw-bold mb-0">${doctor}</h6>\
                                 <p class="mb-0">${time}</p>\
                               </div>\
-                              <textarea class="form-control" id="comment-textarea">${comment}</textarea>\
+                              <textarea placeholder="Введите ваш комментарий здесь" rows="4" class="form-control" id="comment-textarea">${comment}</textarea>\
                               <div class="d-flex justify-content-between align-items-center mt-3">\
                                 <p class="small" style="color: #aaa;">\
                                 <button href="#!" class="btn btn-theme text-end mx-1" onclick="saveComment(${id})">Сохранить</button>\
                                 <button href="#!" class="btn test-end mx-1" onclick="cancelEditComment(${id}, \'${doctor}\', \'${comment}\', \'${time}\')">Отменить</button>\
                               </div>`;
+}
+
+function createCommentInputBlock(doctor) {
+  const commentsContent = document.getElementById('comments-container');
+  const commentInputBlock = document.createElement('div');
+  commentInputBlock.className = 'card mb-3';
+  commentInputBlock.id = 'add-comment';
+  commentInputBlock.innerHTML = `<div class="card-body">\
+                                    <div class="d-flex flex-start">\
+                                      <img class="rounded-circle shadow-1-strong me-3"\
+                                        src="/static/testPatientCardPhoto.jpg" alt="avatar" width="65"\
+                                        height="64" />\
+                                      <div class="flex-grow-1 flex-shrink-1">\
+                                        <div class="d-flex justify-content-between align-items-center mb-3">\
+                                          <h6 class="text-primary fw-bold mb-0">${doctor}</h6>\
+                                        </div>\
+                                        <textarea placeholder="Введите ваш комментарий здесь" rows="4" class="form-control" id="comment-textarea"></textarea>\
+                                        <div class="d-flex justify-content-between align-items-center mt-3">\
+                                          <p class="small" style="color: #aaa;">\
+                                          <button href="#!" class="btn btn-theme text-end mx-1" onclick="addComment()">Сохранить</button>\
+                                        </div>\
+                                      </div>\
+                                    </div>\
+                                  </div>\
+                                </div>`;
+  commentsContent.insertAdjacentElement('afterbegin', commentInputBlock);
+}
+
+function addComment() {
+  const commentInput = document.getElementById('comment-textarea');
+  const addedComment = commentInput.value;
+  
+  $.ajax({
+    url: `/add_comment`,
+    method: 'GET',
+    data: { comment: addedComment },
+    success: function(comment) {
+      const commentsContent = document.getElementById('comments-container');
+      const addCommentBlock = document.getElementById('add-comment');
+      addCommentBlock.remove();
+      const commentBlock = document.createElement('div');
+      commentBlock.innerHTML = generateCommentHtml(comment);
+      commentsContent.insertAdjacentElement('afterbegin', commentBlock);
+    },
+    error: function(xhr, status, error) {
+      console.error('Ошибка при добавлении комментария:', error);
+    }
+  });
 }
 
 function saveComment(id) {
@@ -256,6 +307,8 @@ function deleteComment(id) {
       if (elementToRemove) {
         elementToRemove.remove();
       }
+
+      createCommentInputBlock("Doctor name");
     },
     error: function(xhr, status, error) {
       console.error('Ошибка при удалении комментария:', error);
