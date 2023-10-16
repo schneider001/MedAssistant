@@ -11,7 +11,8 @@
         <h2 class="text-center">Запрос</h2>
         <div class="mb-3">
           <label for="patientname" class="form-label">Пациент</label>
-          <select id="patientname" name="patientname" class="form-select" data-placeholder="Выберите пациента" >
+          <select id="patientname" name="patientname" class="form-select" data-placeholder="Выберите пациента" required>
+            <option></option>
             {% for patient in patients %}
               <option value="{{patient}}">{{patient}}</option>
             {% endfor %}
@@ -19,7 +20,7 @@
         </div>
         <div class="mb-3">
           <label for="symptoms" class="form-label">Симптомы</label>
-          <select class="form-select" id="symptoms" data-placeholder="Выберите что-нибудь" multiple >
+          <select class="form-select" id="symptoms" data-placeholder="Выберите что-нибудь" multiple required>
             {% for symptom in symptoms %}
               <option value="{{symptom}}">{{symptom}}</option>
             {% endfor %}

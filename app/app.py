@@ -49,12 +49,6 @@ def patients():
 
     return render_template('patients.html', columns=columns)
 
-@app.route('/patient_card', methods=['POST'])
-def patient_card():
-    patientID = 0 #как то получается id пациента, потом доделаю
-    #TODO Получить всю информацию о пациенте из БД, которая будет отображаться (возраст, и т.п., история запросов для этого пациента)
-    return #Как то потом отобразится 
-
 
 @app.route('/history')
 def history():
@@ -63,14 +57,14 @@ def history():
     return render_template('history.html', columns=columns)
 
 
-@app.route('/process_request', methods=['POST'])
-def process_request():
+@app.route('/get_request_info', methods=['POST'])
+def get_request_info():
     patientname = request.form['patientname']
     symptoms = request.form.getlist('symptoms')
     time.sleep(5)
     diagnosis = "Some Diagnosis"
-    doctor_comments = [{"doctor": "Dr. Smith", "time": "10:30 AM", "comment": "Comment 1"},
-                      {"doctor": "Dr. Johnson", "time": "11:15 AM", "comment": "Comment 2"}]
+    doctor_comments = [{"doctor": "Dr. Smith", "time": "10:30", "comment": "Comment 1"},
+                      {"doctor": "Dr. Johnson", "time": "11:15", "comment": "Comment 2"}]
     
     response_data = {
         "diagnosis": diagnosis,

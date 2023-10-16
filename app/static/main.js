@@ -32,7 +32,7 @@ $(document).ready(function() {
       }
 
       const numColumns = $(`#${tableId} tbody tr:first td`).length;
-      const $loadingRow = $('<tr style="opacity: 0;"><td colspan="' + numColumns + '" style="text-align: center;"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Загрузка...</span></div></td></tr>');
+      const $loadingRow = $(`<tr style="opacity: 0;"><td colspan="${numColumns}" style="text-align: center;"><div class="spinner-border spinner-border-sm" role="status"><span class="visually-hidden">Загрузка...</span></div></td></tr>`);
 
       if (!isLoading) {
           $loadingRow.animate({ opacity: 1 }, 1000);
@@ -52,7 +52,7 @@ $(document).ready(function() {
               data.forEach(row => {
                 const $row = $('<tr>');
                 row.forEach(value => {
-                  $row.append(`<td>${value}</td>`);
+                  $row.append(`<td>${escapeHtml(value)}</td>`);
                 });
                 $(`#${tableId} tbody`).append($row);
               });
@@ -116,10 +116,10 @@ $(document).ready(function() {
         method: 'GET',
         data: { patient_id: patientId },
         success: function(data) {
-          $('#name').html(data.name);
-          $('#birth-date').html(data.birthDate);
-          $('#age').html(data.age);
-          $('#snils').html(data.snils);
+          $('#name').text(data.name);
+          $('#birth-date').text(data.birthDate);
+          $('#age').text(data.age);
+          $('#snils').text(data.snils);
           createLazyLoadTable('patient-history-table', '/load_patient_history', patientId);
           $('#patientModal').modal('show');
         },
@@ -132,21 +132,47 @@ $(document).ready(function() {
 
   $('#requestForm').submit(function(e) {
     e.preventDefault();
-    console.info("a");
+
     const spinner = '<div class="spinner-container text-center"><div class="spinner-border spinner-border-lg" role="status"><span class="visually-hidden">Загрузка...</span></div></div>';
     $('#diagnosis-section').html(spinner);
 
     $.ajax({
-      url: '/process_request',
+      url: '/get_request_info',
       method: 'POST',
       data: $(this).serialize(),
       success: function(response) {
-        $('#diagnosis-section').html('<h5 class="text-center">Диагноз</h5><p>' + response.diagnosis + '</p>');
-        var commentsHtml = '<h5 class="text-center mt-4">Комментарии врачей</h5><ul>';
-        response.doctor_comments.forEach(function(comment) {
-          commentsHtml += '<li>' + comment.doctor + ' (' + comment.time + '): ' + comment.comment + '</li>';
-        });
-        commentsHtml += '</ul>';
+        $('#diagnosis-section').html('<h5 class="text-center">Диагноз</h5><p>' + escapeHtml(response.diagnosis) + '</p>');
+        var commentsHtml = '<div class="container-fluid my-2 py-2">\
+                              <div class="row d-flex justify-content-center">\
+                                <div class="col-md-12 col-lg-10 col-xl-11">\
+                                  <div class="card">\
+                                    <div class="card-body p-4">\
+                                      <h4 class="text-center mb-4 pb-2">Комментарии врачей</h4>\
+                                      <div class="row">\
+                                        <div class="col">';
+        for (let i = 0; i < response.doctor_comments.length; i++) {
+          const comment = response.doctor_comments[i];
+          commentsHtml += `<div class="d-flex flex-start p-4">\
+                              <img class="rounded-circle shadow-1-strong me-3"\
+                                src="/static/testPatientCardPhoto.jpg" alt="avatar" width="65"\
+                                height="65" />\
+                              <div class="flex-grow-1 flex-shrink-1">\
+                                <div>\
+                                  <div class="d-flex justify-content-between align-items-center">\
+                                    <p class="mb-1">\
+                                    ${escapeHtml(comment.doctor)} <span class="small">- ${escapeHtml(comment.time)}</span>\
+                                    </p>\
+                                    <a href="#!"><i class="fas fa-edit fa-xs"></i><span class="small"> edit</span></a>\
+                                  </div>\
+                                  <p class="small mb-0">${escapeHtml(comment.comment)}</p>\
+                                </div>\
+                              </div>\
+                            </div>`;
+          if (i < response.doctor_comments.length - 1) {
+            commentsHtml += '<hr class="my-0" />';
+          }
+        };
+        commentsHtml += '</div></div></div></div></div></div></div>';
         $('#diagnosis-section').append(commentsHtml);
       },
       error: function(xhr, status, error) {
@@ -157,34 +183,17 @@ $(document).ready(function() {
     $('#requestModal').modal('show');
   });
 
-  function createCommentCard(username, avatar, upvotes, upvoted) {
-    const commentCard = document.createElement('div');
-    commentCard.classList.add('card', 'mb-4');
-  
-    commentCard.innerHTML = `
-      <div class="card-body">
-        <p>Type your note, and hit enter to add it</p>
-  
-        <div class="d-flex justify-content-between">
-          <div class="d-flex flex-row align-items-center">
-            <img src="${avatar}" alt="avatar" width="25" height="25" />
-            <p class="small mb-0 ms-2">${username}</p>
-          </div>
-          <div class="d-flex flex-row align-items-center">
-            <p class="small text-muted mb-0">Upvote?</p>
-            <i class="far fa-thumbs-up mx-2 fa-xs text-black" style="margin-top: -0.16rem;"></i>
-            <p class="small text-muted mb-0">${upvotes}</p>
-          </div>
-        </div>
-      </div>
-    `;
-
-    return commentCard;
-  }
-
-  function addCommentToSection(username, comment, time) {
-    const commentSection = document.getElementById('comment-section');
-    const commentCard = createCommentCard(username, avatar, upvotes, upvoted);
-    commentSection.appendChild(commentCard);
-  }
+  function escapeHtml(unsafe)
+  {
+    if (typeof unsafe === 'string') {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    } else {
+      return unsafe;
+    }
+ }
 });
