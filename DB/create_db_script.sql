@@ -1,4 +1,4 @@
-CREATE TABLE if not exists `doctors` (
+CREATE TABLE IF NOT EXISTS `doctors` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `username` varchar(255) UNIQUE NOT NULL,
   `name` varchar(255),
@@ -8,7 +8,7 @@ CREATE TABLE if not exists `doctors` (
   `image_path_location` varchar(1024)
 );
 
-CREATE TABLE if not exists `patients` (
+CREATE TABLE IF NOT EXISTS `patients` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `born_date` timestamp,
@@ -16,30 +16,30 @@ CREATE TABLE if not exists `patients` (
   `image_path_location` varchar(1024)
 );
 
-CREATE TABLE if not exists `administrators` (
+CREATE TABLE IF NOT EXISTS `administrators` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `username` varchar(255) UNIQUE NOT NULL,
   `name` varchar(255),
   `password_hash` blob NOT NULL
 );
 
-CREATE TABLE if not exists `symptoms` (
+CREATE TABLE IF NOT EXISTS `symptoms` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) UNIQUE NOT NULL
 );
 
-CREATE TABLE if not exists `diseases` (
+CREATE TABLE IF NOT EXISTS `diseases` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) UNIQUE NOT NULL
 );
 
-CREATE TABLE if not exists `ml_model` (
+CREATE TABLE IF NOT EXISTS `ml_model` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `hash` blob,
   `version` varchar(255)
 );
 
-CREATE TABLE if not exists `requests` (
+CREATE TABLE IF NOT EXISTS `requests` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `doctor_id` integer NOT NULL,
   `patient_id` integer NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE if not exists `requests` (
   FOREIGN KEY (`ml_model_id`) REFERENCES `ml_model` (`id`)
 );
 
-CREATE TABLE if not exists `request_symptoms` (
+CREATE TABLE IF NOT EXISTS `request_symptoms` (
   `symptom_id` integer NOT NULL,
   `request_id` integer NOT NULL,
   UNIQUE (`symptom_id` ,`request_id`),
@@ -61,7 +61,7 @@ CREATE TABLE if not exists `request_symptoms` (
   FOREIGN KEY (`request_id`) REFERENCES `requests` (`id`)
 );
 
-CREATE TABLE if not exists `comments` (
+CREATE TABLE IF NOT EXISTS `comments` (
   `doctor_id` integer NOT NULL,
   `request_id` integer NOT NULL,
   `comment` varchar(255) NOT NULL,

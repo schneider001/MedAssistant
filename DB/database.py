@@ -7,14 +7,15 @@ class Database:
     def __init__(self):
 
         with open('../configs/db_settings.json', 'r') as options_file:
+        with open('../configs/db_settings.json', 'r') as options_file:
             config = loads(options_file.read())
 
         self.conn = mysql.connector.connect(**config)
         self.cursor = self.conn.cursor()
-        self.execute_sql_script("../DB/create_db_script.sql") #TODO добавить проверку перед выполнением, созданы ли все таблицы и связи
-        self.fill_from_dataset("../datasets/Symptom-severity.csv", "symptoms")#TODO correct path when model is committed
+        self.execute_sql_script("./create_db_script.sql") #TODO добавить проверку перед выполнением, созданы ли все таблицы и связи
+        self.fill_from_dataset("../datasets/Symptom-severity.csv", "symptoms")
         self.fill_from_dataset("../datasets/symptom_Description.csv", "diseases")
-        
+    # Establish MySQL database
     def execute_sql_script(self, script_file):
         try:
             with open(script_file, 'r') as file:
