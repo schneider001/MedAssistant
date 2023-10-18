@@ -1,22 +1,20 @@
 import mysql.connector
-from csv import reader
+import csv
 from json import loads
 from hashlib import sha256
 
 class Database:
-    # Establish a connection to the MySQL database
     def __init__(self):
 
-        with open('./db_settings.json', 'r') as options_file:
+        with open('../configs/db_settings.json', 'r') as options_file:
             config = loads(options_file.read())
 
         self.conn = mysql.connector.connect(**config)
         self.cursor = self.conn.cursor()
-        self.execute_sql_script("./create_db_script.sql") #TODO добавить проверку перед выполнением, созданы ли все таблицы и связи
-        self.fill_from_dataset("./Symptom-severity.csv", "symptoms")#TODO correct path when model is committed
-        self.fill_from_dataset("./symptom_Description.csv", "diseases")
+        self.execute_sql_script("../DB/create_db_script.sql") #TODO добавить проверку перед выполнением, созданы ли все таблицы и связи
+        self.fill_from_dataset("../datasets/Symptom-severity.csv", "symptoms")#TODO correct path when model is committed
+        self.fill_from_dataset("../datasets/symptom_Description.csv", "diseases")
         
-    # Establish MySQL database
     def execute_sql_script(self, script_file):
         try:
             with open(script_file, 'r') as file:
@@ -29,28 +27,29 @@ class Database:
         except Exception as e:
             print(f"Error executing SQL script from file: {str(e)}") #TODO логировать ошибки, а не выводить на экран
             
-    #Add symptoms and diseases from dataset to DB, if already exists ignore
-    def fill_from_dataset (self, filepath, tablename):
+    def fill_from_dataset(self, filepath, tablename):
         data_set = set()
         with open(filepath, 'r') as csv_file:
-            reader = reader(csv_file)
-            header = next(reader)
+            reader = csv.reader(csv_file)
             for row in reader:
                 data_set.add(row[0])
         for entry in data_set:
             query = f"INSERT IGNORE INTO {tablename} (name) VALUES (%s)"
             values = (entry,)
-            self.cursor.execute(query, values)
+            try:
+                self.cursor.execute(query, values)
+            except Exception as e:
+                print(f"Failed to insert values from dataset {tablename} into DB: {str(e)}")
         self.conn.commit()
 
     def select_doctor_by_id(self, id):
-        query = "SELECT id, username, name, password_hash, last_login, is_blocked FROM doctors WHERE id = %s LIMIT 1" #why limit when it's a unique field
+        query = "SELECT id, username, name, password_hash, last_login, is_blocked FROM doctors WHERE id = %s"
         values = (id,)
         self.cursor.execute(query, values)
-        return self.cursor.fetchone() #it limits to 1 here anyways
+        return self.cursor.fetchone()
         
     def select_doctor_by_username(self, username):
-        query = "SELECT id, username, name, password_hash, last_login, is_blocked FROM doctors WHERE username = %s LIMIT 1" # same abt limit
+        query = "SELECT id, username, name, password_hash, last_login, is_blocked FROM doctors WHERE username = %s"
         values = (username,)
         self.cursor.execute(query, values)
         return self.cursor.fetchone() 
