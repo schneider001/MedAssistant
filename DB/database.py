@@ -2,7 +2,7 @@ import mysql.connector
 import csv
 from json import loads
 from hashlib import sha256
-from retry import retry
+import retry
 
 class Database:
     def __init__(self):
