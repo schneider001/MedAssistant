@@ -6,13 +6,14 @@ sys.path.append("..")
 from init import db, login_manager
 
 class Doctor(UserMixin):
-    def __init__(self, id, username, name, password_hash, last_login, is_blocked):
+    def __init__(self, id, username, name, password_hash, last_login, is_blocked, image_path_location):
         self.id = id
         self.username = username
         self.name = name
         self.password_hash = password_hash
         self.last_login = last_login
         self.is_blocked = is_blocked
+        self.image_path_location = image_path_location
 
     @staticmethod
     def find_by_id(id):

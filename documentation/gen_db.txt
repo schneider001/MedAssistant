@@ -3,12 +3,13 @@
 
 
 Table doctors {
-  id integer [primary key]
-  username varchar
+  id integer [primary key] 
+  username varchar unique
   name varchar
   password_hash blob
   last_login timestamp
   is_blocked IsBlocked
+  image_path_location varchar(1024)
 }
 
 enum IsBlocked {
@@ -21,6 +22,7 @@ Table patients {
   name varchar
   born_date timestamp
   Sex Sex
+  image_path_location varchar(1024)
 }
 
 enum Sex {
@@ -68,7 +70,7 @@ Table ml_model {
 
 Table administrators {
   id integer [primary key]
-  username varchar
+  username varchar unique
   name varchar
   password_hash blob
 }
