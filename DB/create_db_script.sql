@@ -1,12 +1,8 @@
 CREATE TABLE `doctors` (
   `id` serial PRIMARY KEY,
   `username` varchar(255),
-  `name` varchar(255),
   `password_hash` blob,
-  `last_login` timestamp,
-  `is_blocked` ENUM ('blocked', 'not_blocked')
   `name` varchar(255),
-  `password_hash` blob,
   `last_login` timestamp,
   `is_blocked` ENUM ('blocked', 'not_blocked')
 );
@@ -14,8 +10,6 @@ CREATE TABLE `doctors` (
 CREATE TABLE `patients` (
   `id` integer PRIMARY KEY,
   `name` varchar(255),
-  `born_date` timestamp,
-  `Sex` ENUM ('male', 'female')
   `born_date` timestamp,
   `Sex` ENUM ('male', 'female')
 );
@@ -35,7 +29,6 @@ CREATE TABLE `requests` (
   `doctor_id` integer,
   `patient_id` integer,
   `predicted_disease_id` integer,
-  `predicted_disease_id` integer,
   `status` ENUM ('in_progress', 'ready', 'error'),
   `date` timestamp,
   `ml_model_id` integer
@@ -48,7 +41,6 @@ CREATE TABLE `request_symptoms` (
 
 CREATE TABLE `ml_model` (
   `id` integer PRIMARY KEY,
-  `hash` blob,
   `hash` blob,
   `version` varchar(255)
 );
