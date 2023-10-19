@@ -1,6 +1,5 @@
-from flask import Flask, request, redirect, url_for, render_template, jsonify
-from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
-from flask_bcrypt import Bcrypt
+from flask import request, redirect, url_for, render_template, jsonify
+from flask_login import  login_required, login_user, logout_user
 import time
 
 from init import *
