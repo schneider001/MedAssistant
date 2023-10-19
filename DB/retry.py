@@ -1,10 +1,6 @@
 from functools import wraps
 import time
-import logging
-import logging.config
-
-logging.config.fileConfig('../configs/log.conf')
-logger = logging.getLogger('MedAssistLog')
+from DB.log_init import *
 
 def retry(exceptions=Exception, total_tries=3, delay=0.5, logger=logger):
     def retry_decorator(f):
@@ -14,7 +10,6 @@ def retry(exceptions=Exception, total_tries=3, delay=0.5, logger=logger):
             print_args = args if args else 'no args'
             while _tries > 0:
                 try:
-                    logger.info(f'Function: {f.__name__} called with {print_args}, {total_tries + 1 - _tries} try out of {total_tries}:')
                     return f(*args, **kwargs)
                 except exceptions as e:
                     _tries -= 1
