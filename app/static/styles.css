@@ -99,7 +99,7 @@ body {
   background-color: white;
 }
 
-#patients-table tbody tr:hover {
+#patients-table, #request-history-table tbody tr:hover {
   cursor: pointer;
 }
 

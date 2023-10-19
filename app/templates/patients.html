@@ -39,50 +39,75 @@
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
       </div>
       <div class="modal-body">
-        <div class="row">
-          <div class="col-md-8">
-            <div class="info-item">
-              <span class="info-label">Имя:</span>
-              <span class="info-value" id="name"></span>
+        <div id="load-section">
+          <div class="spinner-container text-center" id="spinner">
+            <div class="spinner-border spinner-border-lg" role="status">
+              <span class="visually-hidden">Загрузка...</span>
             </div>
-            <div class="info-item">
-              <span class="info-label">Дата рождения:</span>
-              <span class="info-value" id="birth-date"></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">Возраст:</span>
-              <span class="info-value" id="age"></span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">СНИЛС:</span>
-              <span class="info-value" id="snils"></span>
-            </div>
-          </div>
-          <div class="col-md-4 text-end">
-            <img src="/static/testPatientCardPhoto.jpg" alt="Фотография пациента" class="patient-photo">
           </div>
         </div>
-        <h2 class="text-center mt-4">История запросов</h2>
-        <div class="table-responsive">
-          <table class="table table-striped table-hover table-scrollable">
-            <thead>
-              <tr>
-                <th scope="col">Id</th>
-                <th scope="col">Doctor Name</th>
-                <th scope="col">Date</th>
-                <th scope="col">Predicted Result</th>
-                <th scope="col">Doctor Verdict</th>
-                <!-- TODO сделать везде либо заданные вручную столбцы, либо придумать, как не отображать id и задавать каждому столбцу свою ширину-->
-              </tr>
-            </thead>
-          </table>
-          <div class="tbodycontainer scrollable" id="patient-history-table">
+        <div id="data-section">
+          <div class="row">
+            <div class="col-md-8">
+              <div class="info-item">
+                <span class="info-label">Имя:</span>
+                <span class="info-value" id="name"></span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Дата рождения:</span>
+                <span class="info-value" id="birth-date"></span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">Возраст:</span>
+                <span class="info-value" id="age"></span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">СНИЛС:</span>
+                <span class="info-value" id="snils"></span>
+              </div>
+            </div>
+            <div class="col-md-4 text-end">
+              <img src="/static/testPatientCardPhoto.jpg" alt="Фотография пациента" class="patient-photo">
+            </div>
+          </div>
+          <h2 class="text-center mt-4">История запросов</h2>
+          <div class="table-responsive">
             <table class="table table-striped table-hover table-scrollable">
-              <tbody>
-              </tbody>
+              <thead>
+                <tr>
+                  <th scope="col">Id</th>
+                  <th scope="col">Doctor Name</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Predicted Result</th>
+                  <th scope="col">Doctor Verdict</th>
+                  <!-- TODO сделать везде либо заданные вручную столбцы, либо придумать, как не отображать id и задавать каждому столбцу свою ширину-->
+                </tr>
+              </thead>
             </table>
+            <div class="tbodycontainer scrollable" id="request-history-table">
+              <table class="table table-striped table-hover table-scrollable">
+                <tbody>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="requestModalLabel">Запрос</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <div id="diagnosis-section"></div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>

@@ -4,31 +4,47 @@
 {% block content %}
 
 <div id="viewport">
-    <!-- Content -->
-    <div class="vh-100 d-flex justify-content-center align-items-center align-self-center">
-      <div id="centered-box">
-        <form>
-          <h2 class="text-center">История запросов</h2>
-          <input type="search" class="form-control mb-3" id="search-input" placeholder="Поиск...">
-          <div class="table-responsive">
+  <!-- Content -->
+  <div class="vh-100 d-flex justify-content-center align-items-center align-self-center">
+    <div id="centered-box">
+      <form>
+        <h2 class="text-center">История запросов</h2>
+        <input type="search" class="form-control mb-3" id="search-input" placeholder="Поиск...">
+        <div class="table-responsive">
+          <table class="table table-striped table-hover table-scrollable">
+            <thead>
+              <tr>
+                {% for column in columns %}
+                  <th scope="col">{{ column }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+          </table>
+          <div class="tbodycontainer scrollable" id="request-history-table">
             <table class="table table-striped table-hover table-scrollable">
-              <thead>
-                <tr>
-                  {% for column in columns %}
-                    <th scope="col">{{ column }}</th>
-                  {% endfor %}
-                </tr>
-              </thead>
+              <tbody>
+              </tbody>
             </table>
-            <div class="tbodycontainer scrollable" id="request-history-table">
-              <table class="table table-striped table-hover table-scrollable">
-                <tbody>
-                </tbody>
-              </table>
-            </div>
           </div>
-        </form>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="requestModalLabel">Запрос</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+      </div>
+      <div class="modal-body">
+        <div id="diagnosis-section"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
       </div>
     </div>
   </div>
+</div>
 {% endblock %}
