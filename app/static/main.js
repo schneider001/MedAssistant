@@ -84,6 +84,7 @@ $(document).ready(function() {
       loadMoreData();
     }
 
+    $(`#${tableId} tbody`).empty();
     loadMoreData();
 
     $(`#${tableId}`).scroll(function() {
@@ -121,10 +122,10 @@ $(document).ready(function() {
       return;
     }
 
-    const spinner = document.getElementById('spinner');
-    const dataSection = document.getElementById('data-section');
+    const loadSection = document.getElementById('patient-load-section');
+    const dataSection = document.getElementById('patient-data-section');
 
-    spinner.style.display = 'block';
+    loadSection.style.display = 'block';
     dataSection.style.display = 'none';
 
     $.ajax({
@@ -132,7 +133,7 @@ $(document).ready(function() {
         method: 'GET',
         data: { patient_id: patientId },
         success: function(data) {
-          spinner.style.display = 'none';
+          loadSection.style.display = 'none';
           dataSection.style.display = 'block';
           $('#name').text(data.name);
           $('#birth-date').text(data.birthDate);
@@ -155,18 +156,19 @@ $(document).ready(function() {
       return;
     }
 
-    const spinner = '<div class="spinner-container text-center">\
-                      <div class="spinner-border spinner-border-lg" role="status">\
-                        <span class="visually-hidden">Загрузка...</span>\
-                      </div>\
-                    </div>';
-    $('#diagnosis-section').html(spinner);
+    const loadSection = document.getElementById('request-load-section');
+    const dataSection = document.getElementById('request-data-section');
+
+    loadSection.style.display = 'block';
+    dataSection.style.display = 'none';
 
     $.ajax({
         url: '/get_request_info_by_id',
         method: 'GET',
         data: { request_id: requestId },
         success: function(response) {
+          loadSection.style.display = 'none';
+          dataSection.style.display = 'block';
           loadRequestInfoModal(response)
         },
         error: function(xhr, status, error) {
@@ -196,7 +198,7 @@ $(document).ready(function() {
                               </div>\
                             </div>\
                           </div>`;
-    $('#diagnosis-section').html(requestInfoHtml);
+    $('#request-data-section').html(requestInfoHtml);
 
     var commentsHtml = '<div class="container-fluid my-2 py-2">\
                           <div class="row d-flex justify-content-center">\
@@ -210,7 +212,7 @@ $(document).ready(function() {
       commentsHtml += generateCommentHtml(comment);
     });
     commentsHtml += '</div></div></div></div></div></div></div>';
-    $('#diagnosis-section').append(commentsHtml);
+    $('#request-data-section').append(commentsHtml);
 
     const hasEditableComment = response.doctor_comments.some(comment => comment.editable === true);
     if (!hasEditableComment) {
@@ -221,18 +223,19 @@ $(document).ready(function() {
   $('#requestForm').submit(function(e) {
     e.preventDefault();
 
-    const spinner = '<div class="spinner-container text-center">\
-                      <div class="spinner-border spinner-border-lg" role="status">\
-                        <span class="visually-hidden">Загрузка...</span>\
-                      </div>\
-                    </div>';
-    $('#diagnosis-section').html(spinner);
+    const loadSection = document.getElementById('request-load-section');
+    const dataSection = document.getElementById('request-data-section');
+
+    loadSection.style.display = 'block';
+    dataSection.style.display = 'none';
 
     $.ajax({
       url: '/get_request_info',
       method: 'POST',
       data: $(this).serialize(),
       success: function(response) {
+        loadSection.style.display = 'none';
+        dataSection.style.display = 'block';
         loadRequestInfoModal(response);
       },
       error: function(xhr, status, error) {
@@ -427,3 +430,29 @@ function escapeHtml(unsafe)
     return unsafe;
   }
 }
+
+
+$(document).ready(function() {
+  const modalStack = [];
+  let lastModal;
+  
+  $('#patientModal, #requestModal').on('show.bs.modal', function () {
+    const modalId = $(this).data('modal-id');
+    if (lastModal !== undefined && modalId !== lastModal.data('modal-id')) {
+      lastModal.modal('hide');
+      modalStack.push(lastModal);
+    }
+
+    lastModal = $(this);
+  })
+
+  $('#patientModal, #requestModal').on('hidden.bs.modal', function () {
+    const modalId = $(this).data('modal-id');
+    if (modalId === lastModal.data('modal-id')) {
+      lastModal = modalStack.pop();
+      if (lastModal) {
+        lastModal.modal('show');
+      }
+    }
+  })
+})
