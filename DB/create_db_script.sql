@@ -11,6 +11,7 @@ CREATE TABLE if not exists `doctors` (
 CREATE TABLE if not exists `patients` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
+  `insurance certificate` varchar(255) NOT NULL,
   `born_date` timestamp,
   `Sex` ENUM ('male', 'female'),
   `image_path_location` varchar(1024)
