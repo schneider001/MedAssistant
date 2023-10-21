@@ -4,7 +4,7 @@ CREATE TABLE if not exists `doctors` (
   `name` varchar(255),
   `password_hash` blob NOT NULL,
   `last_login` timestamp,
-  `is_blocked` ENUM ('blocked', 'not_blocked') NOT NULL DEFAULT 'not_blocked',
+  --`is_blocked` ENUM ('blocked', 'not_blocked') NOT NULL DEFAULT 'not_blocked',
   `image_path_location` varchar(1024)
 );
 

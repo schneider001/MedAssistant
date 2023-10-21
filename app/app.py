@@ -49,11 +49,6 @@ def main():
     return render_template('index.html', patients=patients, symptoms=symptoms)
 
 
-@app.route('/logout')
-def logout():
-
-
-    return redirect(url_for("login"))
 
 
 @app.route('/patients')

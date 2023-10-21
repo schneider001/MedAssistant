@@ -43,14 +43,14 @@ class Database:
 
     def select_doctor_by_id(self, id):
         query = "SELECT id, username, name, password_hash, last_login, \
-            is_blocked, image_path_location FROM doctors WHERE id = %s"
+            image_path_location FROM doctors WHERE id = %s"
         values = (id,)
         self.cursor.execute(query, values)
         return self.cursor.fetchone()
         
     def select_doctor_by_username(self, username):
         query = "SELECT id, username, name, password_hash, last_login, \
-            is_blocked, image_path_location FROM doctors WHERE username = %s"
+            image_path_location FROM doctors WHERE username = %s"
         values = (username,)
         self.cursor.execute(query, values)
         return self.cursor.fetchone() 
