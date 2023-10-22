@@ -27,6 +27,29 @@ class Doctor(UserMixin):
         if user_data:
             return Doctor(*user_data)
 
-@login_manager.user_loader
-def load_user(user_id):
-    return Doctor.find_by_id(user_id)
+
+
+class Patient:
+    def __init__(self, id, name, insurance_certificate, born_date, sex, image_path_location):
+        self.id = id
+        self.name = name
+        self.insurance_certificate = insurance_certificate
+        self.born_date = born_date
+        self.sex = sex
+        self.image_path_location = image_path_location
+        
+    @staticmethod
+    def get_all_id_name_insurance_certificate():
+        patients_data = db.select_all_patients_id_name_insurance_certificate()
+        return patients_data
+        
+class Symptom:
+    def __init__(self, id, name):
+        self.id = id
+        self.name = name
+    
+    @staticmethod
+    def get_all_symptoms():
+        symptoms = db.select_all_symptoms()
+        return symptoms
+        

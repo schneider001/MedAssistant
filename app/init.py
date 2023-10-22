@@ -19,6 +19,15 @@ def check_password_hash(hashed_password, password) :
     return bcrypt.check_password_hash(hashed_password, password)
 
 db = Database()
-db.insert_doctor_credentials("Petrovich", gen_hashed_password("simple_password")) #для теста login_post
 
 login_manager = LoginManager(app)
+
+
+
+#for testing
+db.insert_doctor_credentials("Petrovich", gen_hashed_password("simple_password")) #для теста login_post
+db.insert_patient_("Иван Петрович Рыбаков", "123-43-234 23")
+db.insert_patient_("Гавриил Дмитрич Сплюев", "457-56-234 76")
+db.insert_patient_("Биба Бобович Кончин", "654-43-928 25")
+
+

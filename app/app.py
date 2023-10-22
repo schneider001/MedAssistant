@@ -5,6 +5,10 @@ import time
 from init import *
 from db_model import *
 
+@login_manager.user_loader
+def load_user(user_id):
+    return Doctor.find_by_id(user_id)
+
 
 @app.route("/")
 def login():
@@ -35,23 +39,19 @@ def logout():
 @app.route('/main')
 @login_required
 def main():
-    patients = [
-        "Иванов Иван Иванович",
-        "Петров Петр Петрович",
-        "Сидоров Сидор Сидорович",
-        "Смирнов Алексей Андреевич",
-        "Козлов Владимир Дмитриевич",
-        "Морозов Олег Игоревич"
-    ] #TODO Получить ФИО из БД
+    patients_id_name_insurance_certificate = Patient.get_all_id_name_insurance_certificate()
+    #Сейчас передается лист кортежей с id, именем и СНИЛС'ом. 
+    patients = patients_id_name_insurance_certificate
+    
+    
+    #Сейчас передается лист кортежей с id и названием симптома
+    symptoms = Symptom.get_all_symptoms()
 
-    symptoms = ['Высокая температура', 'Кашель', 'Насморк'] #TODO Получить из БД
-
-    return render_template('index.html', patients=patients, symptoms=symptoms)
-
-
+    return render_template('index.html', patients=patients, symptoms=symptoms)#TODO Добавить во фронте колонку СНИЛС и нивидимую колонку id
 
 
 @app.route('/patients')
+@login_required
 def patients():
     columns = ['id', 'name']
 
@@ -59,6 +59,7 @@ def patients():
 
 
 @app.route('/history')
+@login_required
 def history():
     columns = ['id', 'name', 'date', 'result']
     #TODO получить историю всех запросов для текущего авторизованного врача

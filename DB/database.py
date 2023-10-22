@@ -41,6 +41,10 @@ class Database:
                 print(f"Failed to insert values from dataset {tablename} into DB: {str(e)}")
         self.conn.commit()
 
+    #------------------------------------------
+    #Doctors's queries
+    #------------------------------------------
+
     def select_doctor_by_id(self, id):
         query = "SELECT id, username, name, password_hash, last_login, \
             image_path_location FROM doctors WHERE id = %s"
@@ -55,6 +59,7 @@ class Database:
         self.cursor.execute(query, values)
         return self.cursor.fetchone() 
         
+    #for testing
     def insert_doctor_credentials(self, username, password_hash): #TODO использовать хэш пароля
         try:
             query = "INSERT INTO doctors (username, password_hash) VALUES (%s, %s)"
@@ -64,6 +69,35 @@ class Database:
         except Exception as e:
             self.conn.rollback() #db rolls back by itself generally
             print(f"Failed to insert doctor's credentials: {str(e)}")
+            
+    #------------------------------------------
+    #Patient's queries
+    #------------------------------------------
+    
+    #for testing
+    def insert_patient_(self, name, insurance_certificate):
+        try:
+            query = "INSERT INTO patients (name, insurance_certificate) VALUES (%s, %s)"
+            values = (name, insurance_certificate)
+            self.cursor.execute(query, values)
+            self.conn.commit()
+        except Exception as e:
+            self.conn.rollback() #db rolls back by itself generally
+            print(f"Failed to insert_patient_: {str(e)}")
+    
+    def select_all_patients_id_name_insurance_certificate(self):
+        query = "SELECT id, name, insurance_certificate FROM patients"
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
+    
+    #------------------------------------------
+    #Symptoms's queries
+    #------------------------------------------
+    
+    def select_all_symptoms(self):
+        query = "SELECT id, name FROM symptoms"
+        self.cursor.execute(query)
+        return self.cursor.fetchall()
 
     def close(self):
         self.cursor.close()
