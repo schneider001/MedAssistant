@@ -13,6 +13,7 @@
           <label for="patientname" class="form-label">Пациент</label>
           <select id="patientname" name="patientname" class="form-select" data-placeholder="Выберите пациента" required>
             <option></option>
+            <option value="add" class="add-user-option text-center" disabled>Добавить нового пациента </option>
             {% for patient in patients %}
               <option value="{{patient}}">{{patient}}</option>
             {% endfor %}
@@ -33,20 +34,7 @@
     </div>
   </div>
 </div>
-<div class="modal fade" id="requestModal" tabindex="-1" aria-labelledby="requestModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="requestModalLabel">Запрос</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-      </div>
-      <div class="modal-body">
-        <div id="diagnosis-section"></div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
-      </div>
-    </div>
-  </div>
-</div>
+{% include "requestModal.html" %}
+{% include "createPatientModal.html" %}
+
 {% endblock %}

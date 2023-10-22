@@ -12,6 +12,14 @@ $(document).ready(function() {
   $('#patientname').select2({
     theme: 'bootstrap-5',
     closeOnSelect: true,
+    templateResult: function(state) {
+      if (state.id === "add") {
+        return $(`<div class="add-patient-button" onClick="openCreatePatientModal()">${state.text} <i class="zmdi zmdi-account-add"></i></div>`);
+      }
+      
+      return state.text;
+    },
+    escapeMarkup: function(m) { return m; }
   });
 })
 
@@ -84,6 +92,7 @@ $(document).ready(function() {
       loadMoreData();
     }
 
+    $(`#${tableId} tbody`).empty();
     loadMoreData();
 
     $(`#${tableId}`).scroll(function() {
@@ -121,10 +130,10 @@ $(document).ready(function() {
       return;
     }
 
-    const spinner = document.getElementById('spinner');
-    const dataSection = document.getElementById('data-section');
+    const loadSection = document.getElementById('patient-load-section');
+    const dataSection = document.getElementById('patient-data-section');
 
-    spinner.style.display = 'block';
+    loadSection.style.display = 'block';
     dataSection.style.display = 'none';
 
     $.ajax({
@@ -132,7 +141,7 @@ $(document).ready(function() {
         method: 'GET',
         data: { patient_id: patientId },
         success: function(data) {
-          spinner.style.display = 'none';
+          loadSection.style.display = 'none';
           dataSection.style.display = 'block';
           $('#name').text(data.name);
           $('#birth-date').text(data.birthDate);
@@ -155,18 +164,19 @@ $(document).ready(function() {
       return;
     }
 
-    const spinner = '<div class="spinner-container text-center">\
-                      <div class="spinner-border spinner-border-lg" role="status">\
-                        <span class="visually-hidden">Загрузка...</span>\
-                      </div>\
-                    </div>';
-    $('#diagnosis-section').html(spinner);
+    const loadSection = document.getElementById('request-load-section');
+    const dataSection = document.getElementById('request-data-section');
+
+    loadSection.style.display = 'block';
+    dataSection.style.display = 'none';
 
     $.ajax({
         url: '/get_request_info_by_id',
         method: 'GET',
         data: { request_id: requestId },
         success: function(response) {
+          loadSection.style.display = 'none';
+          dataSection.style.display = 'block';
           loadRequestInfoModal(response)
         },
         error: function(xhr, status, error) {
@@ -196,7 +206,7 @@ $(document).ready(function() {
                               </div>\
                             </div>\
                           </div>`;
-    $('#diagnosis-section').html(requestInfoHtml);
+    $('#request-data-section').html(requestInfoHtml);
 
     var commentsHtml = '<div class="container-fluid my-2 py-2">\
                           <div class="row d-flex justify-content-center">\
@@ -210,7 +220,7 @@ $(document).ready(function() {
       commentsHtml += generateCommentHtml(comment);
     });
     commentsHtml += '</div></div></div></div></div></div></div>';
-    $('#diagnosis-section').append(commentsHtml);
+    $('#request-data-section').append(commentsHtml);
 
     const hasEditableComment = response.doctor_comments.some(comment => comment.editable === true);
     if (!hasEditableComment) {
@@ -221,18 +231,19 @@ $(document).ready(function() {
   $('#requestForm').submit(function(e) {
     e.preventDefault();
 
-    const spinner = '<div class="spinner-container text-center">\
-                      <div class="spinner-border spinner-border-lg" role="status">\
-                        <span class="visually-hidden">Загрузка...</span>\
-                      </div>\
-                    </div>';
-    $('#diagnosis-section').html(spinner);
+    const loadSection = document.getElementById('request-load-section');
+    const dataSection = document.getElementById('request-data-section');
+
+    loadSection.style.display = 'block';
+    dataSection.style.display = 'none';
 
     $.ajax({
       url: '/get_request_info',
       method: 'POST',
       data: $(this).serialize(),
       success: function(response) {
+        loadSection.style.display = 'none';
+        dataSection.style.display = 'block';
         loadRequestInfoModal(response);
       },
       error: function(xhr, status, error) {
@@ -287,7 +298,7 @@ function editComment(id, doctor, comment, time) {
                               <div class="d-flex justify-content-between align-items-center mt-3">\
                                 <p class="small" style="color: #aaa;">\
                                 <button href="#!" class="btn btn-theme text-end mx-1" onclick="saveComment(${id})">Сохранить</button>\
-                                <button href="#!" class="btn test-end mx-1" onclick="cancelEditComment(${id}, \'${doctor}\', \'${comment}\', \'${time}\')">Отменить</button>\
+                                <button href="#!" class="btn text-end mx-1" onclick="cancelEditComment(${id}, \'${doctor}\', \'${comment}\', \'${time}\')">Отменить</button>\
                               </div>`;
 }
 
@@ -426,4 +437,141 @@ function escapeHtml(unsafe)
   } else {
     return unsafe;
   }
+}
+
+
+$(document).ready(function() {
+  const modalStack = [];
+  let lastModal;
+  
+  $('#patientModal, #requestModal').on('show.bs.modal', function () {
+    const modalId = $(this).data('modal-id');
+    if (lastModal !== undefined && modalId !== lastModal.data('modal-id')) {
+      lastModal.modal('hide');
+      modalStack.push(lastModal);
+    }
+
+    lastModal = $(this);
+  })
+
+  $('#patientModal, #requestModal').on('hidden.bs.modal', function () {
+    const modalId = $(this).data('modal-id');
+    if (modalId === lastModal.data('modal-id')) {
+      lastModal = modalStack.pop();
+      if (lastModal) {
+        lastModal.modal('show');
+      }
+    }
+  })
+})
+
+function openCreatePatientModal() {
+  $('#patientname').select2('close');
+  $('#createPatientModal').modal('show');
+
+  $('#birthdate').datepicker({
+    dateFormat: 'dd-mm-yy'
+  });
+
+  var snilsInput = document.querySelector('.snils-input');
+  var snilsParts = document.querySelectorAll('.snils-part');
+
+  var snils1 = document.getElementById('snils1');
+  var snils2 = document.getElementById('snils2');
+  var snils3 = document.getElementById('snils3');
+  var snils4 = document.getElementById('snils4');
+
+  snilsInput.addEventListener('click', function() {
+    for (var i = snilsParts.length - 1; i >= 0; i--) {
+      if (snilsParts[i].value.length > 0 || i === 0) {
+        if (snilsParts[i].value.length < 3) {
+          snilsParts[i].focus();
+        } else {
+          snilsParts[i + 1].focus();
+        }
+        break;
+      }
+    }
+  });
+
+  snilsParts.forEach(function(input, index) {
+    input.addEventListener('input', function() {
+      var value = input.value;
+
+      if (value.length === input.maxLength && index < snilsParts.length - 1) {
+        snilsParts[index + 1].focus();
+      }
+    });
+
+    input.addEventListener('keydown', function(event) {
+      if (event.key === 'Backspace' && input.value.length === 0 && index > 0) {
+        snilsParts[index - 1].focus();
+      }
+    });
+
+    input.addEventListener('paste', function(event) {
+      setTimeout(function() {
+        var value = input.value;
+  
+        if (value.length === input.maxLength && index < snilsParts.length - 1) {
+          snilsParts[index + 1].focus();
+        }
+      }, 0);
+    });
+  });
+
+  $("#create-patient-form").submit(function (event) {
+    event.preventDefault();
+    
+    var fullname = $("#fullname").val();
+    var birthdate = $("#birthdate").val();
+
+    var snils = `${snils1.value}-${snils2.value}-${snils3.value} ${snils4.value}`;
+
+    $.ajax({
+      url: '/create_patient',
+      method: 'POST',
+      data: { fullname: fullname, birthdate: birthdate, snils: snils },
+      success: function(response) {
+        var $select = $('#patientname');
+
+        var $newOption = $('<option>', {
+          value: response.fullname,
+          text: response.fullname
+        });
+        
+        $select.find('option[value="add"]').after($newOption);
+        $select.trigger('change');
+
+        $('#createPatientModal').modal('hide');
+      },
+      error: function(xhr, status, error) {
+        console.error('Ошибка при создании нового пациента: ' + error);
+      }
+    });
+  });
+
+  $('#createPatientModal').on('hidden.bs.modal', function () {
+    var form = document.getElementById('create-patient-form');
+  
+    if (form) {
+      form.reset();
+    }
+  });
+
+  snils1.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '');
+  });
+  
+  snils2.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '');
+  });
+  
+  snils3.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '');
+  });
+  
+  snils4.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '');
+  });
 }

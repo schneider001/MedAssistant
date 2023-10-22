@@ -1,0 +1,38 @@
+<div class="modal fade" id="createPatientModal" tabindex="-1" data-modal-id="createpatient" aria-labelledby="createPatientModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <form id="create-patient-form">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="createPatientModalLabel">Запрос</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="fullname" class="form-label">ФИО пациента</label>
+                        <input type="text" name="fullname" class="form-control" id="fullname" name="fullname" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="birthdate" class="form-label">Дата рождения</label>
+                        <input type="text" name="birthdate" class="form-control" id="birthdate" name="birthdate" required>
+                    </div>
+                    <div class="mb-5">
+                        <label for="snils" class="form-label">Снилс</label>
+                        <div class="snils-input form-control">
+                            <input type="text" id="snils1" class="snils-part" maxlength="3" pattern="\d{3}" placeholder="123" required>
+                            <span class="snils-separator">-</span>
+                            <input type="text" id="snils2" class="snils-part" maxlength="3" pattern="\d{3}" placeholder="456" required>
+                            <span class="snils-separator">-</span>
+                            <input type="text" id="snils3" class="snils-part" maxlength="3" pattern="\d{3}" placeholder="789" required>
+                            <span class="snils-separator"> </span>
+                            <input type="text" id="snils4" class="snils-part" maxlength="2" pattern="\d{2}" placeholder="10" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-theme">Создать</button>
+                    <button type="button" class="btn" data-bs-dismiss="modal">Отменить</button>
+                </div>
+            </form> 
+        </div>
+    </div>
+</div>
