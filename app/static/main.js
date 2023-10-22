@@ -12,6 +12,14 @@ $(document).ready(function() {
   $('#patientname').select2({
     theme: 'bootstrap-5',
     closeOnSelect: true,
+    templateResult: function(state) {
+      if (state.id === "add") {
+        return $(`<div class="add-patient-button" onClick="openCreatePatientModal()">${state.text} <i class="zmdi zmdi-account-add"></i></div>`);
+      }
+      
+      return state.text;
+    },
+    escapeMarkup: function(m) { return m; }
   });
 })
 
@@ -290,7 +298,7 @@ function editComment(id, doctor, comment, time) {
                               <div class="d-flex justify-content-between align-items-center mt-3">\
                                 <p class="small" style="color: #aaa;">\
                                 <button href="#!" class="btn btn-theme text-end mx-1" onclick="saveComment(${id})">Сохранить</button>\
-                                <button href="#!" class="btn test-end mx-1" onclick="cancelEditComment(${id}, \'${doctor}\', \'${comment}\', \'${time}\')">Отменить</button>\
+                                <button href="#!" class="btn text-end mx-1" onclick="cancelEditComment(${id}, \'${doctor}\', \'${comment}\', \'${time}\')">Отменить</button>\
                               </div>`;
 }
 
@@ -456,3 +464,114 @@ $(document).ready(function() {
     }
   })
 })
+
+function openCreatePatientModal() {
+  $('#patientname').select2('close');
+  $('#createPatientModal').modal('show');
+
+  $('#birthdate').datepicker({
+    dateFormat: 'dd-mm-yy'
+  });
+
+  var snilsInput = document.querySelector('.snils-input');
+  var snilsParts = document.querySelectorAll('.snils-part');
+
+  var snils1 = document.getElementById('snils1');
+  var snils2 = document.getElementById('snils2');
+  var snils3 = document.getElementById('snils3');
+  var snils4 = document.getElementById('snils4');
+
+  snilsInput.addEventListener('click', function() {
+    for (var i = snilsParts.length - 1; i >= 0; i--) {
+      if (snilsParts[i].value.length > 0 || i === 0) {
+        if (snilsParts[i].value.length < 3) {
+          snilsParts[i].focus();
+        } else {
+          snilsParts[i + 1].focus();
+        }
+        break;
+      }
+    }
+  });
+
+  snilsParts.forEach(function(input, index) {
+    input.addEventListener('input', function() {
+      var value = input.value;
+
+      if (value.length === input.maxLength && index < snilsParts.length - 1) {
+        snilsParts[index + 1].focus();
+      }
+    });
+
+    input.addEventListener('keydown', function(event) {
+      if (event.key === 'Backspace' && input.value.length === 0 && index > 0) {
+        snilsParts[index - 1].focus();
+      }
+    });
+
+    input.addEventListener('paste', function(event) {
+      setTimeout(function() {
+        var value = input.value;
+  
+        if (value.length === input.maxLength && index < snilsParts.length - 1) {
+          snilsParts[index + 1].focus();
+        }
+      }, 0);
+    });
+  });
+
+  $("#create-patient-form").submit(function (event) {
+    event.preventDefault();
+    
+    var fullname = $("#fullname").val();
+    var birthdate = $("#birthdate").val();
+
+    var snils = `${snils1.value}-${snils2.value}-${snils3.value} ${snils4.value}`;
+
+    $.ajax({
+      url: '/create_patient',
+      method: 'POST',
+      data: { fullname: fullname, birthdate: birthdate, snils: snils },
+      success: function(response) {
+        var $select = $('#patientname');
+
+        var $newOption = $('<option>', {
+          value: response.fullname,
+          text: response.fullname
+        });
+        
+        $select.find('option[value="add"]').after($newOption);
+        $select.trigger('change');
+
+        $('#createPatientModal').modal('hide');
+      },
+      error: function(xhr, status, error) {
+        console.error('Ошибка при создании нового пациента: ' + error);
+      }
+    });
+  });
+
+  $('#createPatientModal').on('hidden.bs.modal', function () {
+    var form = document.getElementById('create-patient-form');
+  
+    if (form) {
+      form.reset();
+    }
+  });
+
+  snils1.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '');
+  });
+  
+  snils2.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '');
+  });
+  
+  snils3.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '');
+  });
+  
+  snils4.addEventListener('input', function() {
+    this.value = this.value.replace(/\D/g, '');
+  });
+}

@@ -4,7 +4,7 @@
 html *
 {
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, .7) rgba(0, 0, 0, .15);
+  scrollbar-color: rgba(0, 0, 0, .15) rgba(255, 255, 255, .7);
 }
 
 *::-webkit-scrollbar,
@@ -196,4 +196,37 @@ body {
 
 #sidebar .nav a i {
   margin-right: 16px;
+}
+
+.add-patient-button {
+  display: block;
+  text-align: center;
+  background-color: #337ab7;
+  color: #fff;
+  padding: 5px;
+  cursor: pointer;
+}
+
+.add-patient-button:hover {
+  background-color: #286090;
+}
+
+.snils-input {
+  display: inline-flex;
+  align-items: left;
+}
+
+.snils-part {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 27px;
+  text-align: left;
+  margin: 0;
+  padding: 0;
+}
+
+.snils-part {
+  margin-left: 5px;
+  margin-right: 5px;
 }

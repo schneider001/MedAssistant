@@ -13,6 +13,7 @@
           <label for="patientname" class="form-label">Пациент</label>
           <select id="patientname" name="patientname" class="form-select" data-placeholder="Выберите пациента" required>
             <option></option>
+            <option value="add" class="add-user-option text-center" disabled>Добавить нового пациента </option>
             {% for patient in patients %}
               <option value="{{patient}}">{{patient}}</option>
             {% endfor %}
@@ -34,5 +35,6 @@
   </div>
 </div>
 {% include "requestModal.html" %}
+{% include "createPatientModal.html" %}
 
 {% endblock %}

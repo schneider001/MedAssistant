@@ -213,5 +213,14 @@ def edit_comment(comment_id):
     return jsonify({"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment, "editable": True})
 
 
+@app.route('/create_patient', methods=['POST'])
+def create_patient():
+    fullname = request.form['fullname']
+    birthdate = request.form['birthdate']
+    snils = request.form['snils']
+    #TODO сохраняем в бд, возвращаем id из базы и полное имя
+    return jsonify({'id': 1, 'fullname': fullname, 'snils': snils})
+
+
 if __name__ == "__main__":
     app.run(debug=True)
