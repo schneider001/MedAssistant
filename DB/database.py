@@ -9,7 +9,6 @@ class Database:
     def __init__(self):
 
         with open('../configs/db_settings.json', 'r') as options_file:
-        with open('../configs/db_settings.json', 'r') as options_file:
             config = loads(options_file.read())
         try:
             self.conn = mysql.connector.connect(**config) 
@@ -19,12 +18,10 @@ class Database:
             raise
         self.conn.autocommit = False
         self.cursor = self.conn.cursor()
-        self.execute_sql_script("./create_db_script.sql") #TODO добавить проверку перед выполнением, созданы ли все таблицы и связи
+        self.execute_sql_script("../DB/create_db_script.sql") #TODO добавить проверку перед выполнением, созданы ли все таблицы и связи
         self.fill_from_dataset("../datasets/Symptom-severity.csv", "symptoms")
         self.fill_from_dataset("../datasets/symptom_Description.csv", "diseases")
         
-    # Establish MySQL database
-    @retry()
     def execute_sql_script(self, script_file):
         with open(script_file, 'r') as file:
                 sql_script = file.read()
@@ -40,8 +37,6 @@ class Database:
                     self.conn.rollback()
                     raise
 
-    #Add symptoms and diseases from dataset to DB, if already exists ignore
-    @retry()
     def fill_from_dataset (self, filepath, tablename):
         data_set = set()
         with open(filepath, 'r') as csv_file:
@@ -60,7 +55,6 @@ class Database:
             logger.warning(f'Information about {tablename} failed to add to database: {e}')
             raise
 
-    @retry()
     def select_doctor_by_id(self, id):
         query = "SELECT id, username, name, password_hash, last_login, \
             is_blocked, image_path_location FROM doctors WHERE id = %s"
@@ -73,7 +67,6 @@ class Database:
             raise
         return self.cursor.fetchone()
 
-    @retry()
     def select_doctor_by_username(self, username):
         query = "SELECT id, username, name, password_hash, last_login, is_blocked FROM doctors WHERE username = %s" 
         values = (username,)
@@ -85,7 +78,6 @@ class Database:
             raise
         return self.cursor.fetchone()
 
-    @retry()
     def insert_doctor_credentials(self, username, password_hash): #TODO использовать хэш пароля
         query = "INSERT INTO doctors (username, password_hash) VALUES (%s, %s)"
         values = (username, password_hash)
@@ -98,7 +90,6 @@ class Database:
             logger.warning(f'Failed to insert doctor info: {e}')
             raise
 
-    @retry()
     def close(self):
         try:
             self.cursor.close()

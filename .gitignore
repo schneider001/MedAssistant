@@ -1,2 +1,3 @@
 */__pycache__/
 configs/db_settings.json
+app/logfile.log
