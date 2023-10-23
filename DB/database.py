@@ -3,7 +3,6 @@ import csv
 from json import loads
 from hashlib import sha256
 from DB.log_init import *
-from DB.retry import retry
 
 class Database:
     def __init__(self):
