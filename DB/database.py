@@ -75,10 +75,10 @@ class Database:
     #------------------------------------------
     
     #for testing
-    def insert_patient_(self, name, insurance_certificate):
+    def insert_patient_(self, name, insurance_certificate, born_date):
         try:
-            query = "INSERT INTO patients (name, insurance_certificate) VALUES (%s, %s)"
-            values = (name, insurance_certificate)
+            query = "INSERT INTO patients (name, insurance_certificate, born_date) VALUES (%s, %s, %s)"
+            values = (name, insurance_certificate, born_date)
             self.cursor.execute(query, values)
             self.conn.commit()
         except Exception as e:
@@ -89,6 +89,12 @@ class Database:
         query = "SELECT id, name, insurance_certificate FROM patients"
         self.cursor.execute(query)
         return self.cursor.fetchall()
+    
+    def select_patient_by_id(self, id):
+        query = "SELECT * FROM patients WHERE id = %s"
+        values = (id,)
+        self.cursor.execute(query, values)
+        return self.cursor.fetchone()
     
     #------------------------------------------
     #Symptoms's queries

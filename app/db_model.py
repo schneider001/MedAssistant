@@ -42,6 +42,12 @@ class Patient:
     def get_all_id_name_insurance_certificate():
         patients_data = db.select_all_patients_id_name_insurance_certificate()
         return patients_data
+    
+    @staticmethod
+    def find_by_id(id):
+        patient_data = db.select_patient_by_id(id)
+        if patient_data:
+            return Patient(*patient_data)
         
 class Symptom:
     def __init__(self, id, name):

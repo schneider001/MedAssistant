@@ -43,8 +43,7 @@ def main():
     #Сейчас передается лист кортежей с id, именем и СНИЛС'ом. 
     patients = patients_id_name_insurance_certificate
     
-    
-    #Сейчас передается лист кортежей с id и названием симптома
+    #Сейчас передается лист кортежей с id и названием симптома (на инглише пока)
     symptoms = Symptom.get_all_symptoms()
 
     return render_template('index.html', patients=patients, symptoms=symptoms)#TODO Добавить во фронте колонку СНИЛС и нивидимую колонку id
@@ -167,15 +166,18 @@ def load_data_requests():
 def get_patient_info():
     patient_id = request.args.get('patient_id')
 
-    time.sleep(2)
-
-    patient_data = { #TODO как то получаем информацию о пациенте из БД
-        'id': patient_id,
-        'name': 'Иванов Иван Иванович',
-        'birthDate': '1990-05-15',
-        'age': 33, #TODO вычислить возраст
-        'snils': '480 953 512 08'
-    }
+    patient = Patient.find_by_id(patient_id)
+    if patient:
+        today = datetime.now()
+        age = today.year - patient.born_date.year - \
+            ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
+        patient_data = { #TODO как то получаем информацию о пациенте из БД
+            'id': patient_id,
+            'name': patient.name,
+            'birthDate': patient.born_date.strftime("%Y-%m-%d"),
+            'age': age, 
+            'snils': patient.insurance_certificate
+        }
 
     return jsonify(patient_data)
 
