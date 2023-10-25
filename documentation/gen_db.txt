@@ -1,13 +1,13 @@
 
 Enum "patients_sex_enum" {
-  "male"
-  "female"
+  "MALE"
+  "FEMAIL"
 }
 
 Enum "requests_status_enum" {
-  "in_progress"
-  "ready"
-  "error"
+  "IN_PROGRESS"
+  "READY"
+  "ERROR"
 }
 
 Table "doctors" {
@@ -16,7 +16,6 @@ Table "doctors" {
   "name" varchar(255)
   "password_hash" blob [not null]
   "last_login" timestamp
-  "image_path_location" varchar(1024)
 }
 
 Table "patients" {
@@ -25,7 +24,6 @@ Table "patients" {
   "insurance_certificate" varchar(255) [unique, not null]
   "born_date" timestamp
   "sex" patients_sex_enum
-  "image_path_location" varchar(1024)
 }
 
 Table "administrators" {
@@ -56,7 +54,7 @@ Table "requests" {
   "doctor_id" integer [not null]
   "patient_id" integer [not null]
   "predicted_disease_id" integer
-  "status" requests_status_enum [not null, default: "in_progress"]
+  "status" requests_status_enum [not null, default: "IN_PROGRESS"]
   "date" timestamp [default: `NOW()`]
   "ml_model_id" integer
 }
