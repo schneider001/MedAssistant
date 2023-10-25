@@ -163,6 +163,7 @@ def load_data_requests():
 
 
 @app.route('/get_patient_info', methods=['GET'])
+@login_required
 def get_patient_info():
     patient_id = request.args.get('patient_id')
 
@@ -171,12 +172,14 @@ def get_patient_info():
         today = datetime.now()
         age = today.year - patient.born_date.year - \
             ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
-        patient_data = { #TODO как то получаем информацию о пациенте из БД
-            'id': patient_id,
+        patient_data = {
+            'id': patient.id, #TODO Сделать невидимым во фронте
             'name': patient.name,
             'birthDate': patient.born_date.strftime("%Y-%m-%d"),
             'age': age, 
-            'snils': patient.insurance_certificate
+            'snils': patient.insurance_certificate,
+            'sex' : patient.sex, #Не используется пока
+            'imagePathLocation' : patient.image_path_location #Не используется пока
         }
 
     return jsonify(patient_data)
