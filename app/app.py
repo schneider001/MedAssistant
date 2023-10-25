@@ -179,7 +179,6 @@ def get_patient_info():
             'age': age, 
             'snils': patient.insurance_certificate,
             'sex' : patient.sex, #Не используется пока
-            'imagePathLocation' : patient.image_path_location #Не используется пока
         }
 
     return jsonify(patient_data)
