@@ -3,9 +3,7 @@ CREATE TABLE if not exists `doctors` (
   `username` varchar(255) UNIQUE NOT NULL,
   `name` varchar(255),
   `password_hash` blob NOT NULL,
-  `last_login` timestamp,
-  ##`is_blocked` ENUM ('BLOCKED', 'NOT_BLOCKED') NOT NULL DEFAULT 'NOT_BLOCKED',
-  `image_path_location` varchar(1024)
+  `last_login` timestamp
 );
 
 CREATE TABLE if not exists `patients` (
@@ -13,8 +11,7 @@ CREATE TABLE if not exists `patients` (
   `name` varchar(255) NOT NULL,
   `insurance_certificate` varchar(255) UNIQUE NOT NULL,
   `born_date` timestamp,
-  `sex` ENUM ('MALE', 'FEMAIL'),
-  `image_path_location` varchar(1024)
+  `sex` ENUM ('MALE', 'FEMAIL')
 );
 
 CREATE TABLE if not exists `administrators` (

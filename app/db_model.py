@@ -6,14 +6,12 @@ sys.path.append("..")
 from init import db, login_manager
 
 class Doctor(UserMixin):
-    def __init__(self, id, username, name, password_hash, last_login, image_path_location):
+    def __init__(self, id, username, name, password_hash, last_login):
         self.id = id
         self.username = username
         self.name = name
         self.password_hash = password_hash
         self.last_login = last_login
-        #self.is_blocked = is_blocked
-        self.image_path_location = image_path_location
 
     @staticmethod
     def find_by_id(id):
@@ -30,13 +28,12 @@ class Doctor(UserMixin):
 
 
 class Patient:
-    def __init__(self, id, name, insurance_certificate, born_date, sex, image_path_location):
+    def __init__(self, id, name, insurance_certificate, born_date, sex):
         self.id = id
         self.name = name
         self.insurance_certificate = insurance_certificate
         self.born_date = born_date
         self.sex = sex
-        self.image_path_location = image_path_location
         
     @staticmethod
     def get_all_id_name_insurance_certificate():
