@@ -12,13 +12,13 @@ class Database:
             config = loads(options_file.read())
         try:
             self.conn = mysql.connector.connect(**config) 
-            logger.info('Database connection iniatedted successfully') 
+            self.logger.info('Database connection iniatedted successfully') 
         except mysql.connector.Error as e:
-            logger.warning(f'Database connection failed to iniate: {e}')
+            self.logger.warning(f'Database connection failed to iniate: {e}')
             raise
         self.conn.autocommit = False
         self.cursor = self.conn.cursor()
-        self.execute_sql_script("../DB/create_db_script.sql") #TODO добавить проверку перед выполнением, созданы ли все таблицы и связи
+        self.execute_sql_script("../db_init/create_db_script.sql") #TODO добавить проверку перед выполнением, созданы ли все таблицы и связи
         self.fill_from_dataset("../datasets/Symptom-severity.csv", "symptoms")
         self.fill_from_dataset("../datasets/symptom_Description.csv", "diseases")
         
@@ -31,9 +31,9 @@ class Database:
                         if command.strip():
                             self.cursor.execute(command)
                     self.conn.commit()
-                    logger.info('Database created successfully')
+                    self.logger.info('Database created successfully')
                 except mysql.connector.Error as e:
-                    logger.warning(f'Database failed to create: {e}')
+                    self.logger.warning(f'Database failed to create: {e}')
                     self.conn.rollback()
                     raise
 
@@ -101,7 +101,7 @@ class Database:
         try:
             self.cursor.close()
             self.conn.close()
-            logger.info('Connection to database closed')
+            self.logger.info('Connection to database closed')
         except mysql.connector.Error as e: 
-            logger.warning(f'Failed close connection to databbase: {e}')
+            self.logger.warning(f'Failed close connection to databbase: {e}')
             raise
