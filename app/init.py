@@ -2,12 +2,11 @@ from flask import Flask
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from datetime import datetime
+import logging.config
+from database import Database
 
 
-import sys
-sys.path.append("..")
-
-from DB.database import Database
+logging.config.fileConfig('../configs/log.conf')
 
 app = Flask(__name__)
 app.static_folder = 'static'

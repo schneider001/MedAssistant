@@ -2,9 +2,12 @@ import mysql.connector
 import csv
 from json import loads
 
+
+from logs import Logs
+
 class Database:
     def __init__(self):
-
+        self.logger = Logs(__name__).get_logger()
         with open('../configs/db_settings.json', 'r') as options_file:
             config = loads(options_file.read())
 
@@ -46,15 +49,21 @@ class Database:
     #example 2: execute_select("SELECT id, name FROM users) -> [(id1, name1), (id2, name2), ...]
     #example 3: execute_select("SELECT * FROM users where id = -1") -> []
     def execute_select(self, sql_query, *values) -> list[tuple]:
-        self.cursor.execute(sql_query, values)
-        return self.cursor.fetchall()
+        try:
+            self.cursor.execute(sql_query, values)
+            return self.cursor.fetchall()
+        except Exception as e:
+            self.conn.rollback()
+            self.logger.error(f"Failed to select from database: " + str(e))
     
     def execute_update(self, sql_query, *values):
         try:
             self.cursor.execute(sql_query, values)
             self.conn.commit()
         except Exception as e:
-            print("Can't execute update. Traceback:\n" + str(e))
+            self.conn.rollback()
+            # print("Can't execute update. Traceback:\n" + str(e))
+            self.logger.error(f"Failed to update database: " + str(e))
         
 
     #------------------------------------------

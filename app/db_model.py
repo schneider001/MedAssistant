@@ -1,9 +1,7 @@
-from flask_login import UserMixin, login_manager
+from flask_login import UserMixin
 
-import sys
-sys.path.append("..")
 
-from init import db, login_manager
+from init import db
 
 class Doctor(UserMixin):
     def __init__(self, id, username, name, password_hash, last_login):
