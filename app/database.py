@@ -1,12 +1,13 @@
 import mysql.connector
 import csv
 from json import loads
-from hashlib import sha256
-from DB.log_init import *
+
+
+from logs import Logs
 
 class Database:
     def __init__(self):
-
+        self.logger = Logs(__name__).get_logger()
         with open('../configs/db_settings.json', 'r') as options_file:
             config = loads(options_file.read())
         try:
@@ -42,52 +43,59 @@ class Database:
             reader = csv.reader(csv_file)
             for row in reader:
                 data_set.add(row[0])
+        for entry in data_set:
+            query = f"INSERT IGNORE INTO {tablename} (name) VALUES (%s)"
+            values = (entry,)
+            try:
+                self.cursor.execute(query, values)
+            except Exception as e:
+                print(f"Failed to insert values from dataset {tablename} into DB: {str(e)}")
+        self.conn.commit()
+    
+    
+    #example 1: execute_select("SELECT * FROM users where id = %s", id) -> [(id, name, pass)]
+    #example 2: execute_select("SELECT id, name FROM users) -> [(id1, name1), (id2, name2), ...]
+    #example 3: execute_select("SELECT * FROM users where id = -1") -> []
+    def execute_select(self, sql_query, *values) -> list[tuple]:
         try:
-            for entry in data_set:
-                query = f"INSERT IGNORE INTO {tablename} (name) VALUES (%s)"
-                values = (entry,)
-                self.cursor.execute(query, values)      
-            self.conn.commit()
-            logger.info(f'Information about {tablename} added successfully to database')
-        except mysql.connector.Error as e:
+            self.cursor.execute(sql_query, values)
+            return self.cursor.fetchall()
+        except Exception as e:
             self.conn.rollback()
-            logger.warning(f'Information about {tablename} failed to add to database: {e}')
-            raise
-
-    def select_doctor_by_id(self, id):
-        query = "SELECT id, username, name, password_hash, last_login, \
-            is_blocked, image_path_location FROM doctors WHERE id = %s"
-        values = (id,)
+            self.logger.error(f"Failed to select from database: " + str(e))
+    
+    def execute_update(self, sql_query, *values):
         try:
-            self.cursor.execute(query, values)
-            logger.info('Fetched doctor info by id successfully')
-        except mysql.connector.Error as e:
-            logger.warning(f'Failed to fetch doctor info by id: {e}')
-            raise
-        return self.cursor.fetchone()
+            self.cursor.execute(sql_query, values)
+            self.conn.commit()
+        except Exception as e:
+            self.conn.rollback()
+            # print("Can't execute update. Traceback:\n" + str(e))
+            self.logger.error(f"Failed to update database: " + str(e))
+        
 
-    def select_doctor_by_username(self, username):
-        query = "SELECT id, username, name, password_hash, last_login, is_blocked FROM doctors WHERE username = %s" 
-        values = (username,)
-        try:
-            self.cursor.execute(query, values)
-            logger.info('Fetched doctor info by username successfully')
-        except mysql.connector.Error as e:
-            logger.warning(f'Failed to fetch doctor info by username: {e}')
-            raise
-        return self.cursor.fetchone()
-
-    def insert_doctor_credentials(self, username, password_hash): #TODO использовать хэш пароля
+    #------------------------------------------
+    #Doctors's queries
+    #------------------------------------------
+        
+    #for testing
+    def insert_doctor_credentials_(self, username, password_hash):
         query = "INSERT INTO doctors (username, password_hash) VALUES (%s, %s)"
-        values = (username, password_hash)
-        try:
-            self.cursor.execute(query, values)
-            self.conn.commit()
-            logger.info(f'Inserted doctor info {username}:{password_hash} successfully')
-        except mysql.connector.Error as e:
-            self.conn.rollback()
-            logger.warning(f'Failed to insert doctor info: {e}')
-            raise
+        self.execute_update(query, username, password_hash)
+            
+    #------------------------------------------
+    #Patient's queries
+    #------------------------------------------
+    
+    #for testing
+    def insert_patient_(self, name, insurance_certificate, born_date):
+        query = "INSERT INTO patients (name, insurance_certificate, born_date) VALUES (%s, %s, %s)"
+        self.execute_update(query, name, insurance_certificate, born_date)
+
+
+    #------------------------------------------
+    #Close
+    #------------------------------------------
 
     def close(self):
         try:

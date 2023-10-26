@@ -1,99 +1,95 @@
-// Use DBML to define your database structure
-// Docs: https://dbml.dbdiagram.io/docs
 
-
-Table doctors {
-  id integer [primary key] 
-  username varchar unique
-  name varchar
-  password_hash blob
-  last_login timestamp
-  is_blocked IsBlocked
-  image_path_location varchar(1024)
+Enum "patients_sex_enum" {
+  "MALE"
+  "FEMAIL"
 }
 
-enum IsBlocked {
-  blocked
-  not_blocked
+Enum "requests_status_enum" {
+  "IN_PROGRESS"
+  "READY"
+  "ERROR"
 }
 
-Table patients {
-  id integer [primary key]
-  name varchar
-  born_date timestamp
-  Sex Sex
-  image_path_location varchar(1024)
+Table "doctors" {
+  "id" integer [pk, increment]
+  "username" varchar(255) [unique, not null]
+  "name" varchar(255)
+  "password_hash" blob [not null]
+  "last_login" timestamp
 }
 
-enum Sex {
-  male
-  female
+Table "patients" {
+  "id" integer [pk, increment]
+  "name" varchar(255) [not null]
+  "insurance_certificate" varchar(255) [unique, not null]
+  "born_date" timestamp
+  "sex" patients_sex_enum
 }
 
-Table symptoms {
-  id integer [primary key]
-  name varchar
+Table "administrators" {
+  "id" integer [pk, increment]
+  "username" varchar(255) [unique, not null]
+  "name" varchar(255)
+  "password_hash" blob [not null]
 }
 
-Table diseases {
-  id integer [primary key]
-  name varchar
+Table "symptoms" {
+  "id" integer [pk, increment]
+  "name" varchar(255) [unique, not null]
 }
 
-Table requests {
-  id integer [primary key]
-  doctor_id integer
-  patient_id integer
-  predicted_disease_id integer
-  status RequestStatus
-  date timestamp
-  ml_model_id integer
+Table "diseases" {
+  "id" integer [pk, increment]
+  "name" varchar(255) [unique, not null]
 }
 
-enum RequestStatus {
-  in_progress
-  ready
-  error
+Table "ml_model" {
+  "id" integer [pk, increment]
+  "hash" blob
+  "version" varchar(255)
 }
 
-Table request_symptoms {
-  symptom_id integer
-  request_id integer
+Table "requests" {
+  "id" integer [pk, increment]
+  "doctor_id" integer [not null]
+  "patient_id" integer [not null]
+  "predicted_disease_id" integer
+  "status" requests_status_enum [not null, default: "IN_PROGRESS"]
+  "date" timestamp [default: `NOW()`]
+  "ml_model_id" integer
 }
 
+Table "request_symptoms" {
+  "symptom_id" integer [not null]
+  "request_id" integer [not null]
 
-Table ml_model {
-  id integer [primary key]
-  hash blob
-  version varchar
+Indexes {
+  (symptom_id, request_id) [unique]
+}
 }
 
-Table administrators {
-  id integer [primary key]
-  username varchar unique
-  name varchar
-  password_hash blob
+Table "comments" {
+  "doctor_id" integer [not null]
+  "request_id" integer [not null]
+  "comment" varchar(255) [not null]
+
+Indexes {
+  (doctor_id, request_id) [unique]
+}
 }
 
-Table comments {
-  doctor_id integer
-  request_id integer
-  comment varchar
-}
+Ref:"doctors"."id" < "requests"."doctor_id"
 
+Ref:"patients"."id" < "requests"."patient_id"
 
-Ref: request_symptoms.symptom_id > symptoms.id
+Ref:"diseases"."id" < "requests"."predicted_disease_id"
 
-Ref: request_symptoms.request_id > requests.id
+Ref:"ml_model"."id" < "requests"."ml_model_id"
 
-Ref: requests.doctor_id > doctors.id
+Ref:"symptoms"."id" < "request_symptoms"."symptom_id"
 
-Ref: requests.patient_id > patients.id
+Ref:"requests"."id" < "request_symptoms"."request_id"
 
-Ref: requests.predicted_disease_id > diseases.id
+Ref:"doctors"."id" < "comments"."doctor_id"
 
-Ref: requests.ml_model_id > ml_model.id
-
-Ref: comments.doctor_id > doctors.id
-
-Ref: comments.request_id > requests.id
+Ref:"requests"."id" < "comments"."request_id"

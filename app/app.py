@@ -1,10 +1,13 @@
-from flask import Flask, request, redirect, url_for, render_template, jsonify
-from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
-from flask_bcrypt import Bcrypt
+from flask import request, redirect, url_for, render_template, jsonify
+from flask_login import  login_required, login_user, logout_user
 import time
 
 from init import *
 from db_model import *
+
+@login_manager.user_loader
+def load_user(user_id):
+    return Doctor.get_by_id(user_id)
 
 
 @app.route("/")
@@ -17,7 +20,7 @@ def login_post():
     username = request.form['username']
     password = request.form['password']
 
-    doctor = Doctor.find_by_username(username)
+    doctor = Doctor.get_by_username(username)
     authorized = doctor and check_password_hash(doctor.password_hash, password)
  
     if authorized:
@@ -36,28 +39,18 @@ def logout():
 @app.route('/main')
 @login_required
 def main():
-    patients = [
-        "Иванов Иван Иванович",
-        "Петров Петр Петрович",
-        "Сидоров Сидор Сидорович",
-        "Смирнов Алексей Андреевич",
-        "Козлов Владимир Дмитриевич",
-        "Морозов Олег Игоревич"
-    ] #TODO Получить ФИО из БД
+    patients_id_name_insurance_certificate = Patient.find_all_id_name_insurance_certificate()
+    #Сейчас передается лист кортежей с id, именем и СНИЛС'ом. 
+    patients = patients_id_name_insurance_certificate
+    
+    #Сейчас передается лист кортежей с id и названием симптома (на инглише пока)
+    symptoms = Symptom.find_all_symptoms()
 
-    symptoms = ['Высокая температура', 'Кашель', 'Насморк'] #TODO Получить из БД
-
-    return render_template('index.html', patients=patients, symptoms=symptoms)
-
-
-@app.route('/logout')
-def logout():
-
-
-    return redirect(url_for("login"))
+    return render_template('index.html', patients=patients, symptoms=symptoms)#TODO Добавить во фронте колонку СНИЛС и нивидимую колонку id
 
 
 @app.route('/patients')
+@login_required
 def patients():
     columns = ['id', 'name']
 
@@ -65,6 +58,7 @@ def patients():
 
 
 @app.route('/history')
+@login_required
 def history():
     columns = ['id', 'name', 'date', 'result']
     #TODO получить историю всех запросов для текущего авторизованного врача
@@ -169,18 +163,23 @@ def load_data_requests():
 
 
 @app.route('/get_patient_info', methods=['GET'])
+@login_required
 def get_patient_info():
     patient_id = request.args.get('patient_id')
 
-    time.sleep(2)
-
-    patient_data = { #TODO как то получаем информацию о пациенте из БД
-        'id': patient_id,
-        'name': 'Иванов Иван Иванович',
-        'birthDate': '1990-05-15',
-        'age': 33, #TODO вычислить возраст
-        'snils': '480 953 512 08'
-    }
+    patient = Patient.get_by_id(patient_id)
+    if patient:
+        today = datetime.now()
+        age = today.year - patient.born_date.year - \
+            ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
+        patient_data = {
+            'id': patient.id, #TODO Сделать невидимым во фронте
+            'name': patient.name,
+            'birthDate': patient.born_date.strftime("%Y-%m-%d"),
+            'age': age, 
+            'snils': patient.insurance_certificate,
+            'sex' : patient.sex, #Не используется пока
+        }
 
     return jsonify(patient_data)
 

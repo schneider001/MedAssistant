@@ -3,17 +3,15 @@ CREATE TABLE IF NOT EXISTS `doctors` (
   `username` varchar(255) UNIQUE NOT NULL,
   `name` varchar(255),
   `password_hash` blob NOT NULL,
-  `last_login` timestamp,
-  `is_blocked` ENUM ('blocked', 'not_blocked') NOT NULL DEFAULT 'not_blocked',
-  `image_path_location` varchar(1024)
+  `last_login` timestamp
 );
 
 CREATE TABLE IF NOT EXISTS `patients` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
+  `insurance_certificate` varchar(255) UNIQUE NOT NULL,
   `born_date` timestamp,
-  `Sex` ENUM ('male', 'female'),
-  `image_path_location` varchar(1024)
+  `sex` ENUM ('MALE', 'FEMAIL')
 );
 
 CREATE TABLE IF NOT EXISTS `administrators` (
@@ -44,7 +42,7 @@ CREATE TABLE IF NOT EXISTS `requests` (
   `doctor_id` integer NOT NULL,
   `patient_id` integer NOT NULL,
   `predicted_disease_id` integer,
-  `status` ENUM ('in_progress', 'ready', 'error') NOT NULL DEFAULT 'in_progress',
+  `status` ENUM ('IN_PROGRESS', 'READY', 'ERROR') NOT NULL DEFAULT 'IN_PROGRESS',
   `date` timestamp DEFAULT NOW(),
   `ml_model_id` integer,
   FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`),
