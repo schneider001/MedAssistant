@@ -7,7 +7,7 @@ from db_model import *
 
 @login_manager.user_loader
 def load_user(user_id):
-    return Doctor.find_by_id(user_id)
+    return Doctor.get_by_id(user_id)
 
 
 @app.route("/")
@@ -20,7 +20,7 @@ def login_post():
     username = request.form['username']
     password = request.form['password']
 
-    doctor = Doctor.find_by_username(username)
+    doctor = Doctor.get_by_username(username)
     authorized = doctor and check_password_hash(doctor.password_hash, password)
  
     if authorized:
@@ -39,12 +39,12 @@ def logout():
 @app.route('/main')
 @login_required
 def main():
-    patients_id_name_insurance_certificate = Patient.get_all_id_name_insurance_certificate()
+    patients_id_name_insurance_certificate = Patient.find_all_id_name_insurance_certificate()
     #Сейчас передается лист кортежей с id, именем и СНИЛС'ом. 
     patients = patients_id_name_insurance_certificate
     
     #Сейчас передается лист кортежей с id и названием симптома (на инглише пока)
-    symptoms = Symptom.get_all_symptoms()
+    symptoms = Symptom.find_all_symptoms()
 
     return render_template('index.html', patients=patients, symptoms=symptoms)#TODO Добавить во фронте колонку СНИЛС и нивидимую колонку id
 
@@ -167,7 +167,7 @@ def load_data_requests():
 def get_patient_info():
     patient_id = request.args.get('patient_id')
 
-    patient = Patient.find_by_id(patient_id)
+    patient = Patient.get_by_id(patient_id)
     if patient:
         today = datetime.now()
         age = today.year - patient.born_date.year - \

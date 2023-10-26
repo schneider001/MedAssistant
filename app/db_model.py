@@ -14,16 +14,20 @@ class Doctor(UserMixin):
         self.last_login = last_login
 
     @staticmethod
-    def find_by_id(id):
-        user_data = db.select_doctor_by_id(id)
+    def get_by_id(id):
+        query = "SELECT id, username, name, password_hash, last_login \
+            FROM doctors WHERE id = %s"
+        user_data = db.execute_select(query, id)
         if user_data:
-            return Doctor(*user_data)
+            return Doctor(*user_data[0])
 
     @staticmethod
-    def find_by_username(username):
-        user_data = db.select_doctor_by_username(username)
+    def get_by_username(username):
+        query = "SELECT id, username, name, password_hash, last_login \
+            FROM doctors WHERE username = %s"
+        user_data = db.execute_select(query, username)
         if user_data:
-            return Doctor(*user_data)
+            return Doctor(*user_data[0])
 
 
 
@@ -36,16 +40,16 @@ class Patient:
         self.sex = sex
         
     @staticmethod
-    def get_all_id_name_insurance_certificate():
-        patients_data = db.select_all_patients_id_name_insurance_certificate()
-        return patients_data
+    def find_all_id_name_insurance_certificate():
+        query = "SELECT id, name, insurance_certificate FROM patients"
+        return db.execute_select(query)
     
     @staticmethod
-    def find_by_id(id):
-        patient_data = db.select_patient_by_id(id)
+    def get_by_id(id):
+        query = "SELECT * FROM patients WHERE id = %s"
+        patient_data = db.execute_select(query, id)
         if patient_data:
-            return Patient(*patient_data)
-        
+            return Patient(*patient_data[0])
         
         
 class Symptom:
@@ -54,7 +58,7 @@ class Symptom:
         self.name = name
     
     @staticmethod
-    def get_all_symptoms():
-        symptoms = db.select_all_symptoms()
-        return symptoms
+    def find_all_symptoms():
+        query = "SELECT id, name FROM symptoms"
+        return db.execute_select(query)
         

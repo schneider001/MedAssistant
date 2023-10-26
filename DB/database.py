@@ -40,35 +40,31 @@ class Database:
             except Exception as e:
                 print(f"Failed to insert values from dataset {tablename} into DB: {str(e)}")
         self.conn.commit()
+    
+    
+    #example 1: execute_select("SELECT * FROM users where id = %s", id) -> [(id, name, pass)]
+    #example 2: execute_select("SELECT id, name FROM users) -> [(id1, name1), (id2, name2), ...]
+    #example 3: execute_select("SELECT * FROM users where id = -1") -> []
+    def execute_select(self, sql_query, *values) -> list[tuple]:
+        self.cursor.execute(sql_query, values)
+        return self.cursor.fetchall()
+    
+    def execute_update(self, sql_query, *values):
+        try:
+            self.cursor.execute(sql_query, values)
+            self.conn.commit()
+        except Exception as e:
+            print("Can't execute update. Traceback:\n" + str(e))
+        
 
     #------------------------------------------
     #Doctors's queries
     #------------------------------------------
-
-    def select_doctor_by_id(self, id):
-        query = "SELECT id, username, name, password_hash, last_login \
-            FROM doctors WHERE id = %s"
-        values = (id,)
-        self.cursor.execute(query, values)
-        return self.cursor.fetchone()
-        
-    def select_doctor_by_username(self, username):
-        query = "SELECT id, username, name, password_hash, last_login \
-            FROM doctors WHERE username = %s"
-        values = (username,)
-        self.cursor.execute(query, values)
-        return self.cursor.fetchone() 
         
     #for testing
-    def insert_doctor_credentials(self, username, password_hash): #TODO использовать хэш пароля
-        try:
-            query = "INSERT INTO doctors (username, password_hash) VALUES (%s, %s)"
-            values = (username, password_hash)
-            self.cursor.execute(query, values)
-            self.conn.commit()
-        except Exception as e:
-            self.conn.rollback() #db rolls back by itself generally
-            print(f"Failed to insert doctor's credentials: {str(e)}")
+    def insert_doctor_credentials_(self, username, password_hash):
+        query = "INSERT INTO doctors (username, password_hash) VALUES (%s, %s)"
+        self.execute_update(query, username, password_hash)
             
     #------------------------------------------
     #Patient's queries
@@ -76,34 +72,13 @@ class Database:
     
     #for testing
     def insert_patient_(self, name, insurance_certificate, born_date):
-        try:
-            query = "INSERT INTO patients (name, insurance_certificate, born_date) VALUES (%s, %s, %s)"
-            values = (name, insurance_certificate, born_date)
-            self.cursor.execute(query, values)
-            self.conn.commit()
-        except Exception as e:
-            self.conn.rollback() #db rolls back by itself generally
-            print(f"Failed to insert_patient_: {str(e)}")
-    
-    def select_all_patients_id_name_insurance_certificate(self):
-        query = "SELECT id, name, insurance_certificate FROM patients"
-        self.cursor.execute(query)
-        return self.cursor.fetchall()
-    
-    def select_patient_by_id(self, id):
-        query = "SELECT * FROM patients WHERE id = %s"
-        values = (id,)
-        self.cursor.execute(query, values)
-        return self.cursor.fetchone()
-    
+        query = "INSERT INTO patients (name, insurance_certificate, born_date) VALUES (%s, %s, %s)"
+        self.execute_update(query, name, insurance_certificate, born_date)
+
+
     #------------------------------------------
-    #Symptoms's queries
+    #Close
     #------------------------------------------
-    
-    def select_all_symptoms(self):
-        query = "SELECT id, name FROM symptoms"
-        self.cursor.execute(query)
-        return self.cursor.fetchall()
 
     def close(self):
         self.cursor.close()
