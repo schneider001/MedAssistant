@@ -1,4 +1,42 @@
-CREATE TABLE IF NOT EXISTS `doctors` (
+DROP PROCEDURE IF EXISTS `drop_all_tables`;
+
+DELIMITER $$
+CREATE PROCEDURE `drop_all_tables`()
+BEGIN
+    DECLARE _done INT DEFAULT FALSE;
+    DECLARE _tableName VARCHAR(255);
+    DECLARE _cursor CURSOR FOR
+        SELECT table_name 
+        FROM information_schema.TABLES
+        WHERE table_schema = SCHEMA();
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET _done = TRUE;
+
+    SET FOREIGN_KEY_CHECKS = 0;
+
+    OPEN _cursor;
+
+    REPEAT FETCH _cursor INTO _tableName;
+
+    IF NOT _done THEN
+        SET @stmt_sql = CONCAT('DROP TABLE ', _tableName);
+        PREPARE stmt1 FROM @stmt_sql;
+        EXECUTE stmt1;
+        DEALLOCATE PREPARE stmt1;
+    END IF;
+
+    UNTIL _done END REPEAT;
+
+    CLOSE _cursor;
+    SET FOREIGN_KEY_CHECKS = 1;
+END$$
+
+DELIMITER ;
+
+call drop_all_tables(); 
+
+DROP PROCEDURE IF EXISTS `drop_all_tables`;
+
+CREATE TABLE `doctors` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `username` varchar(255) UNIQUE NOT NULL,
   `name` varchar(255),
@@ -6,38 +44,40 @@ CREATE TABLE IF NOT EXISTS `doctors` (
   `last_login` timestamp
 );
 
-CREATE TABLE IF NOT EXISTS `patients` (
+CREATE TABLE `patients` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `insurance_certificate` varchar(255) UNIQUE NOT NULL,
   `born_date` timestamp,
-  `sex` ENUM ('MALE', 'FEMAIL')
+  `sex` ENUM ('MALE', 'FEMAILE')
 );
 
-CREATE TABLE IF NOT EXISTS `administrators` (
+CREATE TABLE `administrators` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `username` varchar(255) UNIQUE NOT NULL,
   `name` varchar(255),
   `password_hash` blob NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS `symptoms` (
+CREATE TABLE `symptoms` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
-  `name` varchar(255) UNIQUE NOT NULL
+  `name` varchar(255) UNIQUE NOT NULL,
+  `ru_name` varchar(255) UNIQUE NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS `diseases` (
+CREATE TABLE `diseases` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
-  `name` varchar(255) UNIQUE NOT NULL
+  `name` varchar(255) UNIQUE NOT NULL,
+  `ru_name` varchar(255) UNIQUE NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS `ml_model` (
+CREATE TABLE `ml_model` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `hash` blob,
   `version` varchar(255)
 );
 
-CREATE TABLE IF NOT EXISTS `requests` (
+CREATE TABLE `requests` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `doctor_id` integer NOT NULL,
   `patient_id` integer NOT NULL,
@@ -51,7 +91,7 @@ CREATE TABLE IF NOT EXISTS `requests` (
   FOREIGN KEY (`ml_model_id`) REFERENCES `ml_model` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS `request_symptoms` (
+CREATE TABLE `request_symptoms` (
   `symptom_id` integer NOT NULL,
   `request_id` integer NOT NULL,
   UNIQUE (`symptom_id` ,`request_id`),
@@ -59,7 +99,7 @@ CREATE TABLE IF NOT EXISTS `request_symptoms` (
   FOREIGN KEY (`request_id`) REFERENCES `requests` (`id`)
 );
 
-CREATE TABLE IF NOT EXISTS `comments` (
+CREATE TABLE `comments` (
   `doctor_id` integer NOT NULL,
   `request_id` integer NOT NULL,
   `comment` varchar(255) NOT NULL,
