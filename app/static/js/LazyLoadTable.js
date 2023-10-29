@@ -1,5 +1,3 @@
-import { escapeHtml } from "./utils.js";
-
 class LazyLoadTable {
     constructor(tableId, dataUrl, searchData = '') {
         this.tableId = tableId;
@@ -19,14 +17,17 @@ class LazyLoadTable {
             return;
         }
   
+        function createLoadingRow(numColumns) {
+          const $row = $('<tr>', { style: 'opacity: 0;' });
+          const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;' });
+          const $div = $('<div>', { class: 'spinner-border spinner-border-sm', role: 'status' }).append($('<span>', { class: 'visually-hidden' }).text('Загрузка...'));
+          $cell.append($div);
+          $row.append($cell);
+          return $row;
+        }
+
         const numColumns = $(`#${this.tableId} thead tr:first th`).length;
-        const $loadingRow = $(`<tr style="opacity: 0;">\
-                                <td colspan="${numColumns}" style="text-align: center;">\
-                                  <div class="spinner-border spinner-border-sm" role="status">\
-                                    <span class="visually-hidden">Загрузка...</span>\
-                                  </div>\
-                                </td>\
-                              </tr>`);
+        const $loadingRow = createLoadingRow(numColumns);
   
         if (!this.isLoading) {
             $loadingRow.animate({ opacity: 1 }, 1000);
@@ -39,18 +40,21 @@ class LazyLoadTable {
                 success: (data) => {
                     $loadingRow.remove();
                     
-                    if ($(`#${this.tableId} tbody`).is(':empty') && data.length === 0) {
-                        $(`#${this.tableId} tbody`).html(`  <tr>\
-                                                                <td colspan="${numColumns}" style="text-align: center;">Ничего не найдено</td>\
-                                                            </tr>`);
+                    const $tbody = $(`#${this.tableId} tbody`);
+                    if ($tbody.is(':empty') && data.length === 0) {
+                        const $row = $('<tr>');
+                        const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;' }).text('Ничего не найдено');
+                        $row.append($cell);
+                        $tbody.html($row);
                     }
+
                     if (data.length > 0) {
                         data.forEach(row => {
                             const $row = $('<tr>');
                             row.forEach(value => {
-                                $row.append(`<td>${escapeHtml(value)}</td>`);
+                                $row.append($('<td>').text(value));
                             });
-                            $(`#${this.tableId} tbody`).append($row);
+                            $tbody.append($row);
                         });
                         this.page++;
                     } else {
