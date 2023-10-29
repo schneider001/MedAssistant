@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, url_for, render_template, jsonify
+from flask import Flask, request, redirect, url_for, render_template, jsonify, send_from_directory
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
 import time
 
@@ -6,6 +6,10 @@ import time
 app = Flask(__name__)
 app.static_folder = 'static'
 #login_manager = LoginManager(app)
+
+@app.route('/static/js/<path:filename>')
+def custom_static(filename):
+    return send_from_directory('static/js', filename, mimetype='text/javascript')
 
 @app.route("/")
 def login():
@@ -182,7 +186,7 @@ def get_patient_info():
 def load_patient_history():
     patient_id = int(request.args.get('search'))
 
-    data = [[i, f'Doctor Name {i}', f'Date {i}', f'Predicted Result {i}', f'Doctor Verdict {i}'] for i in range(1, 17)] #Пример какой то таблицы
+    data = [[i, f'Doctor Name {i}', f'Date {i}', f'Predicted Result {i}', f'Doctor Verdict {i}'] for i in range(1, 170)] #Пример какой то таблицы
 
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
