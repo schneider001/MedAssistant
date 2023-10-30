@@ -226,5 +226,29 @@ def create_patient():
     return jsonify({'id': 1, 'fullname': fullname, 'snils': snils})
 
 
+@app.route('/load_patients', methods=['GET'])
+def load_patients():
+    term = request.args.get('search', '')
+    page = int(request.args.get('page', 1))
+    per_page = 15
+    start = (page - 1) * per_page
+    end = start + per_page
+
+    time.sleep(2)
+    patients_in_db = [
+        {"id": 1 ,"name": "Иванов Иван Иванович", "snils": "123-456-789 10" },
+        {"id": 2 ,"name": "Петров Петр Петрович", "snils": "342-231-534 14" },
+        {"id": 3 ,"name": "Сидоров Сидор Сидорович", "snils": "654-342-765 43" },
+        {"id": 4 ,"name": "Смирнов Алексей Андреевич", "snils": "234-654-324 34" },
+        {"id": 5 ,"name": "Козлов Владимир Дмитриевич", "snils": "432-321-654 43" },
+        {"id": 6 ,"name": "Морозов Олег Игоревич", "snils": "432-765-234 32" }
+    ] * 50 #TODO получать пациентов из БД
+
+    filtered_patients = list(filter(lambda p: term in p["name"] or term in p["snils"], patients_in_db))
+    patients = filtered_patients[start:end] #Нужно опять же из БД получить нужную страницу с пациентами
+
+    return jsonify({'results': patients, 'pagination': {'more': end < len(filtered_patients)}}) #и при этом нужно как то понять, была ли это последняя страница
+
+
 if __name__ == "__main__":
     app.run(debug=True)

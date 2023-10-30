@@ -13,11 +13,6 @@
           <label for="patientname" class="form-label">Пациент</label>
           <select id="patientname" name="patientname" class="form-select" data-placeholder="Выберите пациента" required>
             <option></option>
-            <option value="add" class="add-user-option text-center" disabled>Добавить нового пациента </option>
-            <option value="header" disabled>{"name": "Имя", "snils": "СНИЛС"}</option>
-            {% for patient in patients %}
-              <option value="{{ patient }}">{{ patient }}</option>
-            {% endfor %}
         </select>
         </div>
         <div class="mb-3">
