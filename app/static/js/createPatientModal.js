@@ -3,7 +3,7 @@ export function openCreatePatientModal() {
     $('#createPatientModal').modal('show');
   
     $('#birthdate').datepicker({
-        dateFormat: 'dd-mm-yy'
+        format: "dd.mm.yyyy"
     });
   
     var snilsInput = document.querySelector('.snils-input');
@@ -14,15 +14,17 @@ export function openCreatePatientModal() {
     var snils3 = document.getElementById('snils3');
     var snils4 = document.getElementById('snils4');
   
-    snilsInput.addEventListener('click', function() {
-        for (var i = snilsParts.length - 1; i >= 0; i--) {
-            if (snilsParts[i].value.length > 0 || i === 0) {
-                if (snilsParts[i].value.length < 3) {
-                    snilsParts[i].focus();
-                } else {
-                    snilsParts[i + 1].focus();
+    snilsInput.addEventListener('click', function(event) {
+        if (event.target === snilsInput) {   
+            for (var i = snilsParts.length - 1; i >= 0; i--) {
+                if (snilsParts[i].value.length > 0 || i === 0) {
+                    if (snilsParts[i].value.length < 3) {
+                        snilsParts[i].focus();
+                    } else {
+                        snilsParts[i + 1].focus();
+                    }
+                    break;
                 }
-                break;
             }
         }
     });
@@ -39,16 +41,24 @@ export function openCreatePatientModal() {
         input.addEventListener('keydown', function(event) {
             if (event.key === 'Backspace' && input.value.length === 0 && index > 0) {
                 snilsParts[index - 1].focus();
+            } else if (event.key === 'ArrowRight' && input.selectionStart === input.value.length && index < snilsParts.length - 1) {
+                snilsParts[index + 1].focus();
+                setTimeout(function () {
+                    snilsParts[index + 1].setSelectionRange(1, 1);
+                }, 0);
+                event.preventDefault();
+            } else if (event.key === 'ArrowLeft' && input.selectionStart <= 1 && index > 0) {
+                snilsParts[index - 1].focus();
+                setTimeout(function () {
+                    const newSelection = snilsParts[index - 1].value.length;
+                    snilsParts[index - 1].setSelectionRange(newSelection, newSelection);
+                }, 0);
+                event.preventDefault();
             }
         });
   
-        input.addEventListener('paste', function(event) {
-            setTimeout(function() {
-                var value = input.value;
-                if (value.length === input.maxLength && index < snilsParts.length - 1) {
-                    snilsParts[index + 1].focus();
-                }
-            }, 0);
+        input.addEventListener('paste', function (event) {
+            event.preventDefault();
         });
     });
   
@@ -69,10 +79,11 @@ export function openCreatePatientModal() {
                 
                 var $newOption = $('<option>', {
                     value: response.fullname,
-                    text: response.fullname
+                    text: `{"name": "${response.fullname}", "snils": "${response.snils}"}`
                 });
 
-                $select.find('option[value="add"]').after($newOption);
+                $select.find('option[value="header"]').after($newOption);
+                $select.val(response.fullname);
                 $select.trigger('change');
               
                 $('#createPatientModal').modal('hide');
