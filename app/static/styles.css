@@ -135,6 +135,22 @@ body {
   width: 100% !important;
 }
 
+.select2-container--bootstrap-5 .select2-search.select2-search--inline {
+  cursor: text;
+}
+
+.select2-container .select2-selection--multiple {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.select2-container .select2-search {
+  width: auto;
+  display: inline-block;
+  flex: 1;
+}
+
 /* Sidebar Styles */
 
 #sidebar {

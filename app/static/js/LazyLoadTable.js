@@ -10,20 +10,20 @@ class LazyLoadTable {
         this.searchTimeout = null;
     
         this.init();
-      }
+    }
 
-      loadMoreData() {
+    loadMoreData() {
         if (this.noMoreData) {
             return;
         }
   
         function createLoadingRow(numColumns) {
-          const $row = $('<tr>', { style: 'opacity: 0; pointer-events: none;', id: 'loading' });
-          const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;' });
-          const $div = $('<div>', { class: 'spinner-border spinner-border-sm', role: 'status' }).append($('<span>', { class: 'visually-hidden' }).text('Загрузка...'));
-          $cell.append($div);
-          $row.append($cell);
-          return $row;
+            const $row = $('<tr>', { style: 'opacity: 0; pointer-events: none;', id: 'loading' });
+            const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;' });
+            const $div = $('<div>', { class: 'spinner-border spinner-border-sm', role: 'status' }).append($('<span>', { class: 'visually-hidden' }).text('Загрузка...'));
+            $cell.append($div);
+            $row.append($cell);
+            return $row;
         }
 
         const numColumns = $(`#${this.tableId} thead tr:first th`).length;
