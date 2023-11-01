@@ -1,3 +1,5 @@
+let requestId;
+
 export function openRequestInfoModal(mode, data) {
            
     const loadSection = document.getElementById('request-load-section');
@@ -6,7 +8,6 @@ export function openRequestInfoModal(mode, data) {
     loadSection.style.display = 'block';
     dataSection.style.display = 'none';
 
-    console.info(data);
     $.ajax({
         url: mode === 'by_id' ? '/get_request_info_by_id' : '/get_request_info',
         method: 'POST',
@@ -21,7 +22,8 @@ export function openRequestInfoModal(mode, data) {
             console.error('Ошибка при получении информации о запросе: ' + error);
         }
     });
-
+    
+    requestId = data.request_id;
     $('#requestModal').modal('show');
 }
 
@@ -201,11 +203,11 @@ function addComment() {
     } else {
         commentInput.removeClass('is-invalid');
     }
-  
+    
     $.ajax({
         url: `/add_comment`,
         method: 'GET',
-        data: { comment: addedComment },
+        data: {request_id: requestId, comment: addedComment },
         success: function(comment) {
             const commentsContent = $('#comments-container');
             const addCommentBlock = $('#add-comment');

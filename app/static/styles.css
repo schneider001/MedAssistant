@@ -146,7 +146,6 @@ body {
 }
 
 .select2-container .select2-search {
-  width: auto;
   display: inline-block;
   flex: 1;
 }
