@@ -99,7 +99,7 @@ body {
   background-color: white;
 }
 
-#patients-table, #request-history-table tbody tr:hover {
+#patients-table, #request-history-table tbody tr:not([id="loading"]):hover {
   cursor: pointer;
 }
 

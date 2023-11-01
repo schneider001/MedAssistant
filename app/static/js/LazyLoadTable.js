@@ -18,7 +18,7 @@ class LazyLoadTable {
         }
   
         function createLoadingRow(numColumns) {
-          const $row = $('<tr>', { style: 'opacity: 0;' });
+          const $row = $('<tr>', { style: 'opacity: 0; pointer-events: none;', id: 'loading' });
           const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;' });
           const $div = $('<div>', { class: 'spinner-border spinner-border-sm', role: 'status' }).append($('<span>', { class: 'visually-hidden' }).text('Загрузка...'));
           $cell.append($div);

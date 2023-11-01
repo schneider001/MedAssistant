@@ -14,8 +14,9 @@ $(document).ready(function() {
         "select2/dropdown",
         "select2/dropdown/attachBody",
         "select2/dropdown/attachContainer",
-        "select2/dropdown/search"
-    ], function(Utils, Dropdown, AttachBody, AttachContainer, Search) {
+        "select2/dropdown/search",
+        "select2/dropdown/closeOnSelect"
+    ], function(Utils, Dropdown, AttachBody, AttachContainer, Search, closeOnSelect) {
         let dropdownWithSearch = Utils.Decorate(Dropdown, Search);
         dropdownWithSearch.prototype.render = function() {
             var $rendered = Dropdown.prototype.render.call(this);
@@ -70,15 +71,16 @@ $(document).ready(function() {
     
         let adapter = Utils.Decorate(dropdownWithSearch, AttachContainer);
         adapter = Utils.Decorate(adapter, AttachBody);
+        adapter = Utils.Decorate(adapter, closeOnSelect);
     
         return adapter;
     });
 
     $('#patientname').select2({
         theme: 'bootstrap-5',
-        closeOnSelect: true,
         placeholderForSearch: 'Поиск...',
         dropdownAdapter: $.fn.select2.amd.require("PatientsDropdownAdapter"),
+        closeOnSelect: true,
         ajax: {
             url: '/load_patients',
             dataType: 'json',
@@ -101,8 +103,21 @@ $(document).ready(function() {
             },
             cache: true
         },
+        language: {
+            errorLoading: () => 'Невозможно загрузить результаты',
+            inputTooLong: () => 'Слишком много символов',
+            inputTooShort: () => 'Слишком мало символов',
+            maximumSelected: () => 'Выбрано максимальное количество элементов',
+            noResults: () => $('<div>', { class: 'text-center' }).text('Нет результатов'),
+            removeAllItems: () => 'Удалить все элементы',
+            removeItem: () => 'Удалить элемент',
+            search: () => 'Поиск',
+            searching: () => $('<div>', { class: 'text-center' }).append($('<div>', { class: 'spinner-border spinner-border-sm', role: 'status' })
+                    .append($('<span>', { class: 'visually-hidden' }).text('Загрузка...'))),
+            loadingMore: () => $('<div>', { class: 'text-center' }).append($('<div>', { class: 'spinner-border spinner-border-sm', role: 'status' })
+                    .append($('<span>', { class: 'visually-hidden' }).text('Загрузка...')))
+        },   
         templateResult: function(option) {
-            console.info(option);
             if (!option.id) { return option.text; }
             
             var $row = $('<div>', { class: 'row' });
@@ -133,6 +148,9 @@ $(document).ready(function() {
 
     $('#requestForm').submit(function(e) {
         e.preventDefault();
-        openRequestInfoModal('POST', $(this).serialize());
+        var selectedData = $('#patientname').select2('data');
+        var selectedOption = selectedData[0];
+        var symptoms = $('#symptoms').val();
+        openRequestInfoModal('new', { id: selectedOption.id, name: selectedOption.name, snils: selectedOption.snils, symptoms: symptoms });
     });
 })

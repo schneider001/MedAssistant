@@ -11,6 +11,6 @@ $(document).ready(function() {
             return;
         }
 
-        openRequestInfoModal('GET', { request_id: requestId });
+        openRequestInfoModal('by_id', { request_id: requestId });
     });
 })

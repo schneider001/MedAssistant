@@ -76,16 +76,9 @@ export function openCreatePatientModal() {
             data: { fullname: fullname, birthdate: birthdate, snils: snils },
             success: function(response) {
                 var $select = $('#patientname');
-                
-                var $newOption = $('<option>', {
-                    value: response.fullname,
-                    text: `{"name": "${response.fullname}", "snils": "${response.snils}"}`
-                });
 
-                $select.find('option[value="header"]').after($newOption);
-                $select.val(response.fullname);
-                $select.trigger('change');
-              
+                $select.select2('trigger', 'select', { data: response });
+        
                 $('#createPatientModal').modal('hide');
             },
             error: function(xhr, status, error) {

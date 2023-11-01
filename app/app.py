@@ -56,7 +56,7 @@ def logout():
 
 @app.route('/patients')
 def patients():
-    columns = ['id', 'name']
+    columns = ['id', 'name', 'snils']
 
     return render_template('patients.html', columns=columns)
 
@@ -70,8 +70,13 @@ def history():
 
 @app.route('/get_request_info', methods=['POST'])
 def get_request_info():
-    patientname = request.form['patientname']
-    symptoms = request.form.getlist('symptoms')
+    data = request.get_json()
+
+    patient_id = data.get('id')
+    patientname = data.get('name')
+    snils = data.get('snils')
+    symptoms = data.get('symptoms')
+
     time.sleep(1)
     symptoms = ["Кашель", "Высокая температура"]
     diagnosis = "Cancer"
@@ -82,7 +87,7 @@ def get_request_info():
                        {"id": 5, "doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
     
     response_data = {
-        "patient_name": "Иван Иванов Иванович",
+        "patient_name": patientname,
         "doctor": "Dr. Smith", #Имя текущего доктора
         "symptoms": symptoms,
         "diagnosis": diagnosis,
@@ -92,9 +97,10 @@ def get_request_info():
     return jsonify(response_data)
 
 
-@app.route('/get_request_info_by_id', methods=['GET'])
+@app.route('/get_request_info_by_id', methods=['POST'])
 def get_request_info_by_id():
-    request_id = request.args.get('request_id')
+    data = request.get_json()
+    request_id = data.get('request_id')
 
     symptoms = ["Кашель", "Высокая температура"]
     diagnosis = "Cancer"
@@ -117,7 +123,7 @@ def get_request_info_by_id():
 
 @app.route('/load_data_patients', methods=['GET'])
 def load_data_patients():
-    data = [[i, f'Name {i}'] for i in range(1, 101)]  # Пример какой-то таблицы
+    data = [[i, f'Name {i}', f'snils {i}'] for i in range(1, 101)]  # Пример какой-то таблицы
     search_text = request.args.get('search', '').lower()
 
     if search_text == '':
@@ -223,7 +229,7 @@ def create_patient():
     birthdate = request.form['birthdate']
     snils = request.form['snils']
     #TODO сохраняем в бд, возвращаем id из базы и полное имя
-    return jsonify({'id': 1, 'fullname': fullname, 'snils': snils})
+    return jsonify({'id': 100, 'name': fullname, 'snils': snils})
 
 
 @app.route('/load_patients', methods=['GET'])
@@ -234,7 +240,7 @@ def load_patients():
     start = (page - 1) * per_page
     end = start + per_page
 
-    time.sleep(2)
+    time.sleep(1)
     patients_in_db = [
         {"id": 1 ,"name": "Иванов Иван Иванович", "snils": "123-456-789 10" },
         {"id": 2 ,"name": "Петров Петр Петрович", "snils": "342-231-534 14" },
@@ -242,7 +248,7 @@ def load_patients():
         {"id": 4 ,"name": "Смирнов Алексей Андреевич", "snils": "234-654-324 34" },
         {"id": 5 ,"name": "Козлов Владимир Дмитриевич", "snils": "432-321-654 43" },
         {"id": 6 ,"name": "Морозов Олег Игоревич", "snils": "432-765-234 32" }
-    ] * 50 #TODO получать пациентов из БД
+    ] #TODO получать пациентов из БД
 
     filtered_patients = list(filter(lambda p: term in p["name"] or term in p["snils"], patients_in_db))
     patients = filtered_patients[start:end] #Нужно опять же из БД получить нужную страницу с пациентами

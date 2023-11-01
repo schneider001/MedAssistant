@@ -1,4 +1,4 @@
-export function openRequestInfoModal(method, data) {
+export function openRequestInfoModal(mode, data) {
            
     const loadSection = document.getElementById('request-load-section');
     const dataSection = document.getElementById('request-data-section');
@@ -6,10 +6,12 @@ export function openRequestInfoModal(method, data) {
     loadSection.style.display = 'block';
     dataSection.style.display = 'none';
 
+    console.info(data);
     $.ajax({
-        url: method === 'GET' ? '/get_request_info_by_id' : '/get_request_info',
-        method: method,
-        data: data,
+        url: mode === 'by_id' ? '/get_request_info_by_id' : '/get_request_info',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(data),
         success: function(response) {
             loadSection.style.display = 'none';
             dataSection.style.display = 'block';
