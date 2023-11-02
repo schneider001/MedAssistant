@@ -65,15 +65,23 @@ export function openCreatePatientModal() {
     function createPatientSubmitHandler (event) {
         event.preventDefault();
         
-        var fullname = $("#fullname").val();
-        var birthdate = $("#birthdate").val();
+        var formData = new FormData();
         
-        var snils = `${snils1.value}-${snils2.value}-${snils3.value} ${snils4.value}`;
+        formData.append("fullname", $("#fullname").val());
+        formData.append("birthdate", $("#birthdate").val());
+        formData.append("snils", `${snils1.value}-${snils2.value}-${snils3.value} ${snils4.value}`);
         
+        var imageFile = $('#file-input')[0].files[0];
+        if (imageFile) {
+            formData.append("image", imageFile);
+        }
+
         $.ajax({
             url: '/create_patient',
             method: 'POST',
-            data: { fullname: fullname, birthdate: birthdate, snils: snils },
+            data: formData,
+            contentType: false,
+            processData: false,
             success: function(response) {
                 var $select = $('#patientname');
 
@@ -115,5 +123,63 @@ export function openCreatePatientModal() {
         this.value = this.value.replace(/\D/g, '');
     });
 }
+
+function handleDragOver(event) {
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'copy';
+    // Добавьте стили для подсветки области при наведении
+    document.getElementById('image-upload').classList.add('dragover');
+}
+window.handleDragOver = handleDragOver;
+
+function handleDragLeave(event) {
+    event.preventDefault();
+    // Удалите стили подсветки при уходе с области
+    document.getElementById('image-upload').classList.remove('dragover');
+}
+window.handleDragLeave = handleDragLeave;
+
+function handleFileDrop(event) {
+    event.preventDefault();
+    document.getElementById('image-upload').classList.remove('dragover');
+    var file = event.dataTransfer.files[0];
+    displayImage(file);
+}
+window.handleFileDrop = handleFileDrop;
+
+function handleFileSelect(event) {
+    var file = event.target.files[0];
+    displayImage(file);
+}
+window.handleFileSelect = handleFileSelect;
+
+function displayImage(file) {
+    if (file && file.type.match('image.*')) {
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            var img = new Image();
+            img.src = e.target.result;
+            img.onload = function() {
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+                canvas.width = 64;
+                canvas.height = 64;
+                ctx.drawImage(img, 0, 0, 256, 256);
+
+                var thumbnail = document.getElementById('thumbnail');
+                thumbnail.src = canvas.toDataURL('image/png');
+                thumbnail.style.display = 'block';
+
+                var uploadText = document.getElementById('image-upload');
+                uploadText.style.display = 'none';
+
+                var thumbnailContainer = document.getElementById('thumbnail-container');
+                thumbnailContainer.style.display = 'block';
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+}
+window.displayImage = displayImage;
 
 window.openCreatePatientModal = openCreatePatientModal;

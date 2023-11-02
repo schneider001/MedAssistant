@@ -302,12 +302,17 @@ def create_patient():
     Создает нового пациента.
     :param str fullname: Имя пациента.
     :param str birthdate: Дата рождения.
-    :param str snils: СНИЛС пациента
+    :param str snils: СНИЛС пациента.
+    :param image image: Изображение пациента.
     :return: JSON-ответ с информацией о пациенте, включая id пациента, имя пациента, СНИЛС.
     """
     fullname = request.form['fullname']
     birthdate = request.form['birthdate']
     snils = request.form['snils']
+    image = request.files.get('image') #может быть null
+
+    if image:
+        image.save('./static/patient_images/imagename.jpg')
 
     #TODO сохраняем в бд, возвращаем id из базы и полное имя со СНИЛСом
     return jsonify({'id': 100, 'name': fullname, 'snils': snils})
