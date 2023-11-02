@@ -56,7 +56,6 @@ body {
   background-size: cover;
   height: 100%;
   position: relative;
-  background-position: 7% center;
 }
 .account-block .overlay {
   -webkit-box-flex: 1;
@@ -237,7 +236,7 @@ body {
   height: 50vh;
 }
 
-.comment-card, .add-comment-card {
+.comment-card, .add-comment-card, .login-card {
   background-color: var(--background-color);
 }
 
