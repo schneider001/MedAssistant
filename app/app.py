@@ -58,7 +58,7 @@ def logout():
     Обрабатывает выход из аккаунта
     :return: Перенаправляет на страницу входа в аккаунт.
     """
-    return redirect(url_for("login"))
+    return redirect(url_for('login'))
 
 
 @app.route('/patients')
@@ -323,7 +323,7 @@ def load_patients():
     #TODO сейчас есть похожая функция для таблицы, но в этой появляется обязательная переменная more, в будущем планирую убрать старую функцию без more и переиспользовать эту
     term = request.args.get('search', '')
     page = int(request.args.get('page', 1))
-    
+
     per_page = 15
     start = (page - 1) * per_page
     end = start + per_page

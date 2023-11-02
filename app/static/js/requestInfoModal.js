@@ -56,9 +56,9 @@ function loadRequestInfoModal(response) {
         $comments.append(generateCommentElement(comment));
     });
 
-    $commentsCardBody.append($commentsTitle, $comments);
+    $commentsCardBody.append($comments);
     $commentsCard.append($commentsCardBody);
-    $commentsContainer.append($commentsCard);
+    $commentsContainer.append($commentsTitle, $commentsCard);
 
     const requestDataSection = $('#request-data-section');
     requestDataSection.empty().append($infoContainer, $commentsContainer);

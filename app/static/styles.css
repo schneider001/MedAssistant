@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css?family=Nunito:300,400,400i,500');
+
 :root {
   --primary-color: #006D77;
   --secondary-color: #D3EAEB;
@@ -36,10 +38,15 @@ html *::-webkit-scrollbar-thumb {
   border-radius: 7px;
 }
 
+*::-webkit-scrollbar-corner {
+  background: var(--secondary-color);
+  border-radius: 7px;
+}
+
 body {
   background: var(--text-color-light);
   overflow-x: hidden;
-  font-family: 'Roboto', sans-serif;
+  font-family: 'Nunito', sans-serif;
   font-size: 16px;
 }
 .account-block {
@@ -107,12 +114,9 @@ body {
   color: var(--text-color-dark);
 }
 
-@import url('https://fonts.googleapis.com/css?family=Roboto:300,400,400i,500');
-
 /* Toggle Styles */
 
 #viewport {
-  padding-left: 250px;
   -webkit-transition: all 0.5s ease;
   -moz-transition: all 0.5s ease;
   -o-transition: all 0.5s ease;
@@ -125,8 +129,6 @@ body {
 #centered-box {
   background-color: var(--background-color);
   border-radius: 10px;
-  max-width: 80%;
-  min-width: 45%;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
@@ -243,26 +245,18 @@ body {
 /* Sidebar Styles */
 
 #sidebar {
-  z-index: 1000;
-  position: fixed;
-  left: 250px;
-  width: 250px;
-  height: 100%;
-  margin-left: -250px;
   overflow-y: auto;
   background: var(--background-color);
   -webkit-transition: all 0.5s ease;
   -moz-transition: all 0.5s ease;
   -o-transition: all 0.5s ease;
   transition: all 0.5s ease;
-  border-right: 2px solid var(--secondary-color);
 }
 
 #sidebar header {
   background-color: var(--primary-color);
-  font-size: 20px;
+  border-right: 2px solid var(--primary-color);
   font-weight: bold;
-  line-height: 52px;
   text-align: center;
 }
 
@@ -279,7 +273,6 @@ body {
 
 #sidebar .nav-item {
   width: 100%;
-  padding-bottom: 16px;
 }
 
 #sidebar .nav-link {
@@ -291,16 +284,11 @@ body {
   border-radius: 10px;
   color: var(--text-color-dark);
   font-size: 19px;
-  padding: 8px 16px;
 }
 
 #sidebar .nav a:hover {
   background: var(--secondary-color);
   color: var(--text-color-primary);
-}
-
-#sidebar .nav a i {
-  margin-right: 8px;
 }
 
 #sidebar .nav a.active {
@@ -351,9 +339,16 @@ body {
   margin-right: 5px;
 }
 
+.vh-35 {
+  height: 35vh;
+}
+
+.vh-66 {
+  height: 66vh;
+}
+
 .tableFixHead {
   overflow: auto;
-  height: 66vh; 
   width: 100%; 
   border-radius: 7px;
   background-color: var(--secondary-color);
