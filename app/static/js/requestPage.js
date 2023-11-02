@@ -7,7 +7,19 @@ $(document).ready(function() {
         closeOnSelect: false,
         tags: false,
         allowHtml: true,
-	    allowClear: true
+	    allowClear: true,
+        language: {
+            errorLoading: () => 'Невозможно загрузить симптомы',
+            maximumSelected: () => 'Выбрано максимальное количество симптомов',
+            noResults: () => $('<div>', { class: 'text-center' }).text('Нет результатов'),
+            removeAllItems: () => 'Удалить все симптомы',
+            removeItem: () => 'Удалить симптом',
+            search: () => 'Поиск',
+            searching: () => $('<div>', { class: 'text-center' }).append($('<div>', { class: 'spinner-border spinner-border-sm', role: 'status' })
+                    .append($('<span>', { class: 'visually-hidden' }).text('Загрузка...'))),
+            loadingMore: () => $('<div>', { class: 'text-center' }).append($('<div>', { class: 'spinner-border spinner-border-sm', role: 'status' })
+                    .append($('<span>', { class: 'visually-hidden' }).text('Загрузка...')))
+        },  
     });
 
     $('#patientname').select2({

@@ -27,9 +27,8 @@ $.fn.select2.amd.define("PatientsDropdownAdapter", [
         );
 
         var $button = $('<div>', {
-            class: 'add-patient-button my-1',
-            text: 'Добавить нового пациента',
-            style: 'border-radius: 5px; cursor: pointer; margin-left: 11px; margin-right: 11px'
+            class: 'btn btn-theme add-patient-button my-1',
+            text: 'Добавить нового пациента'
         }).append($('<i>', {
             class: 'zmdi zmdi-account-add ms-3'
         }));

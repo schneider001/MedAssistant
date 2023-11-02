@@ -5,7 +5,7 @@ $(document).ready(function() {
     const patientsTable = new LazyLoadTable('patients-table', '/load_data_patients');
     let requestHistoryTable;
 
-    $('#patients-table').on('click', 'tr', function() {
+    $('#patients-table').on('click', 'tbody tr', function() {
         var patientId = $(this).find('td:first').text();
     
         if (isNaN(patientId)) {
@@ -31,11 +31,11 @@ $(document).ready(function() {
                 $('#snils').text(data.snils);
                 if (requestHistoryTable) {
                     requestHistoryTable.removeEventListeners();
-                    $('#request-history-table').off('click', 'tr');
+                    $('#request-history-table').off('click', 'tbody tr');
                 }
                 requestHistoryTable = new LazyLoadTable('request-history-table', '/load_patient_history', patientId);
 
-                $('#request-history-table').on('click', 'tr', function() {
+                $('#request-history-table').on('click', 'tbody tr', function() {
                     var requestId = $(this).find('td:first').text();
                 
                     if (isNaN(requestId)) {

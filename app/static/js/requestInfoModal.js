@@ -45,10 +45,10 @@ function loadRequestInfoModal(response) {
     $infoContainer.append($patientInfo, $symptomsInfo, $diagnosisInfo);
 
     const $commentsContainer = $('<div>', { class: 'container-fluid my-2 py-2' });
-    const $commentsCard = $('<div>', { class: 'card' });
-    const $commentsCardBody = $('<div>', { class: 'card-body p-4', style: 'background-color: #f7f6f6; overflow-y: auto; height: 35vh' });
+    const $commentsCard = $('<div>', { class: 'card comments-block-card' });
+    const $commentsCardBody = $('<div>', { class: 'card-body p-4' });
 
-    const $commentsTitle = $('<h5>', { class: 'text-center mb-4 pb-2' }).text('Комментарии врачей');
+    const $commentsTitle = $('<h4>', { class: 'text-center mb-2 pb-2', style: 'font-weight: bold' }).text('Комментарии врачей');
 
     const $comments = $('<div>', { class: 'row', id: 'comments-container' });
 
@@ -91,7 +91,7 @@ function createCommentBlock(id, doctor, comment, time, editable = false) {
 }
 
 function generateCommentElement(comment) {
-    const $div = $('<div>', { class: 'card mb-3' });
+    const $div = $('<div>', { class: 'card mb-3 comment-card' });
 
     if (comment.editable) {
         $div.attr('id', 'editable-comment');
@@ -158,7 +158,7 @@ function editComment(id, doctor, comment, time) {
 function createCommentInputBlock(doctor) {
     const commentsContent = $('#comments-container');
     
-    const $commentInputBlock = $('<div>', { class: 'card mb-3', id: 'add-comment' });
+    const $commentInputBlock = $('<div>', { class: 'card mb-3 add-comment-card', id: 'add-comment' });
     const $cardBody = $('<div>', { class: 'card-body' });
     
     const $dFlex = $('<div>', { class: 'd-flex flex-start' });
@@ -174,12 +174,12 @@ function createCommentInputBlock(doctor) {
     const $header = $('<div>', { class: 'd-flex justify-content-between align-items-center mb-3' });
     const $doctorName = $('<h6>', { class: 'text-primary fw-bold', text: doctor });
     
-    const $commentTextareaContainer = $('<div>', { class: 'mb-4 position-relative' });
+    const $commentTextareaContainer = $('<div>', { class: 'mb-3 position-relative' });
     const $commentTextarea = $('<textarea>', { placeholder: 'Введите ваш комментарий здесь', rows: 4, class: 'form-control', id: 'comment-textarea' });
     const $invalidTooltip = $('<div>', { class: 'invalid-tooltip', text: 'Комментарий не должен быть пустым' });
     
-    const $buttonContainer = $('<div>', { class: 'd-flex justify-content-between align-items-center mt-3' });
-    const $saveButton = $('<button>', { class: 'btn btn-theme text-end mx-1', text: 'Сохранить', click: addComment });
+    const $buttonContainer = $('<div>', { class: 'mt-1 text-end' });
+    const $saveButton = $('<button>', { class: 'btn btn-theme', text: 'Сохранить', click: addComment });
     
     $header.append($doctorName);
     $commentTextareaContainer.append($commentTextarea, $invalidTooltip);

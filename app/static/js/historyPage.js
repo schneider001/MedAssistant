@@ -4,7 +4,7 @@ import { openRequestInfoModal } from "./requestInfoModal.js";
 $(document).ready(function() {
     const requestHistoryTable = new LazyLoadTable('request-history-table', '/load_data_requests');
 
-    $('#request-history-table').on('click', 'tr', function() {
+    $('#request-history-table').on('click', 'tbody tr', function() {
         var requestId = $(this).find('td:first').text();
     
         if (isNaN(requestId)) {

@@ -14,28 +14,28 @@
 <body>
   {% if show_sidebar %}
   <!-- Sidebar -->
-  <div id="sidebar">
+  <div id="sidebar" class="d-flex flex-column justify-content-between">
     <header>
-      <a href="#">Мед Ассистент</a>
+      <a>Мед Ассистент</a>
     </header>
     <ul class="nav">
       <li class="nav-item">
-        <a class="nav-link" href="/main">
+        <a class="nav-link {% if request.path == '/main' %}active{% endif %}" href="/main">
           <i class="zmdi zmdi-view-dashboard"></i> Главная
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="/patients">
+        <a class="nav-link {% if request.path == '/patients' %}active{% endif %}" href="/patients">
           <i class="zmdi zmdi-account"></i> Пациенты
         </a>
       </li>
       <li class="nav-item">
-        <a class="nav-link" href="/history">
+        <a class="nav-link {% if request.path == '/history' %}active{% endif %}" href="/history">
           <i class="zmdi zmdi-calendar"></i> История запросов
         </a>
       </li>
     </ul>
-    <ul class="nav">
+    <ul class="nav mt-auto">
       <li class="nav-item">
         <a class="nav-link" href="/logout">
           <i class="zmdi zmdi-sign-in"></i> Выход
