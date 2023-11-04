@@ -4,7 +4,7 @@
             <form id="create-patient-form">
                 <div class="modal-header">
                     <h5 class="modal-title" id="createPatientModalLabel">Запрос</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Закрыть"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
@@ -15,7 +15,7 @@
                         <label for="birthdate" class="form-label">Дата рождения</label>
                         <input type="text" name="birthdate" class="form-control" id="birthdate" name="birthdate" required>
                     </div>
-                    <div class="mb-5">
+                    <div class="mb-3">
                         <label for="snils" class="form-label">Снилс</label>
                         <div class="snils-input form-control">
                             <input type="text" id="snils1" class="snils-part" maxlength="3" pattern="\d{3}" placeholder="123" required>
@@ -27,6 +27,19 @@
                             <input type="text" id="snils4" class="snils-part" maxlength="2" pattern="\d{2}" placeholder="10" required>
                         </div>
                     </div>
+                    <div class="mb-5">
+                        <label class="form-label" for="image-upload-container">Фотография пациента</label>
+                        <div id="image-upload-container" class="text-center d-flex flex-column align-items-center justify-content-center align-self-center">
+                            <label for="file-input" id="image-upload" class="position-relative">
+                                <input type="file" id="file-input" accept="image/*" style="display: none;" onchange="handleFileSelect(event)">
+                                <i class="zmdi zmdi-cloud-upload" style="font-size: 32px"></i>
+                                <p>Выберете файл или перетащите его сюда</p>
+                            </label>
+                            <div id="thumbnail-container">
+                                <img id="thumbnail" src="#" alt="Thumbnail" style="width: 256px; height: 256px;">
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-theme">Создать</button>
@@ -36,3 +49,5 @@
         </div>
     </div>
 </div>
+
+<script src="{{ url_for('static', filename='js/createPatientModal.js') }}" type="module"></script>
