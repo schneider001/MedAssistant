@@ -6,6 +6,11 @@ from os import system
 from datetime import datetime, timedelta
 from random import randint, random, choice, sample
 
+import sys
+sys.path.append('../app/')
+from init import gen_hashed_password
+
+
 with open('../configs/db_settings.json', 'r') as options_file:
 	data=json.load(options_file)
 
@@ -61,15 +66,16 @@ def populate_database(): #использовать db методы в идеал
     ("'Дмитриев Дмитрий Дмитриевич'", get_random_snils(), get_random_timestamp(), 1)
     ]
     doctors = [
-    ("'doctor1'", "'Николаев Николай Николаевич'", "'$2b$12$pT14zDz8TEpMRxJpo491L.Qmaof0UINo4zfl.b6yVU5PaMXeg4Dvu'", get_random_timestamp()), #hash pwd - 1
-    ("'doctor2'", "'Васильев Василий Васильевич'", "'$2b$12$L0biwxV8iz7bkVCSUJm.1ucN9DuSuZJx9j8YXJOWOJL5qhfOOZB0O'", get_random_timestamp()), #hash pwd - 2 etc.
-    ("'doctor3'", "'Андреев Андрей Андреевич'", "'$2b$12$KEW63xUmE.DV5JA/WuRz3..Rne26Se9imQuYB9koWqrduxs2Qud/O'"),
-    ("'doctor4'", "'Сергеев Сергей Сергеевич'", "'$2b$12$KEW63xUmE.DV5JA/WuRz3..Rne26Se9imQuYB9koWqrduxs2Qud/O'"),
-    ("'doctor5'", "'Михайлов Михаил Михайлович'", "'$2b$12$KEW63xUmE.DV5JA/WuRz3..Rne26Se9imQuYB9koWqrduxs2Qud/O'", get_random_timestamp())
+    # ("'doctor1'", "'Николаев Николай Николаевич'", "'$2b$12$pT14zDz8TEpMRxJpo491L.Qmaof0UINo4zfl.b6yVU5PaMXeg4Dvu'", get_random_timestamp()), #hash pwd - 1
+    ("'doctor1'", "'Николаев Николай Николаевич'", f"X'{gen_hashed_password('1').encode('utf8').hex()}'", get_random_timestamp()), #hash pwd - 1
+    ("'doctor2'", "'Васильев Василий Васильевич'", f"X'{gen_hashed_password('2').encode('utf8').hex()}'", get_random_timestamp()), #hash pwd - 2 etc.
+    ("'doctor3'", "'Андреев Андрей Андреевич'", f"X'{gen_hashed_password('3').encode('utf8').hex()}'"),
+    ("'doctor4'", "'Сергеев Сергей Сергеевич'", f"X'{gen_hashed_password('4').encode('utf8').hex()}'"),
+    ("'doctor5'", "'Михайлов Михаил Михайлович'", f"X'{gen_hashed_password('5').encode('utf8').hex()}'", get_random_timestamp())
     ]
     admins = [
-    ("'admin1'", "'Владимиров Владимир Владимирович'", "'$2b$12$NqbVgF7mOnrR.Tei.kNm2OfwdieVCYgNrhdit8FEv7f8xCawI6jrm'"), #123
-    ("'admin2'", "'Егоров Егор Егорович'", "'$2b$12$Fua24yccL/0O.OWfMtdobed0EZiyRQofaS2qG2/PWKIYCKf/of8qW'") #321
+    ("'admin1'", "'Владимиров Владимир Владимирович'", f"X'{gen_hashed_password('123').encode('utf8').hex()}'"), #123
+    ("'admin2'", "'Егоров Erop Егорович'", f"X'{gen_hashed_password('321').encode('utf8').hex()}'") #321
     ]
     
     for person in people:
@@ -80,7 +86,8 @@ def populate_database(): #использовать db методы в идеал
     for person in doctors:
         query = f"INSERT INTO doctors (username, name, password_hash, last_login) VALUES ({person[0]}, {person[1]}, {person[2]}, {person[3] if len(person)>3 else 'NULL'})"
         query_line+=query
-        query_line+=';'
+        query_line+=';\n'
+        print(query)
         
     for person in admins:
         query = f"INSERT INTO administrators (username, name, password_hash) VALUES ({person[0]}, {person[1]}, {person[2]})"
