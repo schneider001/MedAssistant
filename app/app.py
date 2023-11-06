@@ -145,8 +145,7 @@ def get_request_info():
     symptoms = data.get('symptoms')
 
     time.sleep(1)
-    symptoms = ["Кашель", "Высокая температура"]
-    diagnosis = "Cancer"
+    diagnosis = get_disease(symptoms)
     doctor_comments = [{"id": 1, "doctor": "Dr. Robert", "time": "10:30", "comment": "Hmm, This diagnosis looks cool", "editable": False}, #editable true, если это комментарий текущего доктора
                        {"id": 2, "doctor": "Dr. Johnson", "time": "11:15", "comment": "Really cool", "editable": False},
                        {"id": 3, "doctor": "Dr. Hudson", "time": "12:05", "comment": "Thanks", "editable": False},
