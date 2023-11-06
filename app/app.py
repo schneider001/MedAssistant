@@ -1,18 +1,22 @@
-from flask import Flask, request, redirect, url_for, render_template, jsonify, send_from_directory
-from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
-from flask_socketio import SocketIO, emit, join_room, leave_room
+from flask import request, redirect, url_for, render_template, jsonify, send_from_directory
+from flask_login import login_required, login_user, logout_user, current_user
+from flask_socketio import emit, join_room, leave_room
 import time
+import random
 
+from init import *
+from db_model import *
 
-app = Flask(__name__)
-app.static_folder = 'static'
-socketio = SocketIO(app)
-#login_manager = LoginManager(app)
+@login_manager.user_loader
+def load_user(user_id):
+    return Doctor.get_by_id(user_id)
+
 
 connected_users = {}
 
 
 @socketio.on('connect')
+@login_required
 def handle_connect():
     user_id = current_user.id
     if user_id not in connected_users:
@@ -21,6 +25,7 @@ def handle_connect():
 
 
 @socketio.on('disconnect')
+@login_required
 def handle_disconnect():
     user_id = current_user.id
     if user_id in connected_users and request.sid in connected_users[user_id]:
@@ -28,14 +33,15 @@ def handle_disconnect():
 
 
 @socketio.on('join_room')
+@login_required
 def handle_join_room(data):
-    print(data)
     room_id = data['room_id']
     join_room(room_id)
     emit('joined_room', f'joined room {room_id}')
 
 
 @socketio.on('leave_room')
+@login_required
 def handle_leave_room(data):
     room_id = data['room_id']
     leave_room(room_id)
@@ -67,17 +73,29 @@ def login_post():
     username = request.form['username']
     password = request.form['password']
 
-    #TODO
-    authorized = True
+    doctor = Doctor.get_by_username(username)
+    authorized = doctor and check_password_hash(doctor.password_hash, password)
  
     if authorized:
+        login_user(doctor)
         return redirect(url_for('main'))
     else:
         return redirect(url_for('login'))
+    
+    
+@app.route("/logout")
+@login_required
+def logout():
+    """
+    Обрабатывает выход из аккаунта
+    :return: Перенаправляет на страницу входа в аккаунт.
+    """
+    logout_user()
+    return redirect(url_for('login'))
 
 
 @app.route('/main')
-#@login_required
+@login_required
 def main():
     """
     Отображает главную страницу с данными о пациентах и симптомах.
@@ -88,16 +106,8 @@ def main():
     return render_template('index.html', symptoms=symptoms)
 
 
-@app.route('/logout')
-def logout():
-    """
-    Обрабатывает выход из аккаунта
-    :return: Перенаправляет на страницу входа в аккаунт.
-    """
-    return redirect(url_for('login'))
-
-
 @app.route('/patients')
+@login_required
 def patients():
     """
     Отображает страницу с пациентами.
@@ -107,6 +117,7 @@ def patients():
 
 
 @app.route('/history')
+@login_required
 def history():
     """
     Отображает страницу с историей запросов.
@@ -116,6 +127,7 @@ def history():
 
 
 @app.route('/get_request_info', methods=['POST'])
+@login_required
 def get_request_info():
     """
     Получает диагноз с помощью модели и возвращает информацию об этом запросе.
@@ -156,6 +168,7 @@ def get_request_info():
 
 
 @app.route('/get_request_info_by_id', methods=['POST'])
+@login_required
 def get_request_info_by_id():
     """
     Получает возвращает информацию о запросе по его id из БД.
@@ -187,6 +200,7 @@ def get_request_info_by_id():
 
 
 @app.route('/load_data_patients', methods=['GET'])
+@login_required
 def load_data_patients():
     """
     Получает список пациентов для указанной страницы в пагинации с использованием поиска.
@@ -219,6 +233,7 @@ def load_data_patients():
 
 
 @app.route('/load_data_requests', methods=['GET'])
+@login_required
 def load_data_requests():
     """
     Получает список запросов для текущего пользователя для указанной страницы в пагинации с использованием поиска.
@@ -253,6 +268,7 @@ def load_data_requests():
 
 
 @app.route('/get_patient_info', methods=['GET'])
+@login_required
 def get_patient_info():
     """
     Получает информацию о пациенте по его id.
@@ -261,20 +277,25 @@ def get_patient_info():
     """
     patient_id = request.args.get('patient_id')
 
-    time.sleep(2)
-
-    patient_data = { #TODO как то получаем информацию о пациенте из БД
-        'id': patient_id,
-        'name': 'Иванов Иван Иванович',
-        'birthDate': '1990-05-15',
-        'age': 33, #TODO вычислить возраст
-        'snils': '480 953 512 08'
-    }
+    patient = Patient.get_by_id(patient_id)
+    if patient:
+        today = datetime.now()
+        age = today.year - patient.born_date.year - \
+            ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
+        patient_data = {
+            'id': patient.id, #TODO Сделать невидимым во фронте
+            'name': patient.name,
+            'birthDate': patient.born_date.strftime("%Y-%m-%d"),
+            'age': age, 
+            'snils': patient.insurance_certificate,
+            'sex' : patient.sex, #Не используется пока
+        }
 
     return jsonify(patient_data)
 
 
 @app.route('/load_patient_history', methods=['GET'])
+@login_required
 def load_patient_history():
     """
     Получает список запросов для пациента по id пациента для указанной странице в пагинации.
@@ -296,6 +317,7 @@ def load_patient_history():
 
 
 @socketio.on('add_comment')
+@login_required
 def add_comment(data):
     """
     Добавляет новый комментарий для указанного запроса в БД.
@@ -306,22 +328,23 @@ def add_comment(data):
     room_id = data['room_id']
     request_id = data['request_id']
     comment = data['comment']
-    print(comment)
     #TODO добавить комментарий в БД
 
+    response = {"id": random.randint(1, 1000), "doctor": "Dr. Smith", "time": "10:30", "comment": comment}
     user_id = current_user.id
     if user_id in connected_users:
         for sid in connected_users[user_id]:
-            emit('self_added_comment', {"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": comment}, to = sid)
-    emit('added_comment', {"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": comment}, room = room_id, skip_sid = connected_users[user_id])
+            emit('self_added_comment', response, to = sid)
+        emit('added_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))
 
 
 @socketio.on('delete_comment')
+@login_required
 def delete_comment(data):
     """
     Удаляет комментарий по его id.
     :param int comment_id: ID комментария.
-    :return: JSON-ответ с именем текущего пользователя.
+    :return: JSON-ответ с id комментария и именем текущего пользователя.
     """
     room_id = data['room_id']
     comment_id = data['comment_id']
@@ -329,10 +352,12 @@ def delete_comment(data):
     #TODO удалить коммент из БД
     doctorName = "Dr. Smith"
 
-    emit('deleted_comment', doctorName, room = room_id)
+    response = {"id": comment_id, "doctor": doctorName}
+    emit('deleted_comment', response, room = room_id)
 
 
 @socketio.on('edit_comment')
+@login_required
 def edit_comment(data):
     """
     Изменяет комментарий по его id.
@@ -345,15 +370,16 @@ def edit_comment(data):
     updated_comment = data['comment']
 
     #TODO изменить коммента в БД и после вернуть его
-
+    response = {"id": comment_id, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment}
     user_id = current_user.id
     if user_id in connected_users:
         for sid in connected_users[user_id]:
-            emit('self_edited_comment', {"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment}, to = sid)
-    emit('edited_comment', {"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment}, room = room_id, skip_sid = connected_users[user_id])    
+            emit('self_edited_comment', response, to = sid)
+        emit('edited_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))    
 
 
 @app.route('/create_patient', methods=['POST'])
+@login_required
 def create_patient():
     """
     Создает нового пациента.
@@ -376,6 +402,7 @@ def create_patient():
 
 
 @app.route('/load_patients', methods=['GET'])
+@login_required
 def load_patients():
     """
     :param str search: Фильтр.

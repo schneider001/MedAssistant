@@ -1,13 +1,6 @@
 let requestId;
 let socket = io().connect(`http://'${document.domain}:${location.port}`);
 
-socket.on('connect', function() {
-    console.log('Подключено к серверу');
-});
-
-socket.on('joined_room', function(data) {
-    console.log(data);
-});
 
 export function openRequestInfoModal(mode, data) {
            
@@ -23,7 +16,6 @@ export function openRequestInfoModal(mode, data) {
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
-            console.info(response.id);
             socket.emit('join_room', { room_id: response.id });
             loadSection.style.display = 'none';
             dataSection.style.display = 'block';
@@ -106,7 +98,7 @@ function createCommentBlock(id, doctor, comment, time, editable = false) {
 }
 
 function generateCommentElement(comment) {
-    const $div = $('<div>', { class: 'card mb-3 comment-card' });
+    const $div = $('<div>', { class: 'card mb-3 comment-card', 'data-comment-id': comment.id });
 
     if (comment.editable) {
         $div.attr('id', 'editable-comment');
@@ -224,25 +216,29 @@ function addComment() {
 
 function addCommentElement(comment) {
     const commentsContent = $('#comments-container');
-    const addCommentBlock = $('#add-comment');
-    addCommentBlock.remove();
     const $commentBlock = generateCommentElement(comment);
+    let addCommentBlock = $('#add-comment');
+
+    if (comment.editable) {
+        addCommentBlock.remove();
+        addCommentBlock = $('#add-comment');
+    }
     
     const editableComment = $('#editable-comment');
-    if (editableComment.length) {
+    if (editableComment.length && comment.editable) {
         editableComment.replaceWith($commentBlock);
+    } else if (addCommentBlock.length && !editableComment.length) {
+        $commentBlock.insertAfter(addCommentBlock);
     } else {
         commentsContent.prepend($commentBlock);
     }
 }
 
 socket.on('added_comment', function(comment) {
-    console.info('added_comment');
     addCommentElement(comment);
 });
 
 socket.on('self_added_comment', function(comment) {
-    console.info('self_added_comment');
     comment.editable = true;
     addCommentElement(comment);
 });
@@ -262,9 +258,30 @@ function saveComment(id) {
 }
 
 function editCommentElement(comment) {
-    const commentSection = $('#editable-comment');
-    const $newComment = generateCommentElement(comment);
-    commentSection.replaceWith($newComment);
+    const editableComment = $('#editable-comment');
+    const $commentBlock = generateCommentElement(comment);
+    let addCommentBlock = $('#add-comment');
+
+    if (comment.editable) {
+        addCommentBlock.remove();
+        addCommentBlock = $('#add-comment');
+    
+        if (editableComment.length) {
+            editableComment.replaceWith($commentBlock);
+            return;
+        }
+    }
+    
+    const editedComment = $(`[data-comment-id="${comment.id}"]`);
+    
+    if (editedComment.length) {
+        editedComment.replaceWith($commentBlock);
+    } else if (addCommentBlock.length) {
+        $commentBlock.insertAfter(addCommentBlock);
+    } else {
+        const commentsContent = $('#comments-container');
+        commentsContent.prepend($commentBlock);
+    }
 }
 
 socket.on('edited_comment', function(comment) {
@@ -280,12 +297,16 @@ function deleteComment(id) {
     socket.emit('delete_comment', { room_id: requestId, comment_id: id });
 }
 
-socket.on('deleted_comment', function(doctor) {
-    const elementToRemove = $('#editable-comment');
+socket.on('deleted_comment', function(comment) {
+    const elementToRemove = document.querySelector(`[data-comment-id="${comment.id}"]`);
     if (elementToRemove) {
       elementToRemove.remove();
     }
-    createCommentInputBlock(doctor);
+
+    const addCommentBlock = $('#add-comment');
+    if (!addCommentBlock.length && elementToRemove.id === "editable-comment") {
+        createCommentInputBlock(comment.doctor);
+    }
 });
   
 function cancelEditComment(id, doctor, comment, time) {
