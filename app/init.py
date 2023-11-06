@@ -6,6 +6,7 @@ from datetime import datetime
 import logging.config
 from database import Database
 
+ML_MODEL_VERSION = 'T_1.0'
 
 logging.config.fileConfig('../configs/log.conf')
 
