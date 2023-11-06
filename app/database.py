@@ -30,10 +30,12 @@ class Database:
             self.conn.rollback()
             self.logger.error(f"Failed to select from database: " + str(e))
     
+    
     def execute_update(self, sql_query, *values):
         try:
             self.cursor.execute(sql_query, values)
             self.conn.commit()
+            return self.cursor.lastrowid 
         except Exception as e:
             self.conn.rollback()
             # print("Can't execute update. Traceback:\n" + str(e))
