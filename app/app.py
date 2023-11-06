@@ -1,15 +1,51 @@
 from flask import Flask, request, redirect, url_for, render_template, jsonify, send_from_directory
-from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user
+from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
+from flask_socketio import SocketIO, emit, join_room, leave_room
 import time
 
 
 app = Flask(__name__)
 app.static_folder = 'static'
+socketio = SocketIO(app)
 #login_manager = LoginManager(app)
+
+connected_users = {}
+
+
+@socketio.on('connect')
+def handle_connect():
+    user_id = current_user.id
+    if user_id not in connected_users:
+        connected_users[user_id] = set()
+    connected_users[user_id].add(request.sid)
+
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    user_id = current_user.id
+    if user_id in connected_users and request.sid in connected_users[user_id]:
+        connected_users[user_id].remove(request.sid)
+
+
+@socketio.on('join_room')
+def handle_join_room(data):
+    print(data)
+    room_id = data['room_id']
+    join_room(room_id)
+    emit('joined_room', f'joined room {room_id}')
+
+
+@socketio.on('leave_room')
+def handle_leave_room(data):
+    room_id = data['room_id']
+    leave_room(room_id)
+    emit('left_room', room_id, room=room_id)
+
 
 @app.route('/static/js/<path:filename>')
 def custom_static(filename):
     return send_from_directory('static/js', filename, mimetype='text/javascript')
+
 
 @app.route("/")
 def login():
@@ -87,7 +123,7 @@ def get_request_info():
     :param str name: Полное имя пациента.
     :param str snils: СНИЛС пациента.
     :param list symptoms: Список симптомов.
-    :return: JSON-ответ с информацией для карточки запроса, включая имя пациента, имя доктора, симптомы, предсказанный диагноз, комментарии врачей.
+    :return: JSON-ответ с информацией для карточки запроса, включая id запроса, имя пациента, имя доктора, симптомы, предсказанный диагноз, комментарии врачей.
     """
     data = request.get_json()
 
@@ -105,7 +141,10 @@ def get_request_info():
                        {"id": 4, "doctor": "Dr. Mycac", "time": "12:06", "comment": "WTF", "editable": False},
                        {"id": 5, "doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
     
+    request_id = 11
+
     response_data = {
+        "id": request_id,
         "patient_name": patientname,
         "doctor": "Dr. Smith", #Имя текущего доктора
         "symptoms": symptoms,
@@ -121,7 +160,7 @@ def get_request_info_by_id():
     """
     Получает возвращает информацию о запросе по его id из БД.
     :param str request_id: ID запроса.
-    :return: JSON-ответ с информацией для карточки запроса, включая имя пациента, имя доктора, симптомы, предсказанный диагноз, комментарии врачей.
+    :return: JSON-ответ с информацией для карточки запроса, включая id запроса имя пациента, имя доктора, симптомы, предсказанный диагноз, комментарии врачей.
     """
     data = request.get_json()
 
@@ -136,6 +175,7 @@ def get_request_info_by_id():
                        {"id": 5, "doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
     
     response_data = {
+        "id": request_id,
         "patient_name": "Иван Иванов Иванович",
         "doctor": "Dr. Smith", #Имя текущего доктора
         "symptoms": symptoms,
@@ -255,45 +295,62 @@ def load_patient_history():
     return jsonify(data[start:end])
 
 
-@app.route('/add_comment', methods=['GET'])
-def add_comment():
+@socketio.on('add_comment')
+def add_comment(data):
     """
     Добавляет новый комментарий для указанного запроса в БД.
     :param str request_id: ID запроса.
     :param str comment: Текст комментария.
     :return: JSON-ответ с информацией о комментарии, включая id комментария, имя доктора, время, текст комментария, является ли текущий пользователь автором.
     """
-    request_id = request.args.get('request_id')
-    comment = request.args.get('comment')
-
+    room_id = data['room_id']
+    request_id = data['request_id']
+    comment = data['comment']
+    print(comment)
     #TODO добавить комментарий в БД
-    return jsonify({"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": comment, "editable": True})
+
+    user_id = current_user.id
+    if user_id in connected_users:
+        for sid in connected_users[user_id]:
+            emit('self_added_comment', {"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": comment}, to = sid)
+    emit('added_comment', {"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": comment}, room = room_id, skip_sid = connected_users[user_id])
 
 
-@app.route('/delete_comment/<int:comment_id>', methods=['POST'])
-def delete_comment(comment_id):
+@socketio.on('delete_comment')
+def delete_comment(data):
     """
     Удаляет комментарий по его id.
     :param int comment_id: ID комментария.
     :return: JSON-ответ с именем текущего пользователя.
     """
+    room_id = data['room_id']
+    comment_id = data['comment_id']
+
     #TODO удалить коммент из БД
     doctorName = "Dr. Smith"
-    return jsonify(doctorName)
+
+    emit('deleted_comment', doctorName, room = room_id)
 
 
-@app.route('/edit_comment/<int:comment_id>', methods=['POST'])
-def edit_comment(comment_id):
+@socketio.on('edit_comment')
+def edit_comment(data):
     """
     Изменяет комментарий по его id.
     :param int comment_id: ID комментария.
     :param str comment: Текст комментария.
     :return: JSON-ответ с информацией о комментарии, включая id комментария, имя доктора, время, текст комментария, является ли текущий пользователь автором.
     """
-    updated_comment = request.form.get('comment')
+    room_id = data['room_id']
+    comment_id = data['comment_id']
+    updated_comment = data['comment']
 
     #TODO изменить коммента в БД и после вернуть его
-    return jsonify({"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment, "editable": True})
+
+    user_id = current_user.id
+    if user_id in connected_users:
+        for sid in connected_users[user_id]:
+            emit('self_edited_comment', {"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment}, to = sid)
+    emit('edited_comment', {"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment}, room = room_id, skip_sid = connected_users[user_id])    
 
 
 @app.route('/create_patient', methods=['POST'])
@@ -350,4 +407,4 @@ def load_patients():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, debug=True)
