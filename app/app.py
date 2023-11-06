@@ -101,7 +101,7 @@ def main():
     Отображает главную страницу с данными о пациентах и симптомах.
     :return: HTML-шаблон главной страницы с симптомами.
     """
-    symptoms = ['Высокая температура', 'Кашель', 'Насморк'] #TODO Получить из БД
+    symptoms = Symptom.find_all_symptoms()
 
     return render_template('index.html', symptoms=symptoms)
 
@@ -278,18 +278,23 @@ def get_patient_info():
     patient_id = request.args.get('patient_id')
 
     patient = Patient.get_by_id(patient_id)
-    if patient:
-        today = datetime.now()
-        age = today.year - patient.born_date.year - \
-            ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
-        patient_data = {
-            'id': patient.id, #TODO Сделать невидимым во фронте
-            'name': patient.name,
-            'birthDate': patient.born_date.strftime("%Y-%m-%d"),
-            'age': age, 
-            'snils': patient.insurance_certificate,
-            'sex' : patient.sex, #Не используется пока
-        }
+    if not patient:
+        error_message = {"error": "Ошибка", "message": "Пациента не существует."}
+        response = jsonify(error_message)
+        response.status_code = 400
+        return response
+    
+    today = datetime.now()
+    age = today.year - patient.born_date.year - \
+        ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
+    patient_data = {
+        'id': patient.id, #TODO Сделать невидимым во фронте
+        'name': patient.name,
+        'birthDate': patient.born_date.strftime("%Y-%m-%d"),
+        'age': age, 
+        'snils': patient.insurance_certificate,
+        'sex' : patient.sex, #Не используется пока
+    }
 
     return jsonify(patient_data)
 
@@ -308,12 +313,9 @@ def load_patient_history():
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
 
-    data = [[i, f'Doctor Name {i}', f'Date {i}', f'Predicted Result {i}', f'Без комментариев'] for i in range(1, 170)] #Пример какой то таблицы
+    data = Request.get_requests_page_by_patient_id(patient_id, page, per_page)
 
-    start = (page - 1) * per_page
-    end = start + per_page
-
-    return jsonify(data[start:end])
+    return jsonify(data)
 
 
 @socketio.on('add_comment')
