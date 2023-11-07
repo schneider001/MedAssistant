@@ -28,7 +28,7 @@ $(document).ready(function() {
                 $('#name').text(data.name);
                 $('#birth-date').text(data.birthDate);
                 $('#age').text(data.age);
-                $('#snils').text(data.snils);
+                $('#oms').text(data.oms);
                 if (requestHistoryTable) {
                     requestHistoryTable.removeEventListeners();
                     $('#request-history-table').off('click', 'tbody tr');

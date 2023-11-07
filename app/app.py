@@ -133,7 +133,7 @@ def get_request_info():
     Получает диагноз с помощью модели и возвращает информацию об этом запросе.
     :param str id: ID пациента.
     :param str name: Полное имя пациента.
-    :param str snils: СНИЛС пациента.
+    :param str oms: Полис ОМС пациента.
     :param list symptoms: Список симптомов.
     :return: JSON-ответ с информацией для карточки запроса, включая id запроса, имя пациента, имя доктора, симптомы, предсказанный диагноз, комментарии врачей.
     """
@@ -141,7 +141,7 @@ def get_request_info():
 
     patient_id = data.get('id')
     patientname = data.get('name')
-    snils = data.get('snils')
+    oms = data.get('oms')
     symptoms = data.get('symptoms')
 
     time.sleep(1)
@@ -207,13 +207,13 @@ def load_data_patients():
     :param str search: Фильтр.
     :param str page: Номер страницы.
     :param str per_page: Количество пациентов на странице.
-    :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, СНИЛС.
+    :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, Полис ОМС.
     """
     search_text = request.args.get('search', '').lower()
     page = int(request.args.get('page'))
     per_page = int(request.args.get('per_page'))
 
-    data = [[i, f'Name {i}', f'snils {i}'] for i in range(1, 101)]  # Пример какой-то таблицы
+    data = [[i, f'Name {i}', f'oms {i}'] for i in range(1, 101)]  # Пример какой-то таблицы
 
     if search_text == '':
         filtered_data = data
@@ -273,7 +273,7 @@ def get_patient_info():
     """
     Получает информацию о пациенте по его id.
     :param str patient_id: ID пациента.
-    :return: JSON-ответ с информацией о пациенте, включая его id, полное имя, дату рождения, текущий возраст, СНИЛС.
+    :return: JSON-ответ с информацией о пациенте, включая его id, полное имя, дату рождения, текущий возраст, Полис ОМС.
     """
     patient_id = request.args.get('patient_id')
 
@@ -292,7 +292,7 @@ def get_patient_info():
         'name': patient.name,
         'birthDate': patient.born_date.strftime("%Y-%m-%d"),
         'age': age, 
-        'snils': patient.insurance_certificate,
+        'oms': patient.insurance_certificate,
         'sex' : patient.sex, #Не используется пока
     }
 
@@ -387,20 +387,23 @@ def create_patient():
     Создает нового пациента.
     :param str fullname: Имя пациента.
     :param str birthdate: Дата рождения.
-    :param str snils: СНИЛС пациента.
+    :param str oms: Полис ОМС пациента.
     :param image image: Изображение пациента.
-    :return: JSON-ответ с информацией о пациенте, включая id пациента, имя пациента, СНИЛС.
+    :return: JSON-ответ с информацией о пациенте, включая id пациента, имя пациента, Полис ОМС.
     """
     fullname = request.form['fullname']
     birthdate = request.form['birthdate']
-    snils = request.form['snils']
-    image = request.files.get('image') #может быть null
+    oms = request.form['oms']
+    sex = request.form['sex']
+    image = request.files.get('image')
+
+    Patient.insert_new_patient(fullname, oms, birthdate, sex)
+    id = Patient.get_id_by_insurance_certificate(oms)
 
     if image:
-        image.save('./static/patient_images/imagename.jpg')
+        image.save(f'./static/patient_images/{id}.jpg')
 
-    #TODO сохраняем в бд, возвращаем id из базы и полное имя со СНИЛСом
-    return jsonify({'id': 100, 'name': fullname, 'snils': snils})
+    return jsonify({'id': id, 'name': fullname, 'oms': oms})
 
 
 @app.route('/load_patients', methods=['GET'])
@@ -409,7 +412,7 @@ def load_patients():
     """
     :param str search: Фильтр.
     :param str page: Номер страницы.
-    :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, СНИЛС; также переменную more, указывающая о конце пагинации.
+    :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, полис ОМС; также переменную more, указывающая о конце пагинации.
     """
     #TODO сейчас есть похожая функция для таблицы, но в этой появляется обязательная переменная more, в будущем планирую убрать старую функцию без more и переиспользовать эту
     term = request.args.get('search', '')
@@ -421,15 +424,15 @@ def load_patients():
 
     time.sleep(1)
     patients_in_db = [
-        {"id": 1 ,"name": "Иванов Иван Иванович", "snils": "123-456-789 10" },
-        {"id": 2 ,"name": "Петров Петр Петрович", "snils": "342-231-534 14" },
-        {"id": 3 ,"name": "Сидоров Сидор Сидорович", "snils": "654-342-765 43" },
-        {"id": 4 ,"name": "Смирнов Алексей Андреевич", "snils": "234-654-324 34" },
-        {"id": 5 ,"name": "Козлов Владимир Дмитриевич", "snils": "432-321-654 43" },
-        {"id": 6 ,"name": "Морозов Олег Игоревич", "snils": "432-765-234 32" }
+        {"id": 1 ,"name": "Иванов Иван Иванович", "oms": "1234 4562 7894 5410" },
+        {"id": 2 ,"name": "Петров Петр Петрович", "oms": "3424 2321 5334 1434" },
+        {"id": 3 ,"name": "Сидоров Сидор Сидорович", "oms": "6534 3242 7665 3243" },
+        {"id": 4 ,"name": "Смирнов Алексей Андреевич", "oms": "2324 6354 3324 2234" },
+        {"id": 5 ,"name": "Козлов Владимир Дмитриевич", "oms": "4321 3321 6254 1243" },
+        {"id": 6 ,"name": "Морозов Олег Игоревич", "oms": "4322 7165 1234 2332" }
     ] #TODO получать пациентов из БД
 
-    filtered_patients = list(filter(lambda p: term in p["name"] or term in p["snils"], patients_in_db))
+    filtered_patients = list(filter(lambda p: term in p["name"] or term in p["oms"], patients_in_db))
     patients = filtered_patients[start:end] #Нужно опять же из БД получить нужную страницу с пациентами
 
     return jsonify({'results': patients, 'pagination': {'more': end < len(filtered_patients)}}) #и при этом нужно как то понять, была ли это последняя страница
