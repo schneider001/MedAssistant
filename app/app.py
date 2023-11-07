@@ -101,7 +101,7 @@ def main():
     Отображает главную страницу с данными о пациентах и симптомах.
     :return: HTML-шаблон главной страницы с симптомами.
     """
-    symptoms = Symptom.find_all_symptoms()
+    symptoms = Symptom.find_all_ru_names()
 
     return render_template('index.html', symptoms=symptoms)
 
@@ -125,7 +125,7 @@ def history():
     """
     return render_template('history.html')
 
-
+#---------------------------------------TODO--------------------------------------------
 @app.route('/get_request_info', methods=['POST'])
 @login_required
 def get_request_info():
@@ -140,32 +140,42 @@ def get_request_info():
     data = request.get_json()
 
     patient_id = data.get('id')
-    patientname = data.get('name')
+    patient_name = data.get('name')
     snils = data.get('snils')
-    symptoms = data.get('symptoms')
-
-    time.sleep(1)
-    diagnosis = get_disease(symptoms)
-    doctor_comments = [{"id": 1, "doctor": "Dr. Robert", "time": "10:30", "comment": "Hmm, This diagnosis looks cool", "editable": False}, #editable true, если это комментарий текущего доктора
-                       {"id": 2, "doctor": "Dr. Johnson", "time": "11:15", "comment": "Really cool", "editable": False},
-                       {"id": 3, "doctor": "Dr. Hudson", "time": "12:05", "comment": "Thanks", "editable": False},
-                       {"id": 4, "doctor": "Dr. Mycac", "time": "12:06", "comment": "WTF", "editable": False},
-                       {"id": 5, "doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
+    symptom_ru_names = data.get('symptoms')
     
-    request_id = 11
+    symptoms = [Symptom.get_by_ru_name(ru_name) for ru_name in symptom_ru_names]
+    
+    request_id = Request.add(current_user.id, 
+                             patient_id, 
+                             [symptom.id for symptom in symptoms], #symptom_ids
+                             ML_MODEL_VERSION)
 
+    disease_name = get_disease([symptom.name for symptom in symptoms])
+    
+    disease = Disease(None, None, None)
+    
+    if disease_name:
+        status = 'READY'
+        disease = Disease.get_by_name(disease_name)
+    else:
+        status = 'ERROR'
+    
+    Request.update_status(request_id, status, disease.id)
+    doctor_comments = []
+    
     response_data = {
         "id": request_id,
-        "patient_name": patientname,
-        "doctor": "Dr. Smith", #Имя текущего доктора
-        "symptoms": symptoms,
-        "diagnosis": diagnosis,
+        "patient_name": patient_name,
+        "doctor": current_user.name, 
+        "symptoms": [symptom.ru_name for symptom in symptoms],
+        "diagnosis": disease.ru_name,
         "doctor_comments": doctor_comments
     }
     
     return jsonify(response_data)
 
-
+#------------------------------------------TODO-----------------------------------------
 @app.route('/get_request_info_by_id', methods=['POST'])
 @login_required
 def get_request_info_by_id():
@@ -230,7 +240,7 @@ def load_data_patients():
 
     return jsonify(paginated_data)
 
-
+#----------------------------------TODO----------------------------------------------------
 @app.route('/load_data_requests', methods=['GET'])
 @login_required
 def load_data_requests():
@@ -297,7 +307,7 @@ def get_patient_info():
 
     return jsonify(patient_data)
 
-
+#---------------------------------------TODO--------------------------------------------
 @app.route('/load_patient_history', methods=['GET'])
 @login_required
 def load_patient_history():
@@ -316,7 +326,7 @@ def load_patient_history():
 
     return jsonify(data)
 
-
+#---------------------------------------TODO--------------------------------------------
 @socketio.on('add_comment')
 @login_required
 def add_comment(data):
@@ -338,7 +348,7 @@ def add_comment(data):
             emit('self_added_comment', response, to = sid)
         emit('added_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))
 
-
+#---------------------------------------TODO--------------------------------------------
 @socketio.on('delete_comment')
 @login_required
 def delete_comment(data):
@@ -356,7 +366,7 @@ def delete_comment(data):
     response = {"id": comment_id, "doctor": doctorName}
     emit('deleted_comment', response, room = room_id)
 
-
+#---------------------------------------TODO--------------------------------------------
 @socketio.on('edit_comment')
 @login_required
 def edit_comment(data):

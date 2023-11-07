@@ -28,5 +28,5 @@ login_manager = LoginManager(app)
 socketio = SocketIO(app)
 
 def get_disease(symptoms: list):
-    return('Заболевание шейки ИИ')
+    return('Osteoarthristis')
 

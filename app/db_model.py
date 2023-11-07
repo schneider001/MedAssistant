@@ -51,15 +51,35 @@ class Patient:
         
         
 class Symptom:
-    def __init__(self, id, name):
+    def __init__(self, id, name, ru_name):
         self.id = id
         self.name = name
+        self.ru_name = ru_name
     
     @staticmethod
-    def find_all_symptoms():
+    def find_all_ru_names():
         query = "SELECT ru_name FROM symptoms"
         result = db.execute_select(query)
         return [item[0] for item in result]
+
+    @staticmethod
+    def get_by_ru_name(ru_name):
+        query = "SELECT id, name, ru_name \
+                 FROM symptoms \
+                 WHERE ru_name = %s"
+        values = db.execute_select(query, ru_name)
+        if values:
+            return Symptom(*values[0])
+    
+    @staticmethod
+    def get_by_name(name):
+        query = "SELECT id, name, ru_name \
+                 FROM symptoms \
+                 WHERE name = %s"
+        values = db.execute_select(query, name)
+        if values:
+            return Symptom(*values)
+        
         
 
 class Request:
@@ -72,6 +92,29 @@ class Request:
         self.status = status
         self.date = date
         self.ml_model_id = ml_model_id
+        
+        
+    @staticmethod
+    def add(doctor_id, patient_id, symptom_ids, ml_model_version):
+        query_req = "INSERT INTO requests (doctor_id, patient_id, ml_model_id) \
+                     SELECT %s, %s, ml_model.id \
+                     FROM ml_model \
+                     WHERE ml_model.version = %s"
+        request_id = db.execute_update(query_req, doctor_id, patient_id, ml_model_version)
+        
+        query_req_sym = "INSERT INTO request_symptoms (request_id, symptom_id) \
+                         VALUES "
+        values = ', '.join(f"({symptom_id}, {request_id})" for symptom_id in symptom_ids)
+        query_req_sym = f"INSERT INTO request_symptoms (symptom_id, request_id) VALUES {values}"
+        db.execute_update(query_req_sym)
+        return request_id
+        
+    @staticmethod
+    def update_status(id, status, predicted_disease_id):
+        query = "UPDATE requests \
+                 SET status = %s, predicted_disease_id = %s \
+                 WHERE id = %s"
+        db.execute_update(query, status, predicted_disease_id, id)
 
     @staticmethod
     def get_requests_page_by_patient_id(patient_id, page, per_page):
@@ -98,3 +141,18 @@ class Comment:
         self.doctor_id = doctor_id
         self.request_id = request_id
         self.comment = comment
+        
+
+class Disease:
+    def __init__(self, id, name, ru_name):
+        self.id = id
+        self.name = name,
+        self.ru_name = ru_name
+        
+    def get_by_name(name):
+        query = "SELECT id, name, ru_name \
+                 FROM diseases \
+                 WHERE name = %s"
+        values = db.execute_select(query, name)
+        if values:
+            return Disease(*values[0])
