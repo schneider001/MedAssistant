@@ -99,6 +99,10 @@ body {
   font-weight: bold;
 }
 
+.select2-container--bootstrap-5 .select2-selection {
+  border-color: var(--primary-color);
+}
+
 .form-control {
   border-color: var(--primary-color) !important;
 }
@@ -141,14 +145,6 @@ body {
 
 .centered-box-body {
   padding: 20px;
-}
-
-.tbodycontainer { 
-  height: 35vh; 
-  width: 100%; 
-  margin: 0; 
-  overflow-y: auto; 
-  background-color: var(--background-color);
 }
 
 #patients-table tbody tr:hover, #request-history-table tbody tr:hover {

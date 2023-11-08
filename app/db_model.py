@@ -72,9 +72,23 @@ class Symptom:
     
     @staticmethod
     def find_all_symptoms():
-        query = "SELECT ru_name FROM symptoms"
-        result = db.execute_select(query)
-        return [item[0] for item in result]
+        query = "SELECT id, ru_name FROM symptoms"
+        return db.execute_select(query)
+    
+    @staticmethod
+    def get_page_by_filter(filter, page, per_page):
+        query = "SELECT id, ru_name FROM symptoms \
+            WHERE LOWER(ru_name) LIKE %s or LOWER(name) LIKE %s \
+            LIMIT %s OFFSET %s;"
+        filter_string = f'%{filter.lower()}%'
+        return db.execute_select(query, filter_string, filter_string, per_page, (page - 1) * per_page)
+    
+    @staticmethod
+    def get_count_by_filter(filter):
+        query = "SELECT COUNT(*) FROM symptoms \
+            WHERE LOWER(ru_name) LIKE %s or LOWER(name) LIKE %s"
+        filter_string = f'%{filter.lower()}%'
+        return db.execute_select(query, filter_string, filter_string)
         
 
 class Request:

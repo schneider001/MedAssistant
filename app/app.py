@@ -100,11 +100,9 @@ def logout():
 def main():
     """
     Отображает главную страницу с данными о пациентах и симптомах.
-    :return: HTML-шаблон главной страницы с симптомами.
+    :return: HTML-шаблон главной страницы.
     """
-    symptoms = Symptom.find_all_symptoms()
-
-    return render_template('index.html', symptoms=symptoms)
+    return render_template('index.html')
 
 
 @app.route('/patients')
@@ -207,14 +205,14 @@ def load_data_patients():
     Получает список пациентов для указанной страницы в пагинации с использованием поиска.
     :param str search: Фильтр.
     :param str page: Номер страницы.
-    :param str per_page: Количество пациентов на странице.
     :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, Полис ОМС.
     """
     search_text = request.args.get('search', '').lower()
     page = int(request.args.get('page'))
-    per_page = int(request.args.get('per_page'))
 
-    data = [[i, f'Name {i}', f'oms {i}'] for i in range(1, 101)]  # Пример какой-то таблицы
+    per_page = 15
+
+    data = [[i, f'Name {i}', f'oms {i}'] for i in range(1, 101)]
 
     if search_text == '':
         filtered_data = data
@@ -240,12 +238,12 @@ def load_data_requests():
     Получает список запросов для текущего пользователя для указанной страницы в пагинации с использованием поиска.
     :param str search: Фильтр.
     :param str page: Номер страницы.
-    :param str per_page: Количество запросов на странице.
     :return: JSON-ответ со списком запросов для указанной страницы, включая id запроса, имя пациента, дату, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
     """
     search_text = request.args.get('search', '').lower()
     page = int(request.args.get('page'))
-    per_page = int(request.args.get('per_page'))
+
+    per_page = 15
 
     data = [[i, f'Name {i}', f'Date {i}', f'Result {i}', 'Без комментариев'] for i in range(1, 156)] #Пример какой то таблицы
     
@@ -290,7 +288,7 @@ def get_patient_info():
         ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
 
     patient_data = {
-        'id': patient.id, #TODO Сделать невидимым во фронте
+        'id': patient.id,
         'name': patient.name,
         'birthDate': patient.born_date.strftime("%Y-%m-%d"),
         'age': age, 
@@ -312,12 +310,12 @@ def load_patient_history():
     Получает список запросов для пациента по id пациента для указанной странице в пагинации.
     :param str patient_id: ID пациента.
     :param str page: Номер страницы.
-    :param str per_page: Количество запросов на странице.
     :return: JSON-ответ со списком запросов для указанной страницы, которые включают id запроса, имя доктора, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
     """
     patient_id = int(request.args.get('search'))
     page = int(request.args.get('page'))
-    per_page = int(request.args.get('per_page'))
+    
+    per_page = 15
 
     data = Request.get_requests_page_by_patient_id(patient_id, page, per_page)
 
@@ -442,6 +440,28 @@ def load_patients():
     patients = filtered_patients[start:end] #Нужно опять же из БД получить нужную страницу с пациентами
 
     return jsonify({'results': patients, 'pagination': {'more': end < len(filtered_patients)}}) #и при этом нужно как то понять, была ли это последняя страница
+
+
+@app.route('/load_symptoms', methods=['GET'])
+@login_required
+def load_symptoms():
+    """
+    :param str search: Фильтр.
+    :param str page: Номер страницы.
+    :return: JSON-ответ со списком симптомов для указанной страницы, включая id симптома, название, также переменную more, указывающая о конце пагинации.
+    """
+    filter = request.args.get('search', '')
+    page = int(request.args.get('page', 1))
+
+    per_page = 15
+    
+    symptoms = Symptom.get_page_by_filter(filter, page, per_page)
+    symptoms = [{'id': item[0], 'name': item[1]} for item in symptoms]
+    symptoms_count = Symptom.get_count_by_filter(filter)[0][0]
+    more = page * per_page < symptoms_count
+
+    return jsonify({'results': symptoms, 'pagination': {'more': more}})
+
 
 
 if __name__ == "__main__":

@@ -16,6 +16,7 @@ export function openRequestInfoModal(mode, data) {
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
+            requestId = response.id;
             socket.emit('join_room', { room_id: response.id });
             loadSection.style.display = 'none';
             dataSection.style.display = 'block';

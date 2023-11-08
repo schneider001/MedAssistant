@@ -4,7 +4,6 @@ class LazyLoadTable {
         this.dataUrl = dataUrl;
         this.hiddenColumns = hiddenColumns
         this.page = 1;
-        this.perPage = 15;
         this.searchData = searchData;
         this.noMoreData = false;
         this.isLoading = false;
@@ -36,7 +35,7 @@ class LazyLoadTable {
             this.isLoading = true;
 
             $.ajax({
-                url: `${this.dataUrl}?page=${this.page}&per_page=${this.perPage}&search=${this.searchData}`,
+                url: `${this.dataUrl}?page=${this.page}&search=${this.searchData}`,
                 method: 'GET',
                 success: (data) => {
                     $loadingRow.remove();
@@ -70,6 +69,11 @@ class LazyLoadTable {
                     }
                   
                     this.isLoading = false;
+
+                    const tableContainer = document.getElementById(this.tableId);
+                    if (tableContainer.scrollHeight <= tableContainer.clientHeight) {
+                        this.loadMoreData();
+                    }
                 },
                 error: function(xhr, status, error) {
                     console.error(`Error fetching data: ${error}`);
