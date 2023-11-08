@@ -2,6 +2,13 @@ let requestId;
 let socket = io().connect(`http://'${document.domain}:${location.port}`);
 
 
+socket.on('connected', function() {
+    if (requestId !== undefined) {
+        openRequestInfoModal('by_id', { request_id: requestId })
+    }    
+});
+
+
 export function openRequestInfoModal(mode, data) {
            
     const loadSection = document.getElementById('request-load-section');
@@ -33,6 +40,7 @@ export function openRequestInfoModal(mode, data) {
 
 $('#requestModal').on('hidden.bs.modal', function() {
     socket.emit('leave_room', { room_id: requestId });
+    requestId = undefined;
 });
 
 function loadRequestInfoModal(response) {

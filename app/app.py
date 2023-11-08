@@ -1,6 +1,7 @@
 from flask import request, redirect, url_for, render_template, jsonify, send_from_directory
 from flask_login import login_required, login_user, logout_user, current_user
-from flask_socketio import emit, join_room, leave_room
+from flask_socketio import emit, join_room, leave_room, disconnect, rooms
+import functools
 import time
 import os
 import random
@@ -8,25 +9,37 @@ import random
 from init import *
 from db_model import *
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return Doctor.get_by_id(user_id)
+
+
+def authenticated_only(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if not current_user.is_authenticated:
+            disconnect()
+        else:
+            return f(*args, **kwargs)
+    return wrapped
 
 
 connected_users = {}
 
 
 @socketio.on('connect')
-@login_required
+@authenticated_only
 def handle_connect():
     user_id = current_user.id
     if user_id not in connected_users:
         connected_users[user_id] = set()
     connected_users[user_id].add(request.sid)
+    emit('connected')
 
 
 @socketio.on('disconnect')
-@login_required
+@authenticated_only
 def handle_disconnect():
     user_id = current_user.id
     if user_id in connected_users and request.sid in connected_users[user_id]:
@@ -34,19 +47,17 @@ def handle_disconnect():
 
 
 @socketio.on('join_room')
-@login_required
+@authenticated_only
 def handle_join_room(data):
     room_id = data['room_id']
     join_room(room_id)
-    emit('joined_room', f'joined room {room_id}')
 
 
 @socketio.on('leave_room')
-@login_required
+@authenticated_only
 def handle_leave_room(data):
     room_id = data['room_id']
     leave_room(room_id)
-    emit('left_room', room_id, room=room_id)
 
 
 @app.route('/static/js/<path:filename>')
@@ -323,7 +334,7 @@ def load_patient_history():
 
 
 @socketio.on('add_comment')
-@login_required
+@authenticated_only
 def add_comment(data):
     """
     Добавляет новый комментарий для указанного запроса в БД.
@@ -345,7 +356,7 @@ def add_comment(data):
 
 
 @socketio.on('delete_comment')
-@login_required
+@authenticated_only
 def delete_comment(data):
     """
     Удаляет комментарий по его id.
@@ -363,7 +374,7 @@ def delete_comment(data):
 
 
 @socketio.on('edit_comment')
-@login_required
+@authenticated_only
 def edit_comment(data):
     """
     Изменяет комментарий по его id.
