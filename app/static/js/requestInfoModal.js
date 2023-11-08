@@ -108,7 +108,7 @@ function generateCommentElement(comment) {
     const $dFlexStart = $('<div>', { class: 'd-flex flex-start' });
     const $avatar = $('<img>', {
         class: 'rounded-circle shadow-1-strong me-3',
-        src: '/static/testPatientCardPhoto.jpg',
+        src: '/static/images/default-avatar.png',
         alt: 'avatar',
         width: '64',
         height: '64'
@@ -171,7 +171,7 @@ function createCommentInputBlock(doctor) {
     const $dFlex = $('<div>', { class: 'd-flex flex-start' });
     const $avatar = $('<img>', { 
         class: 'rounded-circle shadow-1-strong me-3', 
-        src: '/static/testPatientCardPhoto.jpg', 
+        src: '/static/images/default-avatar.png', 
         alt: 'avatar', 
         width: 64, 
         height: 64 

@@ -2,6 +2,7 @@ from flask import request, redirect, url_for, render_template, jsonify, send_fro
 from flask_login import login_required, login_user, logout_user, current_user
 from flask_socketio import emit, join_room, leave_room
 import time
+import os
 import random
 
 from init import *
@@ -273,7 +274,7 @@ def get_patient_info():
     """
     Получает информацию о пациенте по его id.
     :param str patient_id: ID пациента.
-    :return: JSON-ответ с информацией о пациенте, включая его id, полное имя, дату рождения, текущий возраст, Полис ОМС.
+    :return: JSON-ответ с информацией о пациенте, включая его id, полное имя, дату рождения, текущий возраст, Полис ОМС, пол.
     """
     patient_id = request.args.get('patient_id')
 
@@ -287,14 +288,19 @@ def get_patient_info():
     today = datetime.now()
     age = today.year - patient.born_date.year - \
         ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
+
     patient_data = {
         'id': patient.id, #TODO Сделать невидимым во фронте
         'name': patient.name,
         'birthDate': patient.born_date.strftime("%Y-%m-%d"),
         'age': age, 
         'oms': patient.insurance_certificate,
-        'sex' : patient.sex, #Не используется пока
+        'sex' : patient.sex,
     }
+
+    photo_filename = f'./static/patient_images/{patient_id}.jpg'
+    if os.path.exists(photo_filename):
+        patient_data['photo_url'] = photo_filename
 
     return jsonify(patient_data)
 
