@@ -63,13 +63,13 @@ def login():
     return render_template("login.html")
 
 
-@app.route('/', methods=['POST'])
+@app.route('/login', methods=['POST'])
 def login_post():
     """
     Обрабатывает данные, отправленные при попытке входа.
     :param str username: Имя пользователя, отправленное из формы входа.
     :param str password: Пароль, отправленный из формы входа.
-    :return: Перенаправляет пользователя на страницу 'main' в случае успешного входа, или на страницу 'login' при ошибке.
+    :return: Возвращает результат аутентификации.
     """
     username = request.form['username']
     password = request.form['password']
@@ -79,9 +79,9 @@ def login_post():
  
     if authorized:
         login_user(doctor)
-        return redirect(url_for('main'))
+        return jsonify({'success': True})
     else:
-        return redirect(url_for('login'))
+        return jsonify({'success': False})
     
     
 @app.route("/logout")
@@ -314,7 +314,7 @@ def load_patient_history():
     """
     patient_id = int(request.args.get('search'))
     page = int(request.args.get('page'))
-    
+
     per_page = 15
 
     data = Request.get_requests_page_by_patient_id(patient_id, page, per_page)
