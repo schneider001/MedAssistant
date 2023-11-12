@@ -1,3 +1,5 @@
+import "./select2adapters.js"
+
 export function openCreatePatientModal() {
     $('#patientname').select2('close');
     $('#createPatientModal').modal('show');
@@ -6,22 +8,22 @@ export function openCreatePatientModal() {
         format: "dd.mm.yyyy"
     });
   
-    var snilsInput = document.querySelector('.snils-input');
-    var snilsParts = document.querySelectorAll('.snils-part');
+    var omsInput = document.querySelector('.oms-input');
+    var omsParts = document.querySelectorAll('.oms-part');
   
-    var snils1 = document.getElementById('snils1');
-    var snils2 = document.getElementById('snils2');
-    var snils3 = document.getElementById('snils3');
-    var snils4 = document.getElementById('snils4');
+    var oms1 = document.getElementById('oms1');
+    var oms2 = document.getElementById('oms2');
+    var oms3 = document.getElementById('oms3');
+    var oms4 = document.getElementById('oms4');
   
-    snilsInput.addEventListener('click', function(event) {
-        if (event.target === snilsInput) {   
-            for (var i = snilsParts.length - 1; i >= 0; i--) {
-                if (snilsParts[i].value.length > 0 || i === 0) {
-                    if (snilsParts[i].value.length < 3) {
-                        snilsParts[i].focus();
+    omsInput.addEventListener('click', function(event) {
+        if (event.target === omsInput) {   
+            for (var i = omsParts.length - 1; i >= 0; i--) {
+                if (omsParts[i].value.length > 0 || i === 0) {
+                    if (omsParts[i].value.length < 3) {
+                        omsParts[i].focus();
                     } else {
-                        snilsParts[i + 1].focus();
+                        omsParts[i + 1].focus();
                     }
                     break;
                 }
@@ -29,29 +31,29 @@ export function openCreatePatientModal() {
         }
     });
   
-    snilsParts.forEach(function(input, index) {
+    omsParts.forEach(function(input, index) {
         input.addEventListener('input', function() {
             var value = input.value;
         
-            if (value.length === input.maxLength && index < snilsParts.length - 1) {
-                snilsParts[index + 1].focus();
+            if (value.length === input.maxLength && index < omsParts.length - 1) {
+                omsParts[index + 1].focus();
             }
         });
   
         input.addEventListener('keydown', function(event) {
             if (event.key === 'Backspace' && input.value.length === 0 && index > 0) {
-                snilsParts[index - 1].focus();
-            } else if (event.key === 'ArrowRight' && input.selectionStart === input.value.length && index < snilsParts.length - 1) {
-                snilsParts[index + 1].focus();
+                omsParts[index - 1].focus();
+            } else if (event.key === 'ArrowRight' && input.selectionStart === input.value.length && index < omsParts.length - 1) {
+                omsParts[index + 1].focus();
                 setTimeout(function () {
-                    snilsParts[index + 1].setSelectionRange(1, 1);
+                    omsParts[index + 1].setSelectionRange(1, 1);
                 }, 0);
                 event.preventDefault();
             } else if (event.key === 'ArrowLeft' && input.selectionStart <= 1 && index > 0) {
-                snilsParts[index - 1].focus();
+                omsParts[index - 1].focus();
                 setTimeout(function () {
-                    const newSelection = snilsParts[index - 1].value.length;
-                    snilsParts[index - 1].setSelectionRange(newSelection, newSelection);
+                    const newSelection = omsParts[index - 1].value.length;
+                    omsParts[index - 1].setSelectionRange(newSelection, newSelection);
                 }, 0);
                 event.preventDefault();
             }
@@ -66,10 +68,13 @@ export function openCreatePatientModal() {
         event.preventDefault();
         
         var formData = new FormData();
+
+        var selectedSex = $("#sex").select2('data')[0].id;
         
         formData.append("fullname", $("#fullname").val());
         formData.append("birthdate", $("#birthdate").val());
-        formData.append("snils", `${snils1.value}-${snils2.value}-${snils3.value} ${snils4.value}`);
+        formData.append("oms", `${oms1.value}-${oms2.value}-${oms3.value} ${oms4.value}`);
+        formData.append("sex", selectedSex);
         
         var imageFile = $('#file-input')[0].files[0];
         if (imageFile) {
@@ -107,34 +112,41 @@ export function openCreatePatientModal() {
         $("#create-patient-form").off('submit', createPatientSubmitHandler);
     });
   
-    snils1.addEventListener('input', function() {
+    oms1.addEventListener('input', function() {
         this.value = this.value.replace(/\D/g, '');
     });
     
-    snils2.addEventListener('input', function() {
+    oms2.addEventListener('input', function() {
         this.value = this.value.replace(/\D/g, '');
     });
     
-    snils3.addEventListener('input', function() {
+    oms3.addEventListener('input', function() {
         this.value = this.value.replace(/\D/g, '');
     });
     
-    snils4.addEventListener('input', function() {
+    oms4.addEventListener('input', function() {
         this.value = this.value.replace(/\D/g, '');
     });
 }
 
+$('#sex').select2({
+    theme: 'bootstrap-5',
+    dropdownAdapter: $.fn.select2.amd.require("SexDropdownAdapter"),
+    closeOnSelect: true,
+    language: {
+        errorLoading: () => 'Невозможно загрузить пол'
+    }
+});
+
 function handleDragOver(event) {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'copy';
-    // Добавьте стили для подсветки области при наведении
     document.getElementById('image-upload').classList.add('dragover');
 }
 window.handleDragOver = handleDragOver;
 
 function handleDragLeave(event) {
     event.preventDefault();
-    // Удалите стили подсветки при уходе с области
     document.getElementById('image-upload').classList.remove('dragover');
 }
 window.handleDragLeave = handleDragLeave;

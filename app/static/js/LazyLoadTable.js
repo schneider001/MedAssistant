@@ -1,9 +1,9 @@
 class LazyLoadTable {
-    constructor(tableId, dataUrl, searchData = '') {
+    constructor(tableId, dataUrl, hiddenColumns = [], searchData = '') {
         this.tableId = tableId;
         this.dataUrl = dataUrl;
+        this.hiddenColumns = hiddenColumns
         this.page = 1;
-        this.perPage = 15;
         this.searchData = searchData;
         this.noMoreData = false;
         this.isLoading = false;
@@ -35,7 +35,7 @@ class LazyLoadTable {
             this.isLoading = true;
 
             $.ajax({
-                url: `${this.dataUrl}?page=${this.page}&per_page=${this.perPage}&search=${this.searchData}`,
+                url: `${this.dataUrl}?page=${this.page}&search=${this.searchData}`,
                 method: 'GET',
                 success: (data) => {
                     $loadingRow.remove();
@@ -51,8 +51,15 @@ class LazyLoadTable {
                     if (data.length > 0) {
                         data.forEach(row => {
                             const $row = $('<tr>');
-                            row.forEach(value => {
-                                $row.append($('<td>').text(value));
+                            row.forEach((value, index) => {
+                                const isHidden = this.hiddenColumns.indexOf(index) !== -1;
+                            
+                                const $td = $('<td>').text(value);
+                                if (isHidden) {
+                                    $td.addClass('d-none');
+                                }
+                            
+                                $row.append($td);
                             });
                             $tbody.append($row);
                         });
@@ -62,6 +69,11 @@ class LazyLoadTable {
                     }
                   
                     this.isLoading = false;
+
+                    const tableContainer = document.getElementById(this.tableId);
+                    if (tableContainer.scrollHeight <= tableContainer.clientHeight) {
+                        this.loadMoreData();
+                    }
                 },
                 error: function(xhr, status, error) {
                     console.error(`Error fetching data: ${error}`);
@@ -79,6 +91,14 @@ class LazyLoadTable {
     }
 
     init() {
+        $(`#${this.tableId} thead tr th`).each((index, th) => {
+            const isHidden = this.hiddenColumns.indexOf(index) !== -1;
+        
+            if (isHidden) {
+                $(th).addClass('d-none');
+            }
+        });
+
         $(`#${this.tableId} tbody`).empty();
         this.loadMoreData();
         

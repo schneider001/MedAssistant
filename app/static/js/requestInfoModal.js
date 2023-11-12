@@ -2,6 +2,13 @@ let requestId;
 let socket = io().connect(`http://'${document.domain}:${location.port}`);
 
 
+socket.on('connected', function() {
+    if (requestId !== undefined) {
+        openRequestInfoModal('by_id', { request_id: requestId })
+    }    
+});
+
+
 export function openRequestInfoModal(mode, data) {
            
     const loadSection = document.getElementById('request-load-section');
@@ -16,6 +23,7 @@ export function openRequestInfoModal(mode, data) {
         contentType: 'application/json',
         data: JSON.stringify(data),
         success: function(response) {
+            requestId = response.id;
             socket.emit('join_room', { room_id: response.id });
             loadSection.style.display = 'none';
             dataSection.style.display = 'block';
@@ -32,6 +40,7 @@ export function openRequestInfoModal(mode, data) {
 
 $('#requestModal').on('hidden.bs.modal', function() {
     socket.emit('leave_room', { room_id: requestId });
+    requestId = undefined;
 });
 
 function loadRequestInfoModal(response) {
@@ -108,7 +117,7 @@ function generateCommentElement(comment) {
     const $dFlexStart = $('<div>', { class: 'd-flex flex-start' });
     const $avatar = $('<img>', {
         class: 'rounded-circle shadow-1-strong me-3',
-        src: '/static/testPatientCardPhoto.jpg',
+        src: '/static/images/default-avatar.png',
         alt: 'avatar',
         width: '64',
         height: '64'
@@ -171,7 +180,7 @@ function createCommentInputBlock(doctor) {
     const $dFlex = $('<div>', { class: 'd-flex flex-start' });
     const $avatar = $('<img>', { 
         class: 'rounded-circle shadow-1-strong me-3', 
-        src: '/static/testPatientCardPhoto.jpg', 
+        src: '/static/images/default-avatar.png', 
         alt: 'avatar', 
         width: 64, 
         height: 64 

@@ -49,6 +49,21 @@ class Patient:
         if patient_data:
             return Patient(*patient_data[0])
         
+    @staticmethod
+    def insert_new_patient(name, insurance_certificate, born_date, sex):
+        query = "INSERT INTO patients (name, insurance_certificate, born_date, sex) VALUES (%s, %s, %s, %s)"
+        db.execute_update(query, name, insurance_certificate, born_date, sex)
+
+    @staticmethod
+    def get_id_by_insurance_certificate(insurance_certificate):
+        query = "SELECT id FROM patients WHERE insurance_certificate = %s"
+        result = db.execute_select(query, insurance_certificate)
+        print(result)
+        if result:
+            return result[0][0]
+        else:
+            return None
+        
         
 class Symptom:
     def __init__(self, id, name, ru_name):
@@ -80,6 +95,24 @@ class Symptom:
         if values:
             return Symptom(*values)
         
+    def find_all_symptoms():
+        query = "SELECT id, ru_name FROM symptoms"
+        return db.execute_select(query)
+    
+    @staticmethod
+    def get_page_by_filter(filter, page, per_page):
+        query = "SELECT id, ru_name FROM symptoms \
+            WHERE LOWER(ru_name) LIKE %s or LOWER(name) LIKE %s \
+            LIMIT %s OFFSET %s;"
+        filter_string = f'%{filter.lower()}%'
+        return db.execute_select(query, filter_string, filter_string, per_page, (page - 1) * per_page)
+    
+    @staticmethod
+    def get_count_by_filter(filter):
+        query = "SELECT COUNT(*) FROM symptoms \
+            WHERE LOWER(ru_name) LIKE %s or LOWER(name) LIKE %s"
+        filter_string = f'%{filter.lower()}%'
+        return db.execute_select(query, filter_string, filter_string)
         
 
 class Request:

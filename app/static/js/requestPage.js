@@ -5,11 +5,37 @@ $(document).ready(function() {
     $('#symptoms').select2({
         theme: 'bootstrap-5',
         closeOnSelect: false,
-        tags: false,
-        allowHtml: true,
 	    allowClear: true,
+        ajax: {
+            url: '/load_symptoms',
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    search: params.term,
+                    page: params.page || 1
+                };
+            },
+            processResults: function(data, params) {
+                params.page = params.page || 1;
+                
+                data.results.forEach(function(result) {
+                    result.symptom_id = result.id;
+                });
+
+                return {
+                    results: data.results,
+                    pagination: {
+                        more: data.pagination.more
+                    }
+                };
+            },
+            cache: true
+        },
         language: {
             errorLoading: () => 'Невозможно загрузить симптомы',
+            inputTooLong: () => 'Слишком много символов',
+            inputTooShort: () => 'Слишком мало символов',
             maximumSelected: () => 'Выбрано максимальное количество симптомов',
             noResults: () => $('<div>', { class: 'text-center' }).text('Нет результатов'),
             removeAllItems: () => 'Удалить все симптомы',
@@ -20,6 +46,14 @@ $(document).ready(function() {
             loadingMore: () => $('<div>', { class: 'text-center' }).append($('<div>', { class: 'spinner-border spinner-border-sm', role: 'status' })
                     .append($('<span>', { class: 'visually-hidden' }).text('Загрузка...')))
         },  
+        templateResult: function(option) {
+            if (!option.symptom_id) { return option.text; }
+            return option.name;
+        },
+        templateSelection: function(option) {
+            if (!option.id) { return option.text; }
+            return option.name;
+        }
     });
 
     $('#patientname').select2({
@@ -68,27 +102,27 @@ $(document).ready(function() {
             
             var $row = $('<div>', { class: 'row' });
             var $nameCol = $('<div>', { class: 'col', text: option.name });
-            var $snilsCol = $('<div>', { class: 'col-3', text: option.snils });
+            var $omsCol = $('<div>', { class: 'col-3', text: option.oms });
 
-            $row.append($nameCol, $snilsCol);
+            $row.append($nameCol, $omsCol);
             return $row;
         },
         templateSelection: function(option) {
             if (!option.id) { return option.text; }
 
             const container = $('<div>').css('display', 'flex').css('justify-content', 'space-between');
-            container.attr('title', `Имя: ${option.name}, СНИЛС: ${option.snils}`);
+            container.attr('title', `Имя: ${option.name}, Полис ОМС: ${option.oms}`);
         
             const nameWrapper = $('<div>');
             nameWrapper.append($('<span>').text('Имя: ').css('color', '#888'));
             nameWrapper.append($('<span>').text(option.name));
         
-            const snilsWrapper = $('<div>');
-            snilsWrapper.append($('<span>').text('СНИЛС: ').css('color', '#888'));
-            snilsWrapper.append($('<span>').text(option.snils));
+            const omsWrapper = $('<div>');
+            omsWrapper.append($('<span>').text('Полис ОМС: ').css('color', '#888'));
+            omsWrapper.append($('<span>').text(option.oms));
             nameWrapper.css('margin-right', '15px');
             
-            return container.append(nameWrapper, snilsWrapper);
+            return container.append(nameWrapper, omsWrapper);
         }
     })
 
@@ -96,7 +130,10 @@ $(document).ready(function() {
         e.preventDefault();
         var selectedData = $('#patientname').select2('data');
         var selectedOption = selectedData[0];
-        var symptoms = $('#symptoms').val();
-        openRequestInfoModal('new', { id: selectedOption.id, name: selectedOption.name, snils: selectedOption.snils, symptoms: symptoms });
+        var symptoms = $('#symptoms').select2('data').map(function(item) {
+            return item.id;
+        });
+        
+        openRequestInfoModal('new', { id: selectedOption.id, name: selectedOption.name, oms: selectedOption.oms, symptoms: symptoms });
     });
 })
