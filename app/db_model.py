@@ -76,24 +76,16 @@ class Symptom:
         query = "SELECT ru_name FROM symptoms"
         result = db.execute_select(query)
         return [item[0] for item in result]
-
-    @staticmethod
-    def get_by_ru_name(ru_name):
-        query = "SELECT id, name, ru_name \
-                 FROM symptoms \
-                 WHERE ru_name = %s"
-        values = db.execute_select(query, ru_name)
-        if values:
-            return Symptom(*values[0])
+    
     
     @staticmethod
-    def get_by_name(name):
+    def get_by_id(id):
         query = "SELECT id, name, ru_name \
                  FROM symptoms \
-                 WHERE name = %s"
-        values = db.execute_select(query, name)
+                 WHERE id = %s"
+        values = db.execute_select(query, id)
         if values:
-            return Symptom(*values)
+            return Symptom(*values[0])
         
     def find_all_symptoms():
         query = "SELECT id, ru_name FROM symptoms"

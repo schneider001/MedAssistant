@@ -135,7 +135,7 @@ def history():
     """
     return render_template('history.html')
 
-#---------------------------------------TODO--------------------------------------------
+#---------------------------------------DONE--------------------------------------------
 @app.route('/get_request_info', methods=['POST'])
 @login_required
 def get_request_info():
@@ -152,9 +152,9 @@ def get_request_info():
     patient_id = data.get('id')
     patient_name = data.get('name')
     snils = data.get('snils')
-    symptom_ru_names = data.get('symptoms')
+    symptom_ids = data.get('symptoms')
     
-    symptoms = [Symptom.get_by_ru_name(ru_name) for ru_name in symptom_ru_names]
+    symptoms = [Symptom.get_by_id(id) for id in symptom_ids]
     
     request_id = Request.add(current_user.id, 
                              patient_id, 
