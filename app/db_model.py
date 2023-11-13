@@ -238,12 +238,42 @@ class Request:
     
 
 class Comment:
-    def __init__(self, id, doctor_id, request_id, comment):
+    def __init__(self, id, doctor_id, request_id, comment, date):
         self.id = id
         self.doctor_id = doctor_id
         self.request_id = request_id
         self.comment = comment
+        self.date = date
     
+    @staticmethod
+    def add(doctor_id, request_id, comment):
+        query = "INSERT INTO comments (doctor_id, request_id, comment) \
+                 VALUES (%s, %s, %s)"
+        return db.execute_update(query, doctor_id, request_id, comment)
+    
+    @staticmethod
+    def get_by_id(id):
+        query = "SELECT id, doctor_id, request_id, comment, date \
+                 FROM comments \
+                 WHERE id = %s"
+        result = db.execute_select(query, id)
+        if result:
+            return Comment(*result[0])
+    
+    @staticmethod
+    def delete_by_id(id):
+        query = "DELETE FROM comments \
+                 WHERE id = %s"
+        db.execute_update(query, id)
+    
+    @staticmethod
+    def update(id, comment_text):
+        query = "UPDATE comments \
+                 SET comment = %s, date = NOW() \
+                 WHERE id = %s"
+        db.execute_update(query, comment_text, id)
+    
+    @staticmethod
     def get_comments_by_request_id(request_id, doctor_id):
         query = "SELECT \
                      doctors.name, \
@@ -259,6 +289,7 @@ class Comment:
                  WHERE comments.request_id = %s \
                  ORDER BY editable DESC"
         return db.execute_select(query, doctor_id, request_id)
+
         
 
 class Disease:

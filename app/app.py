@@ -305,7 +305,7 @@ def get_patient_info():
 
     return jsonify(patient_data)
 
-#---------------------------------------TODO--------------------------------------------
+#---------------------------------------DONE-4-------------------------------------------
 @app.route('/load_patient_history', methods=['GET'])
 @login_required
 def load_patient_history():
@@ -324,7 +324,7 @@ def load_patient_history():
 
     return jsonify(data)
 
-#---------------------------------------TODO--------------------------------------------
+#---------------------------------------DONE-5-------------------------------------------
 @socketio.on('add_comment')
 @authenticated_only
 def add_comment(data):
@@ -336,17 +336,21 @@ def add_comment(data):
     """
     room_id = data['room_id']
     request_id = data['request_id']
-    comment = data['comment']
-    #TODO добавить комментарий в БД
-
-    response = {"id": random.randint(1, 1000), "doctor": "Dr. Smith", "time": "10:30", "comment": comment}
+    comment_text = data['comment']
+    
     user_id = current_user.id
+    comment_id = Comment.add(user_id, request_id, comment_text)
+    comment = Comment.get_by_id(comment_id)
+    if comment:
+        response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment_text}
+    else:
+        response = {"id": None, "doctor": None, "time": None, "comment": None}
     if user_id in connected_users:
         for sid in connected_users[user_id]:
             emit('self_added_comment', response, to = sid)
         emit('added_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))
 
-#---------------------------------------TODO--------------------------------------------
+#---------------------------------------DONE-6-------------------------------------------
 @socketio.on('delete_comment')
 @authenticated_only
 def delete_comment(data):
@@ -358,13 +362,13 @@ def delete_comment(data):
     room_id = data['room_id']
     comment_id = data['comment_id']
 
-    #TODO удалить коммент из БД
-    doctorName = "Dr. Smith"
+    Comment.delete_by_id(comment_id)
+    doctor_name = current_user.name
 
-    response = {"id": comment_id, "doctor": doctorName}
+    response = {"id": comment_id, "doctor": doctor_name}
     emit('deleted_comment', response, room = room_id)
 
-#---------------------------------------TODO--------------------------------------------
+#---------------------------------------TODO-7-------------------------------------------
 @socketio.on('edit_comment')
 @authenticated_only
 def edit_comment(data):
@@ -376,10 +380,14 @@ def edit_comment(data):
     """
     room_id = data['room_id']
     comment_id = data['comment_id']
-    updated_comment = data['comment']
+    updated_comment_text = data['comment']
 
-    #TODO изменить коммента в БД и после вернуть его
-    response = {"id": comment_id, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment}
+    Comment.update(comment_id, updated_comment_text)
+    comment = Comment.get_by_id(comment_id)
+    if comment:
+        response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment.comment}
+    else:
+        response = {}
     user_id = current_user.id
     if user_id in connected_users:
         for sid in connected_users[user_id]:
