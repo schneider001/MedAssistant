@@ -251,12 +251,12 @@ def load_data_patients():
 
     return jsonify(paginated_data)
 
-#----------------------------------TODO----------------------------------------------------
+#----------------------------------DONE-3---------------------------------------------------
 @app.route('/load_data_requests', methods=['GET'])
 @login_required
 def load_data_requests():
     """
-    Получает список запросов для текущего пользователя для указанной страницы в пагинации с использованием поиска.
+    Получает список запросов для текущего полTODOьзователя для указанной страницы в пагинации с использованием поиска.
     :param str search: Фильтр.
     :param str page: Номер страницы.
     :return: JSON-ответ со списком запросов для указанной страницы, включая id запроса, имя пациента, дату, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
@@ -266,24 +266,7 @@ def load_data_requests():
 
     per_page = 15
 
-    data = [[i, f'Name {i}', f'Date {i}', f'Result {i}', 'Без комментариев'] for i in range(1, 156)] #Пример какой то таблицы
-    if search_text == '':
-        filtered_data = data
-    else:
-        filtered_data = [] #TODO тут нужно реализовать поиск по бд с учетом страницы, я тут фильтрую и отбираю нужные элементы из массива для примера, но в идеале, если это возможно, это надо сделать средствами SQL
-        for row in data:
-            row_text = ' '.join(map(str, row)).lower()
-            if search_text in row_text:
-                filtered_data.append(row)
-
-    start = (page - 1) * per_page
-    end = start + per_page
-
-    paginated_data = filtered_data[start:end]
-
-    time.sleep(2) # Эмуляция задержки ответа от сервера, для тестов
-
-    return jsonify(paginated_data)
+    return jsonify(Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, search_text))
 
 
 @app.route('/get_patient_info', methods=['GET'])

@@ -181,6 +181,42 @@ class Request:
             return result[0][0]
         return None
     
+    @staticmethod
+    def get_requests_page_by_doctor_id_contain_substr(doctor_id, page, per_page, search_text):
+        query = "SELECT \
+                     request_id, \
+                     doctor_name, \
+                     date, \
+                     predicted_disease_name, \
+                     comment_status \
+                 FROM ( \
+                     SELECT  \
+                         doctors.id AS doctor_id, \
+                         doctors.name AS doctor_name, \
+                         requests.date AS date, \
+                         diseases.ru_name AS predicted_disease_name, \
+                         requests.id AS request_id, \
+                         CASE \
+                             WHEN EXISTS (SELECT 1 FROM comments WHERE comments.request_id = requests.id) THEN 'Прокомментирован' \
+                             ELSE 'Без комментариев' \
+                         END AS comment_status \
+                     FROM  \
+                         requests \
+                     JOIN  \
+                         doctors ON requests.doctor_id = doctors.id \
+                     JOIN  \
+                         diseases ON requests.predicted_disease_id = diseases.id \
+                 ) AS subquery \
+                 WHERE  \
+                     doctor_id = %s AND ( \
+                         predicted_disease_name LIKE %s OR  \
+                         comment_status LIKE %s OR  \
+                         date LIKE %s \
+                     ) \
+                 LIMIT %s OFFSET %s;"
+        
+        sub_str = '%' + search_text + '%'
+        return db.execute_select(query, doctor_id, sub_str, sub_str, sub_str, per_page, (page - 1) * per_page)
 
     @staticmethod
     def get_requests_page_by_patient_id(patient_id, page, per_page):
@@ -219,9 +255,8 @@ class Comment:
                      END AS editable \
                  FROM \
                      comments \
-                 JOIN requests ON requests.id = comments.request_id \
-                 JOIN doctors ON doctors.id = requests.doctor_id \
-                 WHERE requests.id = %s \
+                 JOIN doctors ON doctors.id = comments.doctor_id \
+                 WHERE comments.request_id = %s \
                  ORDER BY editable DESC"
         return db.execute_select(query, doctor_id, request_id)
         
