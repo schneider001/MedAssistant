@@ -110,6 +110,8 @@ export function openCreatePatientModal() {
         }
 
         $("#create-patient-form").off('submit', createPatientSubmitHandler);
+
+        removeImage();
     });
   
     oms1.addEventListener('input', function() {
@@ -141,25 +143,43 @@ $('#sex').select2({
 function handleDragOver(event) {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'copy';
-    document.getElementById('image-upload').classList.add('dragover');
 }
 window.handleDragOver = handleDragOver;
 
+function handleDragEnter(event) {
+    var uploadText = document.getElementById('image-upload');
+    uploadText.style.background = '#dcdcdc';
+}
+window.handleDragEnter = handleDragEnter;
+
 function handleDragLeave(event) {
-    event.preventDefault();
-    document.getElementById('image-upload').classList.remove('dragover');
+    var uploadText = document.getElementById('image-upload');
+    uploadText.style.background = 'var(--background-color)';
 }
 window.handleDragLeave = handleDragLeave;
 
-function handleFileDrop(event) {
+function handleDrop(event) {
     event.preventDefault();
-    document.getElementById('image-upload').classList.remove('dragover');
+    var uploadText = document.getElementById('image-upload');
+    uploadText.style.background = 'var(--background-color)';
+    
     var file = event.dataTransfer.files[0];
     displayImage(file);
 }
-window.handleFileDrop = handleFileDrop;
+window.handleDrop = handleDrop;
+
+var isDeletingImage = false;
+
+function handleFileClick(event) {
+    if (isDeletingImage) {
+        isDeletingImage = false;
+        event.preventDefault();
+    }
+}
+window.handleFileClick = handleFileClick;
 
 function handleFileSelect(event) {
+    console.info("test");
     var file = event.target.files[0];
     displayImage(file);
 }
@@ -174,24 +194,64 @@ function displayImage(file) {
             img.onload = function() {
                 var canvas = document.createElement('canvas');
                 var ctx = canvas.getContext('2d');
-                canvas.width = 64;
-                canvas.height = 64;
+                const cropSize = 256;
+                canvas.width = cropSize;
+                canvas.height = cropSize;
                 ctx.drawImage(img, 0, 0, 256, 256);
 
                 var thumbnail = document.getElementById('thumbnail');
                 thumbnail.src = canvas.toDataURL('image/png');
-                thumbnail.style.display = 'block';
 
-                var uploadText = document.getElementById('image-upload');
+                var uploadText = document.getElementById('image-upload-block');
                 uploadText.style.display = 'none';
 
                 var thumbnailContainer = document.getElementById('thumbnail-container');
-                thumbnailContainer.style.display = 'block';
+                thumbnailContainer.style.display = 'flex';
+
+                document.getElementById('delete-icon').addEventListener('click', function (event) {
+                    event.stopPropagation();
+                    removeImage();
+                });
+
+                var imageData = ctx.getImageData(0, 0, cropSize, cropSize);
+                var data = imageData.data;
+                var totalBrightness = 0;
+
+                for (var i = 0; i < data.length; i += 4) {
+                    var brightness = Math.min((299 * data[i] + 587 * data[i + 1] + 114 * data[i + 2]) / (Math.max(1, data[i + 3]) / 255) / 1000, 255);
+                    if (data[i + 3] < 128) brightness = 255;
+                    totalBrightness += brightness;
+                }
+
+                var averageBrightness = totalBrightness / (cropSize * cropSize);
+                
+                var isLightColor = averageBrightness > 128;
+                var deleteIcon = document.getElementById('delete-icon');
+                deleteIcon.style.color = isLightColor ? 'var(--primary-color)' : 'var(--background-color)';
             };
         };
         reader.readAsDataURL(file);
     }
 }
 window.displayImage = displayImage;
+
+function removeImage() {
+    isDeletingImage = true;
+
+    var thumbnail = document.getElementById('thumbnail');
+    var uploadText = document.getElementById('image-upload-block');
+    uploadText.style.display = 'block';
+
+    var thumbnailContainer = document.getElementById('thumbnail-container');
+    thumbnailContainer.style.display = 'none';
+
+    var canvas = document.createElement('canvas');
+    var ctx = canvas.getContext('2d');
+    canvas.width = 256;
+    canvas.height = 256;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    thumbnail.src = canvas.toDataURL('image/png');
+}
 
 window.openCreatePatientModal = openCreatePatientModal;
