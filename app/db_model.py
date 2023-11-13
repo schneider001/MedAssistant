@@ -58,11 +58,23 @@ class Patient:
     def get_id_by_insurance_certificate(insurance_certificate):
         query = "SELECT id FROM patients WHERE insurance_certificate = %s"
         result = db.execute_select(query, insurance_certificate)
-        print(result)
         if result:
             return result[0][0]
         else:
             return None
+    
+    @staticmethod
+    def get_name_by_request_id(request_id):
+        query = "SELECT \
+                     patients.name \
+                 FROM patients \
+                 JOIN requests ON requests.patient_id = patients.id \
+                 WHERE \
+                     requests.id = %s"
+        result = db.execute_select(query, request_id)
+        if result:
+            return result[0][0]
+        
         
         
 class Symptom:
@@ -126,13 +138,12 @@ class Request:
                      FROM ml_model \
                      WHERE ml_model.version = %s"
         request_id = db.execute_update(query_req, doctor_id, patient_id, ml_model_version)
-        
-        query_req_sym = "INSERT INTO request_symptoms (request_id, symptom_id) \
-                         VALUES "
+    
         values = ', '.join(f"({symptom_id}, {request_id})" for symptom_id in symptom_ids)
         query_req_sym = f"INSERT INTO request_symptoms (symptom_id, request_id) VALUES {values}"
         db.execute_update(query_req_sym)
         return request_id
+        
         
     @staticmethod
     def update_status(id, status, predicted_disease_id):
@@ -140,6 +151,36 @@ class Request:
                  SET status = %s, predicted_disease_id = %s \
                  WHERE id = %s"
         db.execute_update(query, status, predicted_disease_id, id)
+        
+    @staticmethod
+    def get_symptom_ru_names(request_id):
+        query = "SELECT \
+                     sym.ru_name \
+                 FROM \
+                     symptoms AS sym \
+                 JOIN \
+                     request_symptoms AS r_s ON r_s.symptom_id = sym.id \
+                 WHERE \
+                     r_s.request_id = %s"
+        result = db.execute_select(query, request_id)
+        if result:
+            return [element[0] for element in result]
+    
+    @staticmethod
+    def get_disease_ru_name(request_id):
+        query = "SELECT \
+                     d.ru_name \
+                 FROM \
+                     diseases AS d \
+                 JOIN \
+                     requests AS r ON r.predicted_disease_id = d.id \
+                 WHERE \
+                     r.id = %s"
+        result = db.execute_select(query, request_id)
+        if result:
+            return result[0][0]
+        return None
+    
 
     @staticmethod
     def get_requests_page_by_patient_id(patient_id, page, per_page):
@@ -166,6 +207,23 @@ class Comment:
         self.doctor_id = doctor_id
         self.request_id = request_id
         self.comment = comment
+    
+    def get_comments_by_request_id(request_id, doctor_id):
+        query = "SELECT \
+                     doctors.name, \
+                     comments.date, \
+                     comments.comment, \
+                     CASE \
+                         WHEN doctors.id = %s THEN 1 \
+                         ELSE 0 \
+                     END AS editable \
+                 FROM \
+                     comments \
+                 JOIN requests ON requests.id = comments.request_id \
+                 JOIN doctors ON doctors.id = requests.doctor_id \
+                 WHERE requests.id = %s \
+                 ORDER BY editable DESC"
+        return db.execute_select(query, doctor_id, request_id)
         
 
 class Disease:

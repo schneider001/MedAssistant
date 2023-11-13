@@ -135,7 +135,7 @@ def history():
     """
     return render_template('history.html')
 
-#---------------------------------------DONE--------------------------------------------
+#---------------------------------------DONE-1--------------------------------------------
 @app.route('/get_request_info', methods=['POST'])
 @login_required
 def get_request_info():
@@ -185,7 +185,7 @@ def get_request_info():
     
     return jsonify(response_data)
 
-#------------------------------------------TODO-----------------------------------------
+#------------------------------------------DONE-2----------------------------------------
 @app.route('/get_request_info_by_id', methods=['POST'])
 @login_required
 def get_request_info_by_id():
@@ -198,20 +198,21 @@ def get_request_info_by_id():
 
     request_id = data.get('request_id')
 
-    symptoms = ["Кашель", "Высокая температура"]
-    diagnosis = "Cancer"
-    doctor_comments = [{"id": 1, "doctor": "Dr. Robert", "time": "10:30", "comment": "Hmm, This diagnosis looks cool", "editable": False}, #editable true, если это комментарий текущего доктора
-                       {"id": 2, "doctor": "Dr. Johnson", "time": "11:15", "comment": "Really cool", "editable": False},
-                       {"id": 3, "doctor": "Dr. Hudson", "time": "12:05", "comment": "Thanks", "editable": False},
-                       {"id": 4, "doctor": "Dr. Mycac", "time": "12:06", "comment": "WTF", "editable": False},
-                       {"id": 5, "doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
-    
+    symptoms = Request.get_symptom_ru_names(request_id)
+    diagnosis_ru_name = Request.get_disease_ru_name(request_id)
+    comments_values = Comment.get_comments_by_request_id(request_id, current_user.id)
+    doctor_comments = [{"id": 1,
+                        "doctor": comment_values[0], 
+                        "time": comment_values[1], 
+                        "comment": comment_values[2], 
+                        "editable": comment_values[3]} for comment_values in comments_values]
+
     response_data = {
         "id": request_id,
-        "patient_name": "Иван Иванов Иванович",
-        "doctor": "Dr. Smith", #Имя текущего доктора
+        "patient_name": Patient.get_name_by_request_id(request_id),
+        "doctor": current_user.name, 
         "symptoms": symptoms,
-        "diagnosis": diagnosis,
+        "diagnosis": diagnosis_ru_name,
         "doctor_comments": doctor_comments
     }
     
@@ -266,7 +267,6 @@ def load_data_requests():
     per_page = 15
 
     data = [[i, f'Name {i}', f'Date {i}', f'Result {i}', 'Без комментариев'] for i in range(1, 156)] #Пример какой то таблицы
-    
     if search_text == '':
         filtered_data = data
     else:
