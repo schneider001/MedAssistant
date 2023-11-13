@@ -112,7 +112,9 @@ def populate_database(): #использовать db методы в идеал
         
     system(single_command+'"'+query_line+'"')
         
+
                     
 purge_create_database()
 fill_sympt_diseases()
 populate_database()
+print('If ERROR - run again')
