@@ -100,6 +100,7 @@ CREATE TABLE `request_symptoms` (
 );
 
 CREATE TABLE `comments` (
+  `id` integer PRIMARY KEY AUTO_INCREMENT, 
   `doctor_id` integer NOT NULL,
   `request_id` integer NOT NULL,
   `comment` varchar(255) NOT NULL,
