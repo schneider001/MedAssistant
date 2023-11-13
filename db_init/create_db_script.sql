@@ -103,6 +103,7 @@ CREATE TABLE `comments` (
   `doctor_id` integer NOT NULL,
   `request_id` integer NOT NULL,
   `comment` varchar(255) NOT NULL,
+  `date` timestamp DEFAULT NOW(),
   UNIQUE (`doctor_id` ,`request_id`),
   FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`),
   FOREIGN KEY (`request_id`) REFERENCES `requests` (`id`)
