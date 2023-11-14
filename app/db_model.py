@@ -210,13 +210,12 @@ class Request:
                  WHERE  \
                      doctor_id = %s AND ( \
                          predicted_disease_name LIKE %s OR  \
-                         comment_status LIKE %s OR  \
-                         date LIKE %s \
+                         comment_status LIKE %s  \
                      ) \
                  LIMIT %s OFFSET %s;"
         
         sub_str = '%' + search_text + '%'
-        return db.execute_select(query, doctor_id, sub_str, sub_str, sub_str, per_page, (page - 1) * per_page)
+        return db.execute_select(query, doctor_id, sub_str, sub_str, per_page, (page - 1) * per_page)
 
     @staticmethod
     def get_requests_page_by_patient_id(patient_id, page, per_page):
