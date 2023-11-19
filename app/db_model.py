@@ -49,6 +49,15 @@ class Patient:
         if patient_data:
             return Patient(*patient_data[0])
         
+    @staticmethod
+    def find_all_search_lazyload(search, start, end):
+        query = "SELECT id, name, insurance_certificate FROM patients WHERE name LIKE CONCAT('%', %s, '%') LIMIT %s, %s"
+        return db.execute_select(query, search, start, end)
+        
+    @staticmethod
+    def count_all_search(search):
+        query = "SELECT COUNT(*) FROM patients WHERE name LIKE CONCAT('%', %s, '%')"
+        return db.execute_select(query, search)
         
 class Symptom:
     def __init__(self, id, name):

@@ -344,24 +344,16 @@ def load_patients():
     term = request.args.get('search', '')
     page = int(request.args.get('page', 1))
 
-    per_page = 15
+    per_page = 2 #небольшое значение для визуализации загрузки
+    count = Patient.count_all_search(term)[0][0]
     start = (page - 1) * per_page
-    end = start + per_page
+    end = (start + per_page) if (start + per_page) < count else count
 
     time.sleep(1)
-    patients_in_db = [
-        {"id": 1 ,"name": "Иванов Иван Иванович", "snils": "123-456-789 10" },
-        {"id": 2 ,"name": "Петров Петр Петрович", "snils": "342-231-534 14" },
-        {"id": 3 ,"name": "Сидоров Сидор Сидорович", "snils": "654-342-765 43" },
-        {"id": 4 ,"name": "Смирнов Алексей Андреевич", "snils": "234-654-324 34" },
-        {"id": 5 ,"name": "Козлов Владимир Дмитриевич", "snils": "432-321-654 43" },
-        {"id": 6 ,"name": "Морозов Олег Игоревич", "snils": "432-765-234 32" }
-    ] #TODO получать пациентов из БД
-
-    filtered_patients = list(filter(lambda p: term in p["name"] or term in p["snils"], patients_in_db))
-    patients = filtered_patients[start:end] #Нужно опять же из БД получить нужную страницу с пациентами
-
-    return jsonify({'results': patients, 'pagination': {'more': end < len(filtered_patients)}}) #и при этом нужно как то понять, была ли это последняя страница
+    
+    patients = Patient.find_all_search_lazyload(term, start, end)
+    patients = [{'id': patient[0], 'name': patient[1], 'snils':patient[2]} for patient in patients]
+    return jsonify({'results': patients, 'pagination': {'more': end < count}}) #и при этом нужно как то понять, была ли это последняя страница
 
 
 if __name__ == "__main__":
