@@ -2,7 +2,7 @@ import LazyLoadTable from './LazyLoadTable.js';
 import { openRequestInfoModal } from './requestInfoModal.js';
 
 $(document).ready(function() {
-    const patientsTable = new LazyLoadTable('patients-table', '/load_data_patients');
+    const patientsTable = new LazyLoadTable('patients-table', '/load_data_patients', [0]);
     let requestHistoryTable;
 
     $('#patients-table').on('click', 'tbody tr', function() {
@@ -28,12 +28,26 @@ $(document).ready(function() {
                 $('#name').text(data.name);
                 $('#birth-date').text(data.birthDate);
                 $('#age').text(data.age);
-                $('#snils').text(data.snils);
+                $('#oms').text(data.oms);
+                $('#sex').text(function() {
+                    if (data.sex === 'MALE') {
+                        return 'мужской';
+                    } else if (data.sex === 'FEMALE') {
+                        return 'женский';
+                    } else {
+                        return 'другой';
+                    }
+                });
+
+                if (data.photo_url) {
+                    $('.patient-photo').attr('src', data.photo_url);
+                }
+
                 if (requestHistoryTable) {
                     requestHistoryTable.removeEventListeners();
                     $('#request-history-table').off('click', 'tbody tr');
                 }
-                requestHistoryTable = new LazyLoadTable('request-history-table', '/load_patient_history', patientId);
+                requestHistoryTable = new LazyLoadTable('request-history-table', '/load_patient_history', [0], patientId);
 
                 $('#request-history-table').on('click', 'tbody tr', function() {
                     var requestId = $(this).find('td:first').text();

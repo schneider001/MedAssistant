@@ -99,6 +99,10 @@ body {
   font-weight: bold;
 }
 
+.select2-container--bootstrap-5 .select2-selection {
+  border-color: var(--primary-color);
+}
+
 .form-control {
   border-color: var(--primary-color) !important;
 }
@@ -141,14 +145,6 @@ body {
 
 .centered-box-body {
   padding: 20px;
-}
-
-.tbodycontainer { 
-  height: 35vh; 
-  width: 100%; 
-  margin: 0; 
-  overflow-y: auto; 
-  background-color: var(--background-color);
 }
 
 #patients-table tbody tr:hover, #request-history-table tbody tr:hover {
@@ -318,32 +314,29 @@ body {
   margin-right: 11px
 }
 
-.snils-input {
+.oms-input {
   display: inline-flex;
   align-items: left;
 }
 
-.snils-part {
+.oms-part {
   border: none;
   background: transparent;
   outline: none;
-  width: 27px;
+  width: 3em;
   text-align: left;
   margin: 0;
   padding: 0;
 }
 
-.snils-part {
-  margin-left: 5px;
-  margin-right: 5px;
-}
-
 .vh-35 {
   height: 35vh;
+  max-height: 35vh;
 }
 
 .vh-66 {
   height: 66vh;
+  max-height: 66vh;
 }
 
 .tableFixHead {

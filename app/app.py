@@ -1,18 +1,69 @@
 from flask import request, redirect, url_for, render_template, jsonify, send_from_directory
-from flask_login import login_required, login_user, logout_user
+from flask_login import login_required, login_user, logout_user, current_user
+from flask_socketio import emit, join_room, leave_room, disconnect, rooms
+import functools
 import time
+import os
+import random
 
 from init import *
 from db_model import *
+
 
 @login_manager.user_loader
 def load_user(user_id):
     return Doctor.get_by_id(user_id)
 
 
+def authenticated_only(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if not current_user.is_authenticated:
+            disconnect()
+        else:
+            return f(*args, **kwargs)
+    return wrapped
+
+
+connected_users = {}
+
+
+@socketio.on('connect')
+@authenticated_only
+def handle_connect():
+    user_id = current_user.id
+    if user_id not in connected_users:
+        connected_users[user_id] = set()
+    connected_users[user_id].add(request.sid)
+    emit('connected')
+
+
+@socketio.on('disconnect')
+@authenticated_only
+def handle_disconnect():
+    user_id = current_user.id
+    if user_id in connected_users and request.sid in connected_users[user_id]:
+        connected_users[user_id].remove(request.sid)
+
+
+@socketio.on('join_room')
+@authenticated_only
+def handle_join_room(data):
+    room_id = data['room_id']
+    join_room(room_id)
+
+
+@socketio.on('leave_room')
+@authenticated_only
+def handle_leave_room(data):
+    room_id = data['room_id']
+    leave_room(room_id)
+
+
 @app.route('/static/js/<path:filename>')
 def custom_static(filename):
     return send_from_directory('static/js', filename, mimetype='text/javascript')
+
 
 @app.route("/")
 def login():
@@ -23,13 +74,13 @@ def login():
     return render_template("login.html")
 
 
-@app.route('/', methods=['POST'])
+@app.route('/login', methods=['POST'])
 def login_post():
     """
     Обрабатывает данные, отправленные при попытке входа.
     :param str username: Имя пользователя, отправленное из формы входа.
     :param str password: Пароль, отправленный из формы входа.
-    :return: Перенаправляет пользователя на страницу 'main' в случае успешного входа, или на страницу 'login' при ошибке.
+    :return: Возвращает результат аутентификации.
     """
     username = request.form['username']
     password = request.form['password']
@@ -39,9 +90,10 @@ def login_post():
  
     if authorized:
         login_user(doctor)
-        return redirect(url_for('main'))
+        return jsonify({'success': True})
     else:
-        return redirect(url_for('login'))
+        return jsonify({'success': False})
+    
     
 @app.route("/logout")
 @login_required
@@ -59,14 +111,9 @@ def logout():
 def main():
     """
     Отображает главную страницу с данными о пациентах и симптомах.
-    :return: HTML-шаблон главной страницы с симптомами.
+    :return: HTML-шаблон главной страницы.
     """
-    symptoms = ['Высокая температура', 'Кашель', 'Насморк'] #TODO Получить из БД
-
-    return render_template('index.html', symptoms=symptoms)
-
-
-
+    return render_template('index.html')
 
 
 @app.route('/patients')
@@ -88,68 +135,84 @@ def history():
     """
     return render_template('history.html')
 
-
+#---------------------------------------DONE-1--------------------------------------------
 @app.route('/get_request_info', methods=['POST'])
+@login_required
 def get_request_info():
     """
     Получает диагноз с помощью модели и возвращает информацию об этом запросе.
     :param str id: ID пациента.
     :param str name: Полное имя пациента.
-    :param str snils: СНИЛС пациента.
+    :param str oms: Полис ОМС пациента.
     :param list symptoms: Список симптомов.
-    :return: JSON-ответ с информацией для карточки запроса, включая имя пациента, имя доктора, симптомы, предсказанный диагноз, комментарии врачей.
+    :return: JSON-ответ с информацией для карточки запроса, включая id запроса, имя пациента, имя доктора, симптомы, предсказанный диагноз, комментарии врачей.
     """
     data = request.get_json()
 
     patient_id = data.get('id')
-    patientname = data.get('name')
+    patient_name = data.get('name')
     snils = data.get('snils')
-    symptoms = data.get('symptoms')
+    symptom_ids = data.get('symptoms')
+    
+    symptoms = [Symptom.get_by_id(id) for id in symptom_ids]
+    
+    request_id = Request.add(current_user.id, 
+                             patient_id, 
+                             [symptom.id for symptom in symptoms], #symptom_ids
+                             ML_MODEL_VERSION)
 
-    time.sleep(1)
-    symptoms = ["Кашель", "Высокая температура"]
-    diagnosis = "Cancer"
-    doctor_comments = [{"id": 1, "doctor": "Dr. Robert", "time": "10:30", "comment": "Hmm, This diagnosis looks cool", "editable": False}, #editable true, если это комментарий текущего доктора
-                       {"id": 2, "doctor": "Dr. Johnson", "time": "11:15", "comment": "Really cool", "editable": False},
-                       {"id": 3, "doctor": "Dr. Hudson", "time": "12:05", "comment": "Thanks", "editable": False},
-                       {"id": 4, "doctor": "Dr. Mycac", "time": "12:06", "comment": "WTF", "editable": False},
-                       {"id": 5, "doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
+    disease_name = get_disease([symptom.name for symptom in symptoms])
+    
+    disease = Disease(None, None, None)
+    
+    if disease_name:
+        status = 'READY'
+        disease = Disease.get_by_name(disease_name)
+    else:
+        status = 'ERROR'
+    
+    Request.update_status(request_id, status, disease.id)
+    doctor_comments = []
     
     response_data = {
-        "patient_name": patientname,
-        "doctor": "Dr. Smith", #Имя текущего доктора
-        "symptoms": symptoms,
-        "diagnosis": diagnosis,
+        "id": request_id,
+        "patient_name": patient_name,
+        "doctor": current_user.name, 
+        "symptoms": [symptom.ru_name for symptom in symptoms],
+        "diagnosis": disease.ru_name,
         "doctor_comments": doctor_comments
     }
     
     return jsonify(response_data)
 
-
+#------------------------------------------DONE-2----------------------------------------
 @app.route('/get_request_info_by_id', methods=['POST'])
+@login_required
 def get_request_info_by_id():
     """
     Получает возвращает информацию о запросе по его id из БД.
     :param str request_id: ID запроса.
-    :return: JSON-ответ с информацией для карточки запроса, включая имя пациента, имя доктора, симптомы, предсказанный диагноз, комментарии врачей.
+    :return: JSON-ответ с информацией для карточки запроса, включая id запроса имя пациента, имя доктора, симптомы, предсказанный диагноз, комментарии врачей.
     """
     data = request.get_json()
 
     request_id = data.get('request_id')
 
-    symptoms = ["Кашель", "Высокая температура"]
-    diagnosis = "Cancer"
-    doctor_comments = [{"id": 1, "doctor": "Dr. Robert", "time": "10:30", "comment": "Hmm, This diagnosis looks cool", "editable": False}, #editable true, если это комментарий текущего доктора
-                       {"id": 2, "doctor": "Dr. Johnson", "time": "11:15", "comment": "Really cool", "editable": False},
-                       {"id": 3, "doctor": "Dr. Hudson", "time": "12:05", "comment": "Thanks", "editable": False},
-                       {"id": 4, "doctor": "Dr. Mycac", "time": "12:06", "comment": "WTF", "editable": False},
-                       {"id": 5, "doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
-    
+    symptoms = Request.get_symptom_ru_names(request_id)
+    diagnosis_ru_name = Request.get_disease_ru_name(request_id)
+    comments_values = Comment.get_comments_by_request_id(request_id, current_user.id)
+    doctor_comments = [{"id": 1,
+                        "doctor": comment_values[0], 
+                        "time": comment_values[1], 
+                        "comment": comment_values[2], 
+                        "editable": comment_values[3]} for comment_values in comments_values]
+
     response_data = {
-        "patient_name": "Иван Иванов Иванович",
-        "doctor": "Dr. Smith", #Имя текущего доктора
+        "id": request_id,
+        "patient_name": Patient.get_name_by_request_id(request_id),
+        "doctor": current_user.name, 
         "symptoms": symptoms,
-        "diagnosis": diagnosis,
+        "diagnosis": diagnosis_ru_name,
         "doctor_comments": doctor_comments
     }
     
@@ -157,19 +220,20 @@ def get_request_info_by_id():
 
 
 @app.route('/load_data_patients', methods=['GET'])
+@login_required
 def load_data_patients():
     """
     Получает список пациентов для указанной страницы в пагинации с использованием поиска.
     :param str search: Фильтр.
     :param str page: Номер страницы.
-    :param str per_page: Количество пациентов на странице.
-    :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, СНИЛС.
+    :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, Полис ОМС.
     """
     search_text = request.args.get('search', '').lower()
     page = int(request.args.get('page'))
-    per_page = int(request.args.get('per_page'))
 
-    data = [[i, f'Name {i}', f'snils {i}'] for i in range(1, 101)]  # Пример какой-то таблицы
+    per_page = 15
+
+    data = [[i, f'Name {i}', f'oms {i}'] for i in range(1, 101)]
 
     if search_text == '':
         filtered_data = data
@@ -187,39 +251,22 @@ def load_data_patients():
 
     return jsonify(paginated_data)
 
-
+#----------------------------------DONE-3---------------------------------------------------
 @app.route('/load_data_requests', methods=['GET'])
+@login_required
 def load_data_requests():
     """
-    Получает список запросов для текущего пользователя для указанной страницы в пагинации с использованием поиска.
+    Получает список запросов для текущего полTODOьзователя для указанной страницы в пагинации с использованием поиска.
     :param str search: Фильтр.
     :param str page: Номер страницы.
-    :param str per_page: Количество запросов на странице.
     :return: JSON-ответ со списком запросов для указанной страницы, включая id запроса, имя пациента, дату, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
     """
     search_text = request.args.get('search', '').lower()
     page = int(request.args.get('page'))
-    per_page = int(request.args.get('per_page'))
 
-    data = [[i, f'Name {i}', f'Date {i}', f'Result {i}', 'Без комментариев'] for i in range(1, 156)] #Пример какой то таблицы
-    
-    if search_text == '':
-        filtered_data = data
-    else:
-        filtered_data = [] #TODO тут нужно реализовать поиск по бд с учетом страницы, я тут фильтрую и отбираю нужные элементы из массива для примера, но в идеале, если это возможно, это надо сделать средствами SQL
-        for row in data:
-            row_text = ' '.join(map(str, row)).lower()
-            if search_text in row_text:
-                filtered_data.append(row)
+    per_page = 15
 
-    start = (page - 1) * per_page
-    end = start + per_page
-
-    paginated_data = filtered_data[start:end]
-
-    time.sleep(2) # Эмуляция задержки ответа от сервера, для тестов
-
-    return jsonify(paginated_data)
+    return jsonify(Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, search_text))
 
 
 @app.route('/get_patient_info', methods=['GET'])
@@ -228,117 +275,159 @@ def get_patient_info():
     """
     Получает информацию о пациенте по его id.
     :param str patient_id: ID пациента.
-    :return: JSON-ответ с информацией о пациенте, включая его id, полное имя, дату рождения, текущий возраст, СНИЛС.
+    :return: JSON-ответ с информацией о пациенте, включая его id, полное имя, дату рождения, текущий возраст, Полис ОМС, пол.
     """
     patient_id = request.args.get('patient_id')
 
     patient = Patient.get_by_id(patient_id)
-    if patient:
-        today = datetime.now()
-        age = today.year - patient.born_date.year - \
-            ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
-        patient_data = {
-            'id': patient.id, #TODO Сделать невидимым во фронте
-            'name': patient.name,
-            'birthDate': patient.born_date.strftime("%Y-%m-%d"),
-            'age': age, 
-            'snils': patient.insurance_certificate,
-            'sex' : patient.sex, #Не используется пока
-        }
+    if not patient:
+        error_message = {"error": "Ошибка", "message": "Пациента не существует."}
+        response = jsonify(error_message)
+        response.status_code = 400
+        return response
+    
+    today = datetime.now()
+    age = today.year - patient.born_date.year - \
+        ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
+
+    patient_data = {
+        'id': patient.id,
+        'name': patient.name,
+        'birthDate': patient.born_date.strftime("%Y-%m-%d"),
+        'age': age, 
+        'oms': patient.insurance_certificate,
+        'sex' : patient.sex,
+    }
+
+    photo_filename = f'./static/patient_images/{patient_id}.jpg'
+    if os.path.exists(photo_filename):
+        patient_data['photo_url'] = photo_filename
 
     return jsonify(patient_data)
 
-
+#---------------------------------------DONE-4-------------------------------------------
 @app.route('/load_patient_history', methods=['GET'])
+@login_required
 def load_patient_history():
     """
     Получает список запросов для пациента по id пациента для указанной странице в пагинации.
     :param str patient_id: ID пациента.
     :param str page: Номер страницы.
-    :param str per_page: Количество запросов на странице.
     :return: JSON-ответ со списком запросов для указанной страницы, которые включают id запроса, имя доктора, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
     """
     patient_id = int(request.args.get('search'))
     page = int(request.args.get('page'))
-    per_page = int(request.args.get('per_page'))
 
-    data = [[i, f'Doctor Name {i}', f'Date {i}', f'Predicted Result {i}', f'Без комментариев'] for i in range(1, 170)] #Пример какой то таблицы
+    per_page = 15
 
-    start = (page - 1) * per_page
-    end = start + per_page
+    data = Request.get_requests_page_by_patient_id(patient_id, page, per_page)
 
-    return jsonify(data[start:end])
+    return jsonify(data)
 
-
-@app.route('/add_comment', methods=['GET'])
-def add_comment():
+#---------------------------------------DONE-5-------------------------------------------
+@socketio.on('add_comment')
+@authenticated_only
+def add_comment(data):
     """
     Добавляет новый комментарий для указанного запроса в БД.
     :param str request_id: ID запроса.
     :param str comment: Текст комментария.
     :return: JSON-ответ с информацией о комментарии, включая id комментария, имя доктора, время, текст комментария, является ли текущий пользователь автором.
     """
-    request_id = request.args.get('request_id')
-    comment = request.args.get('comment')
+    room_id = data['room_id']
+    request_id = data['request_id']
+    comment_text = data['comment']
+    
+    user_id = current_user.id
+    comment_id = Comment.add(user_id, request_id, comment_text)
+    comment = Comment.get_by_id(comment_id)
+    if comment:
+        response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment_text}
+    else:
+        response = {"id": None, "doctor": None, "time": None, "comment": None}
+    if user_id in connected_users:
+        for sid in connected_users[user_id]:
+            emit('self_added_comment', response, to = sid)
+        emit('added_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))
 
-    #TODO добавить комментарий в БД
-    return jsonify({"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": comment, "editable": True})
-
-
-@app.route('/delete_comment/<int:comment_id>', methods=['POST'])
-def delete_comment(comment_id):
+#---------------------------------------DONE-6-------------------------------------------
+@socketio.on('delete_comment')
+@authenticated_only
+def delete_comment(data):
     """
     Удаляет комментарий по его id.
     :param int comment_id: ID комментария.
-    :return: JSON-ответ с именем текущего пользователя.
+    :return: JSON-ответ с id комментария и именем текущего пользователя.
     """
-    #TODO удалить коммент из БД
-    doctorName = "Dr. Smith"
-    return jsonify(doctorName)
+    room_id = data['room_id']
+    comment_id = data['comment_id']
 
+    Comment.delete_by_id(comment_id)
+    doctor_name = current_user.name
 
-@app.route('/edit_comment/<int:comment_id>', methods=['POST'])
-def edit_comment(comment_id):
+    response = {"id": comment_id, "doctor": doctor_name}
+    emit('deleted_comment', response, room = room_id)
+
+#---------------------------------------TODO-7-------------------------------------------
+@socketio.on('edit_comment')
+@authenticated_only
+def edit_comment(data):
     """
     Изменяет комментарий по его id.
     :param int comment_id: ID комментария.
     :param str comment: Текст комментария.
     :return: JSON-ответ с информацией о комментарии, включая id комментария, имя доктора, время, текст комментария, является ли текущий пользователь автором.
     """
-    updated_comment = request.form.get('comment')
+    room_id = data['room_id']
+    comment_id = data['comment_id']
+    updated_comment_text = data['comment']
 
-    #TODO изменить коммента в БД и после вернуть его
-    return jsonify({"id": 1, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment, "editable": True})
+    Comment.update(comment_id, updated_comment_text)
+    comment = Comment.get_by_id(comment_id)
+    if comment:
+        response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment.comment}
+    else:
+        response = {}
+    user_id = current_user.id
+    if user_id in connected_users:
+        for sid in connected_users[user_id]:
+            emit('self_edited_comment', response, to = sid)
+        emit('edited_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))    
 
 
 @app.route('/create_patient', methods=['POST'])
+@login_required
 def create_patient():
     """
     Создает нового пациента.
     :param str fullname: Имя пациента.
     :param str birthdate: Дата рождения.
-    :param str snils: СНИЛС пациента.
+    :param str oms: Полис ОМС пациента.
     :param image image: Изображение пациента.
-    :return: JSON-ответ с информацией о пациенте, включая id пациента, имя пациента, СНИЛС.
+    :return: JSON-ответ с информацией о пациенте, включая id пациента, имя пациента, Полис ОМС.
     """
     fullname = request.form['fullname']
     birthdate = request.form['birthdate']
-    snils = request.form['snils']
-    image = request.files.get('image') #может быть null
+    oms = request.form['oms']
+    sex = request.form['sex']
+    image = request.files.get('image')
+
+    Patient.insert_new_patient(fullname, oms, birthdate, sex)
+    id = Patient.get_id_by_insurance_certificate(oms)
 
     if image:
-        image.save('./static/patient_images/imagename.jpg')
+        image.save(f'./static/patient_images/{id}.jpg')
 
-    #TODO сохраняем в бд, возвращаем id из базы и полное имя со СНИЛСом
-    return jsonify({'id': 100, 'name': fullname, 'snils': snils})
+    return jsonify({'id': id, 'name': fullname, 'oms': oms})
 
 
 @app.route('/load_patients', methods=['GET'])
+@login_required
 def load_patients():
     """
     :param str search: Фильтр.
     :param str page: Номер страницы.
-    :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, СНИЛС; также переменную more, указывающая о конце пагинации.
+    :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, полис ОМС; также переменную more, указывающая о конце пагинации.
     """
     #TODO сейчас есть похожая функция для таблицы, но в этой появляется обязательная переменная more, в будущем планирую убрать старую функцию без more и переиспользовать эту
     term = request.args.get('search', '')
@@ -356,5 +445,27 @@ def load_patients():
     return jsonify({'results': patients, 'pagination': {'more': end < count}}) #и при этом нужно как то понять, была ли это последняя страница
 
 
+@app.route('/load_symptoms', methods=['GET'])
+@login_required
+def load_symptoms():
+    """
+    :param str search: Фильтр.
+    :param str page: Номер страницы.
+    :return: JSON-ответ со списком симптомов для указанной страницы, включая id симптома, название, также переменную more, указывающая о конце пагинации.
+    """
+    filter = request.args.get('search', '')
+    page = int(request.args.get('page', 1))
+
+    per_page = 15
+    
+    symptoms = Symptom.get_page_by_filter(filter, page, per_page)
+    symptoms = [{'id': item[0], 'name': item[1]} for item in symptoms]
+    symptoms_count = Symptom.get_count_by_filter(filter)[0][0]
+    more = page * per_page < symptoms_count
+
+    return jsonify({'results': symptoms, 'pagination': {'more': more}})
+
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, debug=True)

@@ -39,10 +39,10 @@ $.fn.select2.amd.define("PatientsDropdownAdapter", [
 
         var $resultsHeader = $('<div>', { class: 'row pt-3 pb-1 mx-0' });
         var $nameCol = $('<div>', { class: 'col', text: 'Имя' }).css('font-weight', 'bold');
-        var $snilsCol = $('<div>', { class: 'col-3', text: 'СНИЛС' }).css('font-weight', 'bold');
+        var $omsCol = $('<div>', { class: 'col-3', text: 'Полис ОМС' }).css('font-weight', 'bold');
         var $line = $('<hr>', { class: 'mt-2 mb-0' });
 
-        $resultsHeader.append($nameCol, $snilsCol);
+        $resultsHeader.append($nameCol, $omsCol);
         $resultsHeader.append($line);
 
         this.$searchContainer = $search;
@@ -64,3 +64,16 @@ $.fn.select2.amd.define("PatientsDropdownAdapter", [
     return adapter;
 });
 
+$.fn.select2.amd.define("SexDropdownAdapter", [
+    "select2/utils",
+    "select2/dropdown",
+    "select2/dropdown/attachBody",
+    "select2/dropdown/attachContainer",
+    "select2/dropdown/closeOnSelect"
+], function(Utils, Dropdown, AttachBody, AttachContainer, closeOnSelect) {
+    let adapter = Utils.Decorate(Dropdown, AttachContainer);
+    adapter = Utils.Decorate(adapter, AttachBody);
+    adapter = Utils.Decorate(adapter, closeOnSelect);
+
+    return adapter;
+});

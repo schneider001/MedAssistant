@@ -2,7 +2,7 @@ import LazyLoadTable from './LazyLoadTable.js';
 import { openRequestInfoModal } from "./requestInfoModal.js";
 
 $(document).ready(function() {
-    const requestHistoryTable = new LazyLoadTable('request-history-table', '/load_data_requests');
+    const requestHistoryTable = new LazyLoadTable('request-history-table', '/load_data_requests', [0]);
 
     $('#request-history-table').on('click', 'tbody tr', function() {
         var requestId = $(this).find('td:first').text();
