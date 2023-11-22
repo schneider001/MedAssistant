@@ -1,4 +1,4 @@
-*/__pycache__/
+*__pycache__
 configs/db_settings.json
 logs/*
 documentation/gen_db.txt
