@@ -8,7 +8,7 @@ from random import randint, random, choice, sample
 
 import sys
 sys.path.append('../app/')
-from init import gen_hashed_password
+from init import gen_hashed_password, ML_MODEL_VERSION
 
 
 with open('../configs/db_settings.json', 'r') as options_file:
@@ -87,7 +87,6 @@ def populate_database(): #использовать db методы в идеал
         query = f"INSERT INTO doctors (username, name, password_hash, last_login) VALUES ({person[0]}, {person[1]}, {person[2]}, {person[3] if len(person)>3 else 'NULL'})"
         query_line+=query
         query_line+=';\n'
-        print(query)
         
     for person in admins:
         query = f"INSERT INTO administrators (username, name, password_hash) VALUES ({person[0]}, {person[1]}, {person[2]})"
@@ -107,10 +106,15 @@ def populate_database(): #использовать db методы в идеал
             query = f"INSERT INTO comments (doctor_id, request_id, comment) VALUES ({rand_arr[comm_num]}, {x+1}, {get_random_string(25)})" 
             query_line+=query
             query_line+=';'
+    
+    query = f'INSERT INTO ml_model (version) VALUES (\'{ML_MODEL_VERSION}\')'
+    query_line += query + ';'
         
     system(single_command+'"'+query_line+'"')
         
+
                     
 purge_create_database()
 fill_sympt_diseases()
 populate_database()
+print('If ERROR - run again')

@@ -135,7 +135,7 @@ def history():
     """
     return render_template('history.html')
 
-
+#---------------------------------------DONE-1--------------------------------------------
 @app.route('/get_request_info', methods=['POST'])
 @login_required
 def get_request_info():
@@ -150,33 +150,42 @@ def get_request_info():
     data = request.get_json()
 
     patient_id = data.get('id')
-    patientname = data.get('name')
-    oms = data.get('oms')
-    symptoms = data.get('symptoms')
-
-    time.sleep(1)
-    symptoms = ["Кашель", "Высокая температура"]
-    diagnosis = "Cancer"
-    doctor_comments = [{"id": 1, "doctor": "Dr. Robert", "time": "10:30", "comment": "Hmm, This diagnosis looks cool", "editable": False}, #editable true, если это комментарий текущего доктора
-                       {"id": 2, "doctor": "Dr. Johnson", "time": "11:15", "comment": "Really cool", "editable": False},
-                       {"id": 3, "doctor": "Dr. Hudson", "time": "12:05", "comment": "Thanks", "editable": False},
-                       {"id": 4, "doctor": "Dr. Mycac", "time": "12:06", "comment": "WTF", "editable": False},
-                       {"id": 5, "doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
+    patient_name = data.get('name')
+    snils = data.get('snils')
+    symptom_ids = data.get('symptoms')
     
-    request_id = 11
+    symptoms = [Symptom.get_by_id(id) for id in symptom_ids]
+    
+    request_id = Request.add(current_user.id, 
+                             patient_id, 
+                             [symptom.id for symptom in symptoms], #symptom_ids
+                             ML_MODEL_VERSION)
 
+    disease_name = get_disease([symptom.name for symptom in symptoms])
+    
+    disease = Disease(None, None, None)
+    
+    if disease_name:
+        status = 'READY'
+        disease = Disease.get_by_name(disease_name)
+    else:
+        status = 'ERROR'
+    
+    Request.update_status(request_id, status, disease.id)
+    doctor_comments = []
+    
     response_data = {
         "id": request_id,
-        "patient_name": patientname,
-        "doctor": "Dr. Smith", #Имя текущего доктора
-        "symptoms": symptoms,
-        "diagnosis": diagnosis,
+        "patient_name": patient_name,
+        "doctor": current_user.name, 
+        "symptoms": [symptom.ru_name for symptom in symptoms],
+        "diagnosis": disease.ru_name,
         "doctor_comments": doctor_comments
     }
     
     return jsonify(response_data)
 
-
+#------------------------------------------DONE-2----------------------------------------
 @app.route('/get_request_info_by_id', methods=['POST'])
 @login_required
 def get_request_info_by_id():
@@ -189,20 +198,21 @@ def get_request_info_by_id():
 
     request_id = data.get('request_id')
 
-    symptoms = ["Кашель", "Высокая температура"]
-    diagnosis = "Cancer"
-    doctor_comments = [{"id": 1, "doctor": "Dr. Robert", "time": "10:30", "comment": "Hmm, This diagnosis looks cool", "editable": False}, #editable true, если это комментарий текущего доктора
-                       {"id": 2, "doctor": "Dr. Johnson", "time": "11:15", "comment": "Really cool", "editable": False},
-                       {"id": 3, "doctor": "Dr. Hudson", "time": "12:05", "comment": "Thanks", "editable": False},
-                       {"id": 4, "doctor": "Dr. Mycac", "time": "12:06", "comment": "WTF", "editable": False},
-                       {"id": 5, "doctor": "Dr. tEST", "time": "12:06", "comment": "LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT LONG COMMENT", "editable": False}]
-    
+    symptoms = Request.get_symptom_ru_names(request_id)
+    diagnosis_ru_name = Request.get_disease_ru_name(request_id)
+    comments_values = Comment.get_comments_by_request_id(request_id, current_user.id)
+    doctor_comments = [{"id": 1,
+                        "doctor": comment_values[0], 
+                        "time": comment_values[1], 
+                        "comment": comment_values[2], 
+                        "editable": comment_values[3]} for comment_values in comments_values]
+
     response_data = {
         "id": request_id,
-        "patient_name": "Иван Иванов Иванович",
-        "doctor": "Dr. Smith", #Имя текущего доктора
+        "patient_name": Patient.get_name_by_request_id(request_id),
+        "doctor": current_user.name, 
         "symptoms": symptoms,
-        "diagnosis": diagnosis,
+        "diagnosis": diagnosis_ru_name,
         "doctor_comments": doctor_comments
     }
     
@@ -241,12 +251,12 @@ def load_data_patients():
 
     return jsonify(paginated_data)
 
-
+#----------------------------------DONE-3---------------------------------------------------
 @app.route('/load_data_requests', methods=['GET'])
 @login_required
 def load_data_requests():
     """
-    Получает список запросов для текущего пользователя для указанной страницы в пагинации с использованием поиска.
+    Получает список запросов для текущего полTODOьзователя для указанной страницы в пагинации с использованием поиска.
     :param str search: Фильтр.
     :param str page: Номер страницы.
     :return: JSON-ответ со списком запросов для указанной страницы, включая id запроса, имя пациента, дату, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
@@ -256,25 +266,7 @@ def load_data_requests():
 
     per_page = 15
 
-    data = [[i, f'Name {i}', f'Date {i}', f'Result {i}', 'Без комментариев'] for i in range(1, 156)] #Пример какой то таблицы
-    
-    if search_text == '':
-        filtered_data = data
-    else:
-        filtered_data = [] #TODO тут нужно реализовать поиск по бд с учетом страницы, я тут фильтрую и отбираю нужные элементы из массива для примера, но в идеале, если это возможно, это надо сделать средствами SQL
-        for row in data:
-            row_text = ' '.join(map(str, row)).lower()
-            if search_text in row_text:
-                filtered_data.append(row)
-
-    start = (page - 1) * per_page
-    end = start + per_page
-
-    paginated_data = filtered_data[start:end]
-
-    time.sleep(2) # Эмуляция задержки ответа от сервера, для тестов
-
-    return jsonify(paginated_data)
+    return jsonify(Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, search_text))
 
 
 @app.route('/get_patient_info', methods=['GET'])
@@ -313,7 +305,7 @@ def get_patient_info():
 
     return jsonify(patient_data)
 
-
+#---------------------------------------DONE-4-------------------------------------------
 @app.route('/load_patient_history', methods=['GET'])
 @login_required
 def load_patient_history():
@@ -332,7 +324,7 @@ def load_patient_history():
 
     return jsonify(data)
 
-
+#---------------------------------------DONE-5-------------------------------------------
 @socketio.on('add_comment')
 @authenticated_only
 def add_comment(data):
@@ -344,17 +336,21 @@ def add_comment(data):
     """
     room_id = data['room_id']
     request_id = data['request_id']
-    comment = data['comment']
-    #TODO добавить комментарий в БД
-
-    response = {"id": random.randint(1, 1000), "doctor": "Dr. Smith", "time": "10:30", "comment": comment}
+    comment_text = data['comment']
+    
     user_id = current_user.id
+    comment_id = Comment.add(user_id, request_id, comment_text)
+    comment = Comment.get_by_id(comment_id)
+    if comment:
+        response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment_text}
+    else:
+        response = {"id": None, "doctor": None, "time": None, "comment": None}
     if user_id in connected_users:
         for sid in connected_users[user_id]:
             emit('self_added_comment', response, to = sid)
         emit('added_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))
 
-
+#---------------------------------------DONE-6-------------------------------------------
 @socketio.on('delete_comment')
 @authenticated_only
 def delete_comment(data):
@@ -366,13 +362,13 @@ def delete_comment(data):
     room_id = data['room_id']
     comment_id = data['comment_id']
 
-    #TODO удалить коммент из БД
-    doctorName = "Dr. Smith"
+    Comment.delete_by_id(comment_id)
+    doctor_name = current_user.name
 
-    response = {"id": comment_id, "doctor": doctorName}
+    response = {"id": comment_id, "doctor": doctor_name}
     emit('deleted_comment', response, room = room_id)
 
-
+#---------------------------------------TODO-7-------------------------------------------
 @socketio.on('edit_comment')
 @authenticated_only
 def edit_comment(data):
@@ -384,10 +380,14 @@ def edit_comment(data):
     """
     room_id = data['room_id']
     comment_id = data['comment_id']
-    updated_comment = data['comment']
+    updated_comment_text = data['comment']
 
-    #TODO изменить коммента в БД и после вернуть его
-    response = {"id": comment_id, "doctor": "Dr. Smith", "time": "10:30", "comment": updated_comment}
+    Comment.update(comment_id, updated_comment_text)
+    comment = Comment.get_by_id(comment_id)
+    if comment:
+        response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment.comment}
+    else:
+        response = {}
     user_id = current_user.id
     if user_id in connected_users:
         for sid in connected_users[user_id]:
@@ -433,24 +433,16 @@ def load_patients():
     term = request.args.get('search', '')
     page = int(request.args.get('page', 1))
 
-    per_page = 15
+    per_page = 2 #небольшое значение для визуализации загрузки
+    count = Patient.count_all_search(term)[0][0]
     start = (page - 1) * per_page
-    end = start + per_page
+    end = (start + per_page) if (start + per_page) < count else count
 
     time.sleep(1)
-    patients_in_db = [
-        {"id": 1 ,"name": "Иванов Иван Иванович", "oms": "1234 4562 7894 5410" },
-        {"id": 2 ,"name": "Петров Петр Петрович", "oms": "3424 2321 5334 1434" },
-        {"id": 3 ,"name": "Сидоров Сидор Сидорович", "oms": "6534 3242 7665 3243" },
-        {"id": 4 ,"name": "Смирнов Алексей Андреевич", "oms": "2324 6354 3324 2234" },
-        {"id": 5 ,"name": "Козлов Владимир Дмитриевич", "oms": "4321 3321 6254 1243" },
-        {"id": 6 ,"name": "Морозов Олег Игоревич", "oms": "4322 7165 1234 2332" }
-    ] #TODO получать пациентов из БД
-
-    filtered_patients = list(filter(lambda p: term in p["name"] or term in p["oms"], patients_in_db))
-    patients = filtered_patients[start:end] #Нужно опять же из БД получить нужную страницу с пациентами
-
-    return jsonify({'results': patients, 'pagination': {'more': end < len(filtered_patients)}}) #и при этом нужно как то понять, была ли это последняя страница
+    
+    patients = Patient.find_all_search_lazyload(term, start, end)
+    patients = [{'id': patient[0], 'name': patient[1], 'snils':patient[2]} for patient in patients]
+    return jsonify({'results': patients, 'pagination': {'more': end < count}}) #и при этом нужно как то понять, была ли это последняя страница
 
 
 @app.route('/load_symptoms', methods=['GET'])
