@@ -50,6 +50,16 @@ class Patient:
             return Patient(*patient_data[0])
         
     @staticmethod
+    def find_all_search_lazyload(search, start, end):
+        query = "SELECT id, name, insurance_certificate FROM patients WHERE name LIKE CONCAT('%', %s, '%') LIMIT %s, %s"
+        return db.execute_select(query, search, start, end)
+    
+    @staticmethod
+    def count_all_search(search):
+        query = "SELECT COUNT(*) FROM patients WHERE name LIKE CONCAT('%', %s, '%')"
+        return db.execute_select(query, search)
+    
+    @staticmethod
     def insert_new_patient(name, insurance_certificate, born_date, sex):
         query = "INSERT INTO patients (name, insurance_certificate, born_date, sex) VALUES (%s, %s, %s, %s)"
         db.execute_update(query, name, insurance_certificate, born_date, sex)
@@ -81,14 +91,7 @@ class Symptom:
     def __init__(self, id, name, ru_name):
         self.id = id
         self.name = name
-        self.ru_name = ru_name
-    
-    @staticmethod
-    def find_all_ru_names():
-        query = "SELECT ru_name FROM symptoms"
-        result = db.execute_select(query)
-        return [item[0] for item in result]
-    
+        self.ru_name = ru_name    
     
     @staticmethod
     def get_by_id(id):
