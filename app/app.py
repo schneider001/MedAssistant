@@ -203,7 +203,7 @@ def get_request_info_by_id():
     comments_values = Comment.get_comments_by_request_id(request_id, current_user.id)
     doctor_comments = [{"id": 1,
                         "doctor": comment_values[0], 
-                        "time": comment_values[1], 
+                        "time": comment_values[1].strftime("%Y-%m-%d %H:%M:%S"),
                         "comment": comment_values[2], 
                         "editable": comment_values[3]} for comment_values in comments_values]
 
@@ -256,7 +256,7 @@ def load_data_patients():
 @login_required
 def load_data_requests():
     """
-    Получает список запросов для текущего полTODOьзователя для указанной страницы в пагинации с использованием поиска.
+    Получает список запросов для текущего пользователя для указанной страницы в пагинации с использованием поиска.
     :param str search: Фильтр.
     :param str page: Номер страницы.
     :return: JSON-ответ со списком запросов для указанной страницы, включая id запроса, имя пациента, дату, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
@@ -321,7 +321,7 @@ def load_patient_history():
     per_page = 15
 
     data = Request.get_requests_page_by_patient_id(patient_id, page, per_page)
-
+    
     return jsonify(data)
 
 #---------------------------------------DONE-5-------------------------------------------

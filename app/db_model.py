@@ -199,10 +199,6 @@ class Request:
                          requests.date AS date, \
                          diseases.ru_name AS predicted_disease_name, \
                          requests.id AS request_id, \
-                         CASE \
-                             WHEN EXISTS (SELECT 1 FROM comments WHERE comments.request_id = requests.id) THEN 'Прокомментирован' \
-                             ELSE 'Без комментариев' \
-                         END AS comment_status \
                      FROM  \
                          requests \
                      JOIN  \
@@ -227,14 +223,10 @@ class Request:
                         doctors.name AS doctor_name, \
                         requests.date, \
                         diseases.ru_name AS predicted_disease_name, \
-                        CASE \
-                            WHEN EXISTS (SELECT 1 FROM comments WHERE comments.request_id = requests.id) THEN 'Прокомментирован' \
-                            ELSE 'Без комментариев' \
-                        END AS comment_status \
+                        requests.is_commented AS comment_status \
                 FROM requests \
                 JOIN doctors ON requests.doctor_id = doctors.id \
                 JOIN diseases ON requests.predicted_disease_id = diseases.id \
-                LEFT JOIN comments ON requests.id = comments.request_id \
                 WHERE requests.patient_id = %s \
                 LIMIT %s OFFSET %s;"
         return db.execute_select(query, patient_id, per_page, (page - 1) * per_page)

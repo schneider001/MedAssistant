@@ -79,7 +79,7 @@ function loadRequestInfoModal(response) {
     const requestDataSection = $('#request-data-section');
     requestDataSection.empty().append($infoContainer, $commentsContainer);
 
-    const hasEditableComment = response.doctor_comments.some(comment => comment.editable === true);
+    const hasEditableComment = response.doctor_comments.some(comment => comment.editable === 1);
 
     if (!hasEditableComment) {
         createCommentInputBlock(response.doctor);
@@ -87,13 +87,17 @@ function loadRequestInfoModal(response) {
 }
 
 function createCommentBlock(id, doctor, comment, time, editable = false) {
-    const $container1 = $('<div>', { class: 'd-flex justify-content-between align-items-center mb-3' });
-    const $doctorName = $('<h6>', { class: 'text-primary fw-bold mb-0', text: doctor });
-    const $commentText = $('<span>', { class: 'text-dark ms-2', text: comment });
-    const $timeElement = $('<p>', { class: 'mb-0', text: time });
+    const $container1 = $('<div>', { class: 'container mb-3' });
+    const $rowDoctorAndTime = $('<div>', { class: 'row g-3' });
+    const $rowComment = $('<div>', { class: 'row g-3' });
     
-    $doctorName.append($commentText);
-    $container1.append($doctorName, $timeElement);
+    const $doctorName = $('<h6>', { class: 'col-8 text-primary fw-bold mb-0', text: doctor });
+    const $timeElement = $('<p>', { class: 'col-4 mb-0 start', text: time });
+    const $commentText = $('<span>', { class: 'text-dark', text: comment, style: 'font-weight: bold;' });
+    
+    $rowDoctorAndTime.append($doctorName, $timeElement);
+    $rowComment.append($commentText);
+    $container1.append($rowDoctorAndTime, $rowComment);
     
     let $container2;
     if (editable) {
@@ -107,10 +111,10 @@ function createCommentBlock(id, doctor, comment, time, editable = false) {
 }
 
 function generateCommentElement(comment) {
-    const $div = $('<div>', { class: 'card mb-3 comment-card', 'data-comment-id': comment.id });
+    const $div = $('<div>', { class: 'card mb-3 comment-card', id: `comment-${comment.id}` });
 
     if (comment.editable) {
-        $div.attr('id', 'editable-comment');
+        $div.addClass('editable-comment');
     }
 
     const $cardBody = $('<div>', { class: 'card-body' });
@@ -307,13 +311,13 @@ function deleteComment(id) {
 }
 
 socket.on('deleted_comment', function(comment) {
-    const elementToRemove = document.querySelector(`[data-comment-id="${comment.id}"]`);
+    const elementToRemove = $(`#comment-${comment.id}`);
     if (elementToRemove) {
       elementToRemove.remove();
     }
 
     const addCommentBlock = $('#add-comment');
-    if (!addCommentBlock.length && elementToRemove.id === "editable-comment") {
+    if (!addCommentBlock.length && elementToRemove.classList.contains("editable-comment")) {
         createCommentInputBlock(comment.doctor);
     }
 });
