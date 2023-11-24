@@ -271,19 +271,19 @@ class Comment:
     @staticmethod
     def get_comments_by_request_id(request_id, doctor_id):
         query = "SELECT \
-                     comments.id, \
+                     comments.id AS comments_id, \
                      doctors.name, \
                      comments.date, \
                      comments.comment, \
                      CASE \
                          WHEN doctors.id = %s THEN 1 \
                          ELSE 0 \
-                     END AS editable \
+                     END \
                  FROM \
                      comments \
                  JOIN doctors ON doctors.id = comments.doctor_id \
                  WHERE comments.request_id = %s \
-                 ORDER BY editable DESC"
+                 ORDER BY comments_id DESC"
         return db.execute_select(query, doctor_id, request_id)
 
         
