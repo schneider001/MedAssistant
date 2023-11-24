@@ -232,9 +232,11 @@ def load_data_patients():
     page = int(request.args.get('page'))
 
     per_page = 15
-
-    data = [[i, f'Name {i}', f'oms {i}'] for i in range(1, 101)]
-
+    
+    #data = [[i, f'Name {i}', f'oms {i}'] for i in range(1, 101)]
+    data = Patient.find_all_id_name_insurance_certificate() #очень временно так, пока дублируются функции
+    data = [[ patient[0], patient[1], patient[2]] for patient in data]
+    
     if search_text == '':
         filtered_data = data
     else:
@@ -433,16 +435,15 @@ def load_patients():
     term = request.args.get('search', '')
     page = int(request.args.get('page', 1))
 
-    per_page = 2 #небольшое значение для визуализации загрузки
-    count = Patient.count_all_search(term)[0][0]
+    per_page = 2 #небольшие значения для визуализации загрузки
     start = (page - 1) * per_page
-    end = (start + per_page) if (start + per_page) < count else count
+    limit = 5
 
     time.sleep(1)
     
-    patients = Patient.find_all_search_lazyload(term, start, end)
-    patients = [{'id': patient[0], 'name': patient[1], 'snils':patient[2]} for patient in patients]
-    return jsonify({'results': patients, 'pagination': {'more': end < count}}) #и при этом нужно как то понять, была ли это последняя страница
+    patients = Patient.find_all_search_lazyload(term, per_page, start)
+    patients = [{'id': patient[0], 'name': patient[1], 'oms':patient[2]} for patient in patients]
+    return jsonify({'results': patients, 'pagination': {'more': len(patients)==per_page and page * per_page < limit}}) #и при этом нужно как то понять, была ли это последняя страница
 
 
 @app.route('/load_symptoms', methods=['GET'])
@@ -456,12 +457,12 @@ def load_symptoms():
     filter = request.args.get('search', '')
     page = int(request.args.get('page', 1))
 
-    per_page = 15
+    per_page = 2 #небольшие значения для визуализации загрузки
+    limit = 5
     
     symptoms = Symptom.get_page_by_filter(filter, page, per_page)
     symptoms = [{'id': item[0], 'name': item[1]} for item in symptoms]
-    symptoms_count = Symptom.get_count_by_filter(filter)[0][0]
-    more = page * per_page < symptoms_count
+    more = len(symptoms)==per_page and page * per_page < limit 
 
     return jsonify({'results': symptoms, 'pagination': {'more': more}})
 

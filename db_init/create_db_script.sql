@@ -41,7 +41,8 @@ CREATE TABLE `doctors` (
   `username` varchar(255) UNIQUE NOT NULL,
   `name` varchar(255),
   `password_hash` blob NOT NULL,
-  `last_login` timestamp
+  `last_login` timestamp,
+  FULLTEXT KEY(name)
 );
 
 CREATE TABLE `patients` (
@@ -49,7 +50,9 @@ CREATE TABLE `patients` (
   `name` varchar(255) NOT NULL,
   `insurance_certificate` varchar(255) UNIQUE NOT NULL,
   `born_date` timestamp,
-  `sex` ENUM ('MALE', 'FEMALE')
+  `sex` ENUM ('MALE', 'FEMALE'),
+  FULLTEXT KEY(name),
+  FULLTEXT KEY(insurance_certificate)
 );
 
 CREATE TABLE `administrators` (
@@ -62,13 +65,15 @@ CREATE TABLE `administrators` (
 CREATE TABLE `symptoms` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) UNIQUE NOT NULL,
-  `ru_name` varchar(255) UNIQUE NOT NULL
+  `ru_name` varchar(255) UNIQUE NOT NULL,
+  FULLTEXT KEY(ru_name, name)
 );
 
 CREATE TABLE `diseases` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) UNIQUE NOT NULL,
-  `ru_name` varchar(255) UNIQUE NOT NULL
+  `ru_name` varchar(255) UNIQUE NOT NULL,
+  FULLTEXT KEY(ru_name, name)
 );
 
 CREATE TABLE `ml_model` (
