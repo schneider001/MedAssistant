@@ -179,7 +179,7 @@ class Request:
                      doctor_name, \
                      date, \
                      predicted_disease_name, \
-                     comment_status \
+                     is_commented \
                  FROM ( \
                      SELECT  \
                          doctors.id AS doctor_id, \
@@ -187,23 +187,20 @@ class Request:
                          requests.date AS date, \
                          diseases.ru_name AS predicted_disease_name, \
                          requests.id AS request_id, \
-                     FROM  \
-                         requests \
-                     JOIN  \
-                         doctors ON requests.doctor_id = doctors.id \
-                     JOIN  \
-                         diseases ON requests.predicted_disease_id = diseases.id \
+                         requests.is_commented AS is_commented \
+                     FROM requests \
+                     JOIN doctors ON requests.doctor_id = doctors.id \
+                     JOIN diseases ON requests.predicted_disease_id = diseases.id \
                  ) AS subquery \
                  WHERE  \
                      doctor_id = %s AND ( \
                          predicted_disease_name LIKE %s OR  \
-                         comment_status LIKE %s OR  \
                          date LIKE %s \
                      ) \
                  LIMIT %s OFFSET %s;"
         
         sub_str = '%' + search_text + '%'
-        return db.execute_select(query, doctor_id, sub_str, sub_str, sub_str, per_page, (page - 1) * per_page)
+        return db.execute_select(query, doctor_id, sub_str, sub_str, per_page, (page - 1) * per_page)
 
     @staticmethod
     def get_requests_page_by_patient_id(patient_id, page, per_page):

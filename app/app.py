@@ -267,6 +267,7 @@ def load_data_requests():
     per_page = 15
 
     requests = Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, term)
+    print(requests)
     requests = [{"id" : request[0], "name": request[1], "date": request[2], "diagnosis" : request[3], "is_commented": request[4]} for request in requests]
 
     return jsonify({'results': requests, 'pagination': {'more': len(requests) > 0}})
