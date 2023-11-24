@@ -203,7 +203,7 @@ def get_request_info_by_id():
     comments_values = Comment.get_comments_by_request_id(request_id, current_user.id)
     doctor_comments = [{"id": 1,
                         "doctor": comment_values[0], 
-                        "time": comment_values[1], 
+                        "time": comment_values[1].strftime("%Y-%m-%d %H:%M:%S"),
                         "comment": comment_values[2], 
                         "editable": comment_values[3]} for comment_values in comments_values]
 
@@ -256,7 +256,7 @@ def load_data_patients():
 @login_required
 def load_data_requests():
     """
-    Получает список запросов для текущего полTODOьзователя для указанной страницы в пагинации с использованием поиска.
+    Получает список запросов для текущего пользователя для указанной страницы в пагинации с использованием поиска.
     :param str search: Фильтр.
     :param str page: Номер страницы.
     :return: JSON-ответ со списком запросов для указанной страницы, включая id запроса, имя пациента, дату, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
@@ -321,7 +321,7 @@ def load_patient_history():
     per_page = 15
 
     data = Request.get_requests_page_by_patient_id(patient_id, page, per_page)
-
+    
     return jsonify(data)
 
 #---------------------------------------DONE-5-------------------------------------------
@@ -433,24 +433,16 @@ def load_patients():
     term = request.args.get('search', '')
     page = int(request.args.get('page', 1))
 
-    per_page = 15
+    per_page = 2 #небольшое значение для визуализации загрузки
+    count = Patient.count_all_search(term)[0][0]
     start = (page - 1) * per_page
-    end = start + per_page
+    end = (start + per_page) if (start + per_page) < count else count
 
     time.sleep(1)
-    patients_in_db = [
-        {"id": 1 ,"name": "Иванов Иван Иванович", "oms": "1234 4562 7894 5410" },
-        {"id": 2 ,"name": "Петров Петр Петрович", "oms": "3424 2321 5334 1434" },
-        {"id": 3 ,"name": "Сидоров Сидор Сидорович", "oms": "6534 3242 7665 3243" },
-        {"id": 4 ,"name": "Смирнов Алексей Андреевич", "oms": "2324 6354 3324 2234" },
-        {"id": 5 ,"name": "Козлов Владимир Дмитриевич", "oms": "4321 3321 6254 1243" },
-        {"id": 6 ,"name": "Морозов Олег Игоревич", "oms": "4322 7165 1234 2332" }
-    ] #TODO получать пациентов из БД
-
-    filtered_patients = list(filter(lambda p: term in p["name"] or term in p["oms"], patients_in_db))
-    patients = filtered_patients[start:end] #Нужно опять же из БД получить нужную страницу с пациентами
-
-    return jsonify({'results': patients, 'pagination': {'more': end < len(filtered_patients)}}) #и при этом нужно как то понять, была ли это последняя страница
+    
+    patients = Patient.find_all_search_lazyload(term, start, end)
+    patients = [{'id': patient[0], 'name': patient[1], 'snils':patient[2]} for patient in patients]
+    return jsonify({'results': patients, 'pagination': {'more': end < count}}) #и при этом нужно как то понять, была ли это последняя страница
 
 
 @app.route('/load_symptoms', methods=['GET'])

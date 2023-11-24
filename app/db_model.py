@@ -50,6 +50,16 @@ class Patient:
             return Patient(*patient_data[0])
         
     @staticmethod
+    def find_all_search_lazyload(search, start, end):
+        query = "SELECT id, name, insurance_certificate FROM patients WHERE name LIKE CONCAT('%', %s, '%') LIMIT %s, %s"
+        return db.execute_select(query, search, start, end)
+    
+    @staticmethod
+    def count_all_search(search):
+        query = "SELECT COUNT(*) FROM patients WHERE name LIKE CONCAT('%', %s, '%')"
+        return db.execute_select(query, search)
+    
+    @staticmethod
     def insert_new_patient(name, insurance_certificate, born_date, sex):
         query = "INSERT INTO patients (name, insurance_certificate, born_date, sex) VALUES (%s, %s, %s, %s)"
         db.execute_update(query, name, insurance_certificate, born_date, sex)
@@ -81,14 +91,7 @@ class Symptom:
     def __init__(self, id, name, ru_name):
         self.id = id
         self.name = name
-        self.ru_name = ru_name
-    
-    @staticmethod
-    def find_all_ru_names():
-        query = "SELECT ru_name FROM symptoms"
-        result = db.execute_select(query)
-        return [item[0] for item in result]
-    
+        self.ru_name = ru_name    
     
     @staticmethod
     def get_by_id(id):
@@ -196,10 +199,6 @@ class Request:
                          requests.date AS date, \
                          diseases.ru_name AS predicted_disease_name, \
                          requests.id AS request_id, \
-                         CASE \
-                             WHEN EXISTS (SELECT 1 FROM comments WHERE comments.request_id = requests.id) THEN 'Прокомментирован' \
-                             ELSE 'Без комментариев' \
-                         END AS comment_status \
                      FROM  \
                          requests \
                      JOIN  \
@@ -223,14 +222,10 @@ class Request:
                         doctors.name AS doctor_name, \
                         requests.date, \
                         diseases.ru_name AS predicted_disease_name, \
-                        CASE \
-                            WHEN EXISTS (SELECT 1 FROM comments WHERE comments.request_id = requests.id) THEN 'Прокомментирован' \
-                            ELSE 'Без комментариев' \
-                        END AS comment_status \
+                        requests.is_commented AS comment_status \
                 FROM requests \
                 JOIN doctors ON requests.doctor_id = doctors.id \
                 JOIN diseases ON requests.predicted_disease_id = diseases.id \
-                LEFT JOIN comments ON requests.id = comments.request_id \
                 WHERE requests.patient_id = %s \
                 LIMIT %s OFFSET %s;"
         return db.execute_select(query, patient_id, per_page, (page - 1) * per_page)

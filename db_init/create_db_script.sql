@@ -49,7 +49,7 @@ CREATE TABLE `patients` (
   `name` varchar(255) NOT NULL,
   `insurance_certificate` varchar(255) UNIQUE NOT NULL,
   `born_date` timestamp,
-  `sex` ENUM ('MALE', 'FEMAILE')
+  `sex` ENUM ('MALE', 'FEMALE')
 );
 
 CREATE TABLE `administrators` (
