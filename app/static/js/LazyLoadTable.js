@@ -1,8 +1,7 @@
 class LazyLoadTable {
-    constructor(tableId, dataUrl, hiddenColumns = [], searchData = '') {
+    constructor(tableId, dataUrl, searchData = '') {
         this.tableId = tableId;
         this.dataUrl = dataUrl;
-        this.hiddenColumns = hiddenColumns
         this.page = 1;
         this.searchData = searchData;
         this.noMoreData = false;
@@ -18,8 +17,8 @@ class LazyLoadTable {
         }
   
         function createLoadingRow(numColumns) {
-            const $row = $('<tr>', { style: 'opacity: 0; pointer-events: none;', id: 'loading' });
-            const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;' });
+            const $row = $('<tr>', { style: 'opacity: 0; pointer-events: none;' });
+            const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;', id: 'loading' });
             const $div = $('<div>', { class: 'spinner-border spinner-border-sm', role: 'status' }).append($('<span>', { class: 'visually-hidden' }).text('Загрузка...'));
             $cell.append($div);
             $row.append($cell);
@@ -33,6 +32,7 @@ class LazyLoadTable {
             $loadingRow.animate({ opacity: 1 }, 1000);
             $(`#${this.tableId} tbody`).append($loadingRow);
             this.isLoading = true;
+            console.info($loadingRow);
 
             $.ajax({
                 url: `${this.dataUrl}?page=${this.page}&search=${this.searchData}`,
@@ -41,33 +41,34 @@ class LazyLoadTable {
                     $loadingRow.remove();
                     
                     const $tbody = $(`#${this.tableId} tbody`);
-                    if ($tbody.is(':empty') && data.length === 0) {
+                    console.info(data);
+                    if ($tbody.is(':empty') && data.results.length === 0) {
                         const $row = $('<tr>');
-                        const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;' }).text('Ничего не найдено');
+                        const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;', id: 'notfound' }).text('Ничего не найдено');
                         $row.append($cell);
                         $tbody.html($row);
                     }
 
-                    if (data.length > 0) {
-                        data.forEach(row => {
-                            const $row = $('<tr>');
-                            row.forEach((value, index) => {
-                                const isHidden = this.hiddenColumns.indexOf(index) !== -1;
-                            
-                                const $td = $('<td>').text(value);
-                                if (isHidden) {
-                                    $td.addClass('d-none');
-                                }
-                            
-                                $row.append($td);
-                            });
+                    if (data.results.length > 0) {
+                        data.results.forEach(row => {
+                            let $row;
+
+                            switch (this.tableId) {
+                              case "request-history-table":
+                                $row = convertRequestsToTableRow(row);
+                                break;
+                              case "patients-table":
+                                $row = convertPatientsToTableRow(row);
+                                break;
+                            }
+
                             $tbody.append($row);
                         });
                         this.page++;
-                    } else {
-                        this.noMoreData = true;
                     }
-                  
+                    
+                    this.noMoreData = !data.pagination.more;
+                    
                     this.isLoading = false;
 
                     const tableContainer = document.getElementById(this.tableId);
@@ -91,14 +92,6 @@ class LazyLoadTable {
     }
 
     init() {
-        $(`#${this.tableId} thead tr th`).each((index, th) => {
-            const isHidden = this.hiddenColumns.indexOf(index) !== -1;
-        
-            if (isHidden) {
-                $(th).addClass('d-none');
-            }
-        });
-
         $(`#${this.tableId} tbody`).empty();
         this.loadMoreData();
         
@@ -131,6 +124,28 @@ class LazyLoadTable {
         $('#search-input').off('input', this.searchHandler);
         document.getElementById('search-input').removeEventListener('keydown', this.keydownHandler);
     }
+}
+
+function convertPatientsToTableRow(patient) {
+    const $row = $('<tr>');
+
+    $row.append($('<td>').text(patient.id));
+    $row.append($('<td>').text(patient.name));
+    $row.append($('<td>').text(patient.oms));    
+
+    return $row;
+}
+
+function convertRequestsToTableRow(request) {
+    const $row = $('<tr>');
+
+    $row.append($('<td>').text(request.id));
+    $row.append($('<td>').text(request.name));
+    $row.append($('<td>').text(request.date));    
+    $row.append($('<td>').text(request.diagnosis));    
+    $row.append($('<td>').text(request.is_commented ? "Прокомментирован" : "Без комментариев"));
+
+    return $row;
 }
 
 export default LazyLoadTable;

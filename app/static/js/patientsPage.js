@@ -2,7 +2,7 @@ import LazyLoadTable from './LazyLoadTable.js';
 import { openRequestInfoModal } from './requestInfoModal.js';
 
 $(document).ready(function() {
-    const patientsTable = new LazyLoadTable('patients-table', '/load_data_patients', [0]);
+    const patientsTable = new LazyLoadTable('patients-table', '/load_patients');
     let requestHistoryTable;
 
     $('#patients-table').on('click', 'tbody tr', function() {
@@ -47,7 +47,7 @@ $(document).ready(function() {
                     requestHistoryTable.removeEventListeners();
                     $('#request-history-table').off('click', 'tbody tr');
                 }
-                requestHistoryTable = new LazyLoadTable('request-history-table', '/load_patient_history', [0], patientId);
+                requestHistoryTable = new LazyLoadTable('request-history-table', '/load_patient_history', patientId);
 
                 $('#request-history-table').on('click', 'tbody tr', function() {
                     var requestId = $(this).find('td:first').text();

@@ -441,3 +441,10 @@ th, td {
 #delete-icon:hover {
   opacity: 0.75;
 }
+
+#request-history-table table th:nth-child(1):not(#loading):not(#notfound),
+#request-history-table table td:nth-child(1):not(#loading):not(#notfound),
+#patients-table table th:nth-child(1):not(#loading):not(#notfound), 
+#patients-table table td:nth-child(1):not(#loading):not(#notfound) {
+  display: none;
+}
