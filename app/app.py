@@ -201,11 +201,11 @@ def get_request_info_by_id():
     symptoms = Request.get_symptom_ru_names(request_id)
     diagnosis_ru_name = Request.get_disease_ru_name(request_id)
     comments_values = Comment.get_comments_by_request_id(request_id, current_user.id)
-    doctor_comments = [{"id": 1,
-                        "doctor": comment_values[0], 
-                        "time": comment_values[1].strftime("%Y-%m-%d %H:%M:%S"),
-                        "comment": comment_values[2], 
-                        "editable": comment_values[3]} for comment_values in comments_values]
+    doctor_comments = [{"id": comment_values[0],
+                        "doctor": comment_values[1], 
+                        "time": comment_values[2].strftime("%Y-%m-%d %H:%M:%S"),
+                        "comment": comment_values[3], 
+                        "editable": comment_values[4]} for comment_values in comments_values]
 
     response_data = {
         "id": request_id,

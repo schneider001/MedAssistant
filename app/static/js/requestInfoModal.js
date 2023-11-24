@@ -114,7 +114,7 @@ function generateCommentElement(comment) {
     const $div = $('<div>', { class: 'card mb-3 comment-card', id: `comment-${comment.id}` });
 
     if (comment.editable) {
-        $div.addClass('editable-comment');
+        $div.addClass("editable-comment");
     }
 
     const $cardBody = $('<div>', { class: 'card-body' });
@@ -131,7 +131,7 @@ function generateCommentElement(comment) {
     const $commentContent = $('<div>');
 
     if (comment.editable) {
-        $commentContent.attr('id', 'editable-comment-content');
+        $commentContent.addClass("editable-comment-content");
     }
 
     const $commentBlock = createCommentBlock(comment.id, comment.doctor, comment.comment, comment.time, comment.editable);
@@ -149,7 +149,8 @@ function generateCommentElement(comment) {
 }
 
 function editComment(id, doctor, comment, time) {
-    const commentSection = $('#editable-comment-content');
+    const commentBlock = $(`#comment-${id}`);
+    const commentSection = commentBlock.find(".editable-comment-content");
     
     const $header = $('<div>').addClass('d-flex justify-content-between align-items-center mb-3');
     const $title = $('<h6>').addClass('text-primary fw-bold mb-0').text(doctor);
@@ -237,7 +238,7 @@ function addCommentElement(comment) {
         addCommentBlock = $('#add-comment');
     }
     
-    const editableComment = $('#editable-comment');
+    const editableComment = $(`#comment-${comment.id}`);
     if (editableComment.length && comment.editable) {
         editableComment.replaceWith($commentBlock);
     } else if (addCommentBlock.length && !editableComment.length) {
@@ -271,7 +272,7 @@ function saveComment(id) {
 }
 
 function editCommentElement(comment) {
-    const editableComment = $('#editable-comment');
+    var editableComment = $(`#comment-${comment.id}`);
     const $commentBlock = generateCommentElement(comment);
     let addCommentBlock = $('#add-comment');
 
@@ -285,10 +286,8 @@ function editCommentElement(comment) {
         }
     }
     
-    const editedComment = $(`[data-comment-id="${comment.id}"]`);
-    
-    if (editedComment.length) {
-        editedComment.replaceWith($commentBlock);
+    if (editableComment.length) {
+        editableComment.replaceWith($commentBlock);
     } else if (addCommentBlock.length) {
         $commentBlock.insertAfter(addCommentBlock);
     } else {
@@ -315,15 +314,17 @@ socket.on('deleted_comment', function(comment) {
     if (elementToRemove) {
       elementToRemove.remove();
     }
-
+    
     const addCommentBlock = $('#add-comment');
-    if (!addCommentBlock.length && elementToRemove.classList.contains("editable-comment")) {
+    if (!addCommentBlock.length && elementToRemove.hasClass("editable-comment")) {
         createCommentInputBlock(comment.doctor);
     }
 });
   
 function cancelEditComment(id, doctor, comment, time) {
-    const commentSection = $('#editable-comment-content');
+    const commentBlock = $(`#comment-${id}`);
+    const commentSection = commentBlock.find(".editable-comment-content");
+
     const $commentBlock = createCommentBlock(id, doctor, comment, time, true);
     commentSection.empty()
     commentSection.append($commentBlock.container1);

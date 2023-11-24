@@ -271,6 +271,7 @@ class Comment:
     @staticmethod
     def get_comments_by_request_id(request_id, doctor_id):
         query = "SELECT \
+                     comments.id, \
                      doctors.name, \
                      comments.date, \
                      comments.comment, \
