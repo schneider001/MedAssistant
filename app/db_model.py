@@ -135,13 +135,19 @@ class Request:
         db.execute_update(query_req_sym)
         return request_id
         
-        
     @staticmethod
     def update_status(id, status, predicted_disease_id):
         query = "UPDATE requests \
                  SET status = %s, predicted_disease_id = %s \
                  WHERE id = %s"
         db.execute_update(query, status, predicted_disease_id, id)
+
+    @staticmethod
+    def update_is_commented(id, is_commented):
+        query = "UPDATE requests \
+                 SET is_commented = %s \
+                 WHERE id = %s"
+        db.execute_update(query, is_commented, id)
         
     @staticmethod
     def get_symptom_ru_names(request_id):
@@ -227,9 +233,9 @@ class Comment:
     
     @staticmethod
     def add(doctor_id, request_id, comment):
-        query = "INSERT INTO comments (doctor_id, request_id, comment) \
-                 VALUES (%s, %s, %s)"
-        return db.execute_update(query, doctor_id, request_id, comment)
+        query = "INSERT INTO comments (doctor_id, request_id, comment, status) \
+                 VALUES (%s, %s, %s, %s)"
+        return db.execute_update(query, doctor_id, request_id, comment, 'NEW')
     
     @staticmethod
     def get_by_id(id):
@@ -241,17 +247,17 @@ class Comment:
             return Comment(*result[0])
     
     @staticmethod
-    def delete_by_id(id):
-        query = "DELETE FROM comments \
-                 WHERE id = %s"
-        db.execute_update(query, id)
-    
-    @staticmethod
-    def update(id, comment_text):
+    def update_status_by_id(status, id):
         query = "UPDATE comments \
-                 SET comment = %s, date = NOW() \
+                 SET status = %s \
                  WHERE id = %s"
-        db.execute_update(query, comment_text, id)
+        return db.execute_update(query, status, id)
+
+    @staticmethod
+    def is_request_commented(request_id):
+        query = "SELECT IF(COUNT(*) > 0, 1, 0) FROM comments \
+                 WHERE request_id = %s AND status = 'NEW' LIMIT 1"
+        return db.execute_select(query, request_id)
     
     @staticmethod
     def get_comments_by_request_id(request_id, doctor_id):
@@ -267,7 +273,8 @@ class Comment:
                  FROM \
                      comments \
                  JOIN doctors ON doctors.id = comments.doctor_id \
-                 WHERE comments.request_id = %s \
+                 WHERE comments.request_id = %s AND \
+                 comments.status = 'NEW' \
                  ORDER BY comments_id DESC"
         return db.execute_select(query, doctor_id, request_id)
 

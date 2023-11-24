@@ -32,7 +32,6 @@ class LazyLoadTable {
             $loadingRow.animate({ opacity: 1 }, 1000);
             $(`#${this.tableId} tbody`).append($loadingRow);
             this.isLoading = true;
-            console.info($loadingRow);
 
             $.ajax({
                 url: `${this.dataUrl}?page=${this.page}&search=${this.searchData}`,
@@ -41,7 +40,7 @@ class LazyLoadTable {
                     $loadingRow.remove();
                     
                     const $tbody = $(`#${this.tableId} tbody`);
-                    console.info(data);
+
                     if ($tbody.is(':empty') && data.results.length === 0) {
                         const $row = $('<tr>');
                         const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;', id: 'notfound' }).text('Ничего не найдено');

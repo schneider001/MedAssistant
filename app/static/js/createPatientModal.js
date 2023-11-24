@@ -179,7 +179,6 @@ function handleFileClick(event) {
 window.handleFileClick = handleFileClick;
 
 function handleFileSelect(event) {
-    console.info("test");
     var file = event.target.files[0];
     displayImage(file);
 }

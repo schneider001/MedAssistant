@@ -268,11 +268,11 @@ function saveComment(id) {
         commentInput.removeClass('is-invalid');
     }
 
-    socket.emit('edit_comment', { room_id: requestId, comment_id: id, comment: updatedComment });
+    socket.emit('edit_comment', { room_id: requestId, request_id: requestId, comment_id: id, comment: updatedComment });
 }
 
 function editCommentElement(comment) {
-    var editableComment = $(`#comment-${comment.id}`);
+    var editableComment = $(`#comment-${comment.old_id}`);
     const $commentBlock = generateCommentElement(comment);
     let addCommentBlock = $('#add-comment');
 
@@ -306,7 +306,7 @@ socket.on('self_edited_comment', function(comment) {
 });
 
 function deleteComment(id) {
-    socket.emit('delete_comment', { room_id: requestId, comment_id: id });
+    socket.emit('delete_comment', { room_id: requestId, request_id: requestId, comment_id: id });
 }
 
 socket.on('deleted_comment', function(comment) {

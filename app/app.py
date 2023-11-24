@@ -201,6 +201,7 @@ def get_request_info_by_id():
     symptoms = Request.get_symptom_ru_names(request_id)
     diagnosis_ru_name = Request.get_disease_ru_name(request_id)
     comments_values = Comment.get_comments_by_request_id(request_id, current_user.id)
+
     doctor_comments = [{"id": comment_values[0],
                         "doctor": comment_values[1], 
                         "time": comment_values[2].strftime("%Y-%m-%d %H:%M:%S"),
@@ -267,7 +268,6 @@ def load_data_requests():
     per_page = 15
 
     requests = Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, term)
-    print(requests)
     requests = [{"id" : request[0], "name": request[1], "date": request[2], "diagnosis" : request[3], "is_commented": request[4]} for request in requests]
 
     return jsonify({'results': requests, 'pagination': {'more': len(requests) > 0}})
@@ -346,6 +346,7 @@ def add_comment(data):
     
     user_id = current_user.id
     comment_id = Comment.add(user_id, request_id, comment_text)
+    Request.update_is_commented(request_id, 1)
     comment = Comment.get_by_id(comment_id)
     if comment:
         response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment_text}
@@ -366,9 +367,12 @@ def delete_comment(data):
     :return: JSON-ответ с id комментария и именем текущего пользователя.
     """
     room_id = data['room_id']
+    request_id = data['request_id']
     comment_id = data['comment_id']
 
-    Comment.delete_by_id(comment_id)
+    Comment.update_status_by_id('OLD', comment_id)
+    is_commented = Comment.is_request_commented(request_id)[0][0]
+    Request.update_is_commented(request_id, is_commented)
     doctor_name = current_user.name
 
     response = {"id": comment_id, "doctor": doctor_name}
@@ -385,13 +389,20 @@ def edit_comment(data):
     :return: JSON-ответ с информацией о комментарии, включая id комментария, имя доктора, время, текст комментария, является ли текущий пользователь автором.
     """
     room_id = data['room_id']
+    request_id = data['request_id']
     comment_id = data['comment_id']
     updated_comment_text = data['comment']
 
-    Comment.update(comment_id, updated_comment_text)
-    comment = Comment.get_by_id(comment_id)
+    Comment.update_status_by_id('OLD', comment_id)
+    user_id = current_user.id
+    new_comment_id = Comment.add(user_id, request_id, updated_comment_text)
+
+    is_commented = Comment.is_request_commented(request_id)[0]
+    Request.update_is_commented(request_id, is_commented)
+
+    comment = Comment.get_by_id(new_comment_id)
     if comment:
-        response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment.comment}
+        response = {"id": comment.id, "old_id": comment_id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment.comment}
     else:
         response = {}
     user_id = current_user.id
