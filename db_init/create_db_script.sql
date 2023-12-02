@@ -85,6 +85,7 @@ CREATE TABLE `requests` (
   `status` ENUM ('IN_PROGRESS', 'READY', 'ERROR') NOT NULL DEFAULT 'IN_PROGRESS',
   `date` timestamp DEFAULT NOW(),
   `ml_model_id` integer,
+  `is_commented` boolean DEFAULT FALSE,
   FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`),
   FOREIGN KEY (`patient_id`) REFERENCES `patients` (`id`),
   FOREIGN KEY (`predicted_disease_id`) REFERENCES `diseases` (`id`),
