@@ -22,12 +22,13 @@ class Database:
     #example 1: execute_select("SELECT * FROM users where id = %s", id) -> [(id, name, pass)]
     #example 2: execute_select("SELECT id, name FROM users) -> [(id1, name1), (id2, name2), ...]
     #example 3: execute_select("SELECT * FROM users where id = -1") -> []
-    def execute_select(self, sql_query, *values) -> list[tuple]:
+    def execute_select(self, sql_query, *values, one_expected=False) -> list[tuple]:
         try:
             self.cursor.execute(sql_query, values)
             return self.cursor.fetchall()
         except Exception as e:
-            self.logger.error(f"Failed to select from database: " + str(e))
+            self.logger.error(f"Failed to select from database: " + str(e) + \
+                "\\\\query = " + sql_query + "\\\\values = " + str(values))
     
     
     def execute_update(self, sql_query, *values):
@@ -37,7 +38,6 @@ class Database:
             return self.cursor.lastrowid 
         except Exception as e:
             self.conn.rollback()
-            # print("Can't execute update. Traceback:\n" + str(e))
             self.logger.error(f"Failed to update database: " + str(e) + \
                 "\\\\query = " + sql_query + "\\\\values = " + str(values))
         
