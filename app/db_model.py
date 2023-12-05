@@ -181,8 +181,8 @@ class Request:
     @staticmethod
     def get_requests_page_by_doctor_id_contain_substr(doctor_id, page, per_page, search_text):
         query = "SELECT  \
-                     doctors.id, \
-                     doctors.name, \
+                     patients.id, \
+                     patients.name, \
                      requests.date, \
                      diseases.ru_name, \
                      requests.id, \
@@ -190,6 +190,7 @@ class Request:
                  FROM requests \
                  JOIN doctors ON requests.doctor_id = doctors.id \
                  JOIN diseases ON requests.predicted_disease_id = diseases.id \
+                 JOIN patients ON requests.patient_id = patients.id \
                  WHERE  \
                      doctors.id = %s AND \
                      diseases.ru_name LIKE %s \
