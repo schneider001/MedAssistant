@@ -1,7 +1,7 @@
-DROP PROCEDURE IF EXISTS `drop_all_tables`;
+DROP PROCEDURE IF EXISTS drop_all_tables;
 
 DELIMITER $$
-CREATE PROCEDURE `drop_all_tables`()
+CREATE PROCEDURE drop_all_tables()
 BEGIN
     DECLARE _done INT DEFAULT FALSE;
     DECLARE _tableName VARCHAR(255);
@@ -66,14 +66,14 @@ CREATE TABLE `symptoms` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) UNIQUE NOT NULL,
   `ru_name` varchar(255) UNIQUE NOT NULL,
-  FULLTEXT KEY(ru_name, name)
+  FULLTEXT KEY(ru_name)
 );
 
 CREATE TABLE `diseases` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) UNIQUE NOT NULL,
   `ru_name` varchar(255) UNIQUE NOT NULL,
-  FULLTEXT KEY(ru_name, name)
+  FULLTEXT KEY(ru_name)
 );
 
 CREATE TABLE `ml_model` (
@@ -115,3 +115,37 @@ CREATE TABLE `comments` (
   FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`),
   FOREIGN KEY (`request_id`) REFERENCES `requests` (`id`)
 );
+
+DROP TRIGGER IF EXISTS after_comment_insert;
+
+DELIMITER $$
+CREATE TRIGGER after_comment_insert
+AFTER INSERT
+ON comments FOR EACH ROW
+BEGIN
+   UPDATE requests
+   SET is_commented = TRUE
+   WHERE id = NEW.request_id;
+END;$$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS after_comment_update;
+
+DELIMITER $$
+CREATE TRIGGER after_comment_update
+AFTER UPDATE
+ON comments FOR EACH ROW
+BEGIN
+   IF OLD.status = 'NEW' AND NEW.status = 'OLD' THEN
+      IF NOT EXISTS (SELECT 1 FROM comments WHERE request_id = OLD.request_id AND status = 'NEW') THEN
+         UPDATE requests
+         SET is_commented = FALSE
+         WHERE id = OLD.request_id;
+      END IF;
+   ELSEIF OLD.status = 'OLD' AND NEW.status = 'NEW' THEN
+      UPDATE requests
+      SET is_commented = TRUE
+      WHERE id = NEW.request_id;
+   END IF;
+END;$$
+DELIMITER ;

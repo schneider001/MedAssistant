@@ -96,9 +96,10 @@ def populate_database(): #использовать db методы в идеал
     for x in range(200):  
         doctor_id = randint(1, len(doctors))
         patient_id = randint(1, 100)  
+        predicted_disease_id = randint(1, 40)
         status = randint(1, 3)
         timestamp = get_random_timestamp()
-        query = f"INSERT INTO requests (doctor_id, patient_id, status, date) VALUES ({doctor_id}, {patient_id}, {status}, {timestamp})"
+        query = f"INSERT INTO requests (doctor_id, patient_id, status, date, predicted_disease_id) VALUES ({doctor_id}, {patient_id}, {status}, {timestamp}, {predicted_disease_id})"
         query_line += query + ';'
         
         used_symptoms = set()
@@ -109,7 +110,6 @@ def populate_database(): #использовать db методы в идеал
             used_symptoms.add(symptom_id)
             query = f"INSERT INTO request_symptoms (symptom_id, request_id) VALUES ({symptom_id}, {x+1})"
             query_line += query + ';'
-        
         
         rand_arr = sample(range(1, len(doctors) + 1), 3)
         for comm_num in range(randint(0, 3)):

@@ -52,8 +52,14 @@ class Patient:
     @staticmethod
 
     def find_all_search_lazyload(search, page, per_page):
-        query = "SELECT id, name, insurance_certificate FROM patients WHERE MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) OR MATCH(insurance_certificate) AGAINST (%s IN BOOLEAN MODE) LIMIT %s OFFSET %s"
-        return db.execute_select(query, search, search, per_page, (page - 1) * per_page)
+        query = "SELECT id, name, insurance_certificate \
+         FROM patients \
+         WHERE MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) \
+         OR MATCH(insurance_certificate) AGAINST (%s IN BOOLEAN MODE) \
+         ORDER BY (MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) + MATCH(insurance_certificate) AGAINST (%s IN BOOLEAN MODE)) DESC, \
+         name ASC \
+         LIMIT %s OFFSET %s"
+        return db.execute_select(query, search, search, search, search, per_page, (page - 1) * per_page)
     
     @staticmethod
     def insert_new_patient(name, insurance_certificate, born_date, sex):
@@ -105,8 +111,8 @@ class Symptom:
     @staticmethod
     def get_page_by_filter(filter, page, per_page):
         query = "SELECT id, ru_name FROM symptoms \
-            WHERE MATCH (ru_name, name) AGAINST (%s IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) \
-            LIMIT %s OFFSET %s;"        
+            WHERE MATCH (ru_name) AGAINST (%s IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) \
+            LIMIT %s OFFSET %s;"  #тоже удалить можно по идее
         return db.execute_select(query, filter, per_page, (page - 1) * per_page)
     
     @staticmethod
@@ -153,7 +159,7 @@ class Request:
     def update_is_commented(id, is_commented):
         query = "UPDATE requests \
                  SET is_commented = %s \
-                 WHERE id = %s"
+                 WHERE id = %s" # в бд создана процедура обновления стутса комментов, статус изменяется автоматически, необходимости делать это вручную по идее нет
         db.execute_update(query, is_commented, id)
 
     @staticmethod
@@ -199,11 +205,13 @@ class Request:
                  JOIN patients ON requests.patient_id = patients.id \
                  WHERE  \
                      doctors.id = %s AND \
-                     diseases.ru_name LIKE %s \
-                 LIMIT %s OFFSET %s;"
-        
-        sub_str = '%' + search_text + '%'
-        return db.execute_select(query, doctor_id, sub_str, per_page, (page - 1) * per_page)
+                     (MATCH(diseases.ru_name) AGAINST (%s IN NATURAL LANGUAGE MODE) OR \
+                     MATCH(patients.name) AGAINST (%s IN NATURAL LANGUAGE MODE)) \
+                 ORDER BY (MATCH(diseases.ru_name) AGAINST (%s IN NATURAL LANGUAGE MODE) + MATCH(patients.name) AGAINST (%s IN NATURAL LANGUAGE MODE)) DESC, \
+                 patients.name ASC \
+                 LIMIT %s OFFSET %s;" #если произошла ошибка и болезнь не была предсказана, реквест не отобразится, баг или фича?
+                 
+        return db.execute_select(query, doctor_id, search_text, search_text, search_text, search_text, per_page, (page - 1) * per_page)
 
     @staticmethod
     def get_requests_page_by_patient_id(patient_id, page, per_page):

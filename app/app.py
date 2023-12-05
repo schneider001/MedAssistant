@@ -452,8 +452,8 @@ def load_patients():
     page = int(request.args.get('page', 1))
 
 
-    per_page = 2 #небольшое значение для визуализации загрузки
-    limit = 5
+    per_page = 5 #небольшое значение для визуализации загрузки
+    limit = 20
     time.sleep(1)
     
     patients = Patient.find_all_search_lazyload(term, page, per_page)
@@ -469,16 +469,22 @@ def load_symptoms():
     :param str page: Номер страницы.
     :return: JSON-ответ со списком симптомов для указанной страницы, включая id симптома, название, также переменную more, указывающая о конце пагинации.
     """
-    filter = request.args.get('search', '')
+    filter = request.args.get('search', '').lower()
     page = int(request.args.get('page', 1))
 
-    per_page = 2 #небольшие значения для визуализации загрузки
-    limit = 5
-    
-    symptoms = Symptom.get_page_by_filter(filter, page, per_page)
-    symptoms = [{'id': item[0], 'name': item[1]} for item in symptoms]
+    per_page = 5
 
-    return jsonify({'results': symptoms, 'pagination': {'more': len(symptoms)==per_page and page * per_page < limit}})
+    symptoms = Symptom.find_all_symptoms()
+    symptoms = [{'id': item[0], 'name': item[1].lower()} for item in symptoms]
+
+    if filter != '':
+        symptoms = [row for row in symptoms if filter in row['name']]
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    filtered_data = symptoms[start:end]
+
+    return jsonify({'results': filtered_data, 'pagination': {'more': len(filtered_data) == per_page}})
 
 
 
