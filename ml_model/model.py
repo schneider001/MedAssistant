@@ -3,6 +3,7 @@ from typing import List, Any
 import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+import os
 
 
 def save_model(obj : Any, path : str):
@@ -19,10 +20,8 @@ def load_pickle(path : str):
 
 class DiseasePredModel:
     def __init__(self, path : str = ""):
-        if path == "":
-            self.__path_saved_model = "model_predict.pkl"
-        else:
-            self.__path_saved_model = "model_predict.pkl"
+        self.path = path
+        self.__path_saved_model = os.path.join(self.path, "model_predict.pkl")
 
         disease_pred_model = load_pickle(self.__path_saved_model)
         self.model = disease_pred_model['model']
@@ -42,7 +41,7 @@ class DiseasePredModel:
 
     
     def _get_weight_symptom(self):
-        weight_symptoms = pd.read_csv('Symptom-severity.csv')
+        weight_symptoms = pd.read_csv(os.path.join(self.path, 'Symptom-severity.csv'))
         symptoms_weight_dict = {symptom.lower() : weight_symptoms.loc[weight_symptoms['Symptom'] == symptom]['weight'] for symptom in weight_symptoms['Symptom']}
         symptoms_weight_dict['dischromic  patches'] = 0
         symptoms_weight_dict['spotting  urination'] = 0

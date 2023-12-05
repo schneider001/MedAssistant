@@ -27,6 +27,20 @@ login_manager = LoginManager(app)
 
 socketio = SocketIO(app)
 
+#import ml_model
+import sys
+sys.path.append('../ml_model')
+from model import DiseasePredModel
+ml_model = DiseasePredModel('../ml_model')
 def get_disease(symptoms: list):
-    return('Osteoarthristis')
+    
+    max_symptoms_number = 17
+    
+    if len(symptoms) > max_symptoms_number:
+        symptoms_to_model = symptoms[:max_symptoms_number]
+    else:
+        symptoms_to_model = symptoms + [float('nan')] * (max_symptoms_number - len(symptoms))
+    print(f'symptoms = {symptoms_to_model}')
+    print(f'disease = {ml_model.predict(symptoms_to_model)[0]}')
+    return ml_model.predict(symptoms_to_model)[0]
 
