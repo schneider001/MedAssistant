@@ -181,11 +181,10 @@ class Request:
     @staticmethod
     def get_requests_page_by_doctor_id_contain_substr(doctor_id, page, per_page, search_text):
         query = "SELECT  \
-                     patients.id, \
+                     requests.id, \
                      patients.name, \
                      requests.date, \
                      diseases.ru_name, \
-                     requests.id, \
                      requests.is_commented \
                  FROM requests \
                  JOIN doctors ON requests.doctor_id = doctors.id \
