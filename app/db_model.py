@@ -52,7 +52,7 @@ class Patient:
     @staticmethod
 
     def find_all_search_lazyload(search, page, per_page):
-        query = "SELECT id, name, insurance_certificate FROM patients WHERE MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) OR MATCH(insurance_certificate) AGAINST (%s IN BOOLEAN MODE) LIMIT %s OFFSET %s"
+        query = "SELECT id, name, insurance_certificate FROM patients WHERE MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) OR MATCH(insurance_certificate) AGAINST (%s IN BOOLEAN MODE) LIMIT %s OFFSET %s"
         return db.execute_select(query, search, search, per_page, (page - 1) * per_page)
     
     @staticmethod

@@ -236,7 +236,7 @@ def load_data_patients():
 
     #data = [[i, f'Name {i}', f'oms {i}'] for i in range(1, 101)]
     data = Patient.find_all_id_name_insurance_certificate() #очень временно так, пока дублируются функции
-    data = [{"id": patient[0], "name": patient[1], "oms": patient[2]}] for patient in data]
+    data = [{"id": patient[0], "name": patient[1], "oms": patient[2]} for patient in data]
     
     if search_text == '':
         filtered_data = data
