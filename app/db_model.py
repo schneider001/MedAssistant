@@ -155,7 +155,7 @@ class Request:
                  SET is_commented = %s \
                  WHERE id = %s"
         db.execute_update(query, is_commented, id)
-        
+
     @staticmethod
     def get_symptom_ru_names(request_id):
         query = "SELECT \
@@ -187,41 +187,31 @@ class Request:
     
     @staticmethod
     def get_requests_page_by_doctor_id_contain_substr(doctor_id, page, per_page, search_text):
-        query = "SELECT \
-                     request_id, \
-                     doctor_name, \
-                     date, \
-                     predicted_disease_name, \
-                     is_commented \
-                 FROM ( \
-                     SELECT  \
-                         doctors.id AS doctor_id, \
-                         doctors.name AS doctor_name, \
-                         requests.date AS date, \
-                         diseases.ru_name AS predicted_disease_name, \
-                         requests.id AS request_id, \
-                         requests.is_commented AS is_commented \
-                     FROM requests \
-                     JOIN doctors ON requests.doctor_id = doctors.id \
-                     JOIN diseases ON requests.predicted_disease_id = diseases.id \
-                 ) AS subquery \
+        query = "SELECT  \
+                     requests.id, \
+                     patients.name, \
+                     requests.date, \
+                     diseases.ru_name, \
+                     requests.is_commented \
+                 FROM requests \
+                 JOIN doctors ON requests.doctor_id = doctors.id \
+                 JOIN diseases ON requests.predicted_disease_id = diseases.id \
+                 JOIN patients ON requests.patient_id = patients.id \
                  WHERE  \
-                     doctor_id = %s AND ( \
-                         predicted_disease_name LIKE %s OR  \
-                         date LIKE %s \
-                     ) \
+                     doctors.id = %s AND \
+                     diseases.ru_name LIKE %s \
                  LIMIT %s OFFSET %s;"
         
         sub_str = '%' + search_text + '%'
-        return db.execute_select(query, doctor_id, sub_str, sub_str, per_page, (page - 1) * per_page)
+        return db.execute_select(query, doctor_id, sub_str, per_page, (page - 1) * per_page)
 
     @staticmethod
     def get_requests_page_by_patient_id(patient_id, page, per_page):
-        query = "SELECT requests.id AS request_id, \
-                        doctors.name AS doctor_name, \
+        query = "SELECT requests.id, \
+                        doctors.name, \
                         requests.date, \
-                        diseases.ru_name AS predicted_disease_name, \
-                        requests.is_commented AS comment_status \
+                        diseases.ru_name, \
+                        requests.is_commented \
                 FROM requests \
                 JOIN doctors ON requests.doctor_id = doctors.id \
                 JOIN diseases ON requests.predicted_disease_id = diseases.id \
@@ -264,7 +254,7 @@ class Comment:
     def is_request_commented(request_id):
         query = "SELECT IF(COUNT(*) > 0, 1, 0) FROM comments \
                  WHERE request_id = %s AND status = 'NEW' LIMIT 1"
-        return db.execute_select(query, request_id)
+        return db.execute_select(query, request_id)[0][0]
     
     @staticmethod
     def get_comments_by_request_id(request_id, doctor_id):

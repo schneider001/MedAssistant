@@ -373,7 +373,7 @@ def delete_comment(data):
     comment_id = data['comment_id']
 
     Comment.update_status_by_id('OLD', comment_id)
-    is_commented = Comment.is_request_commented(request_id)[0][0]
+    is_commented = Comment.is_request_commented(request_id)
     Request.update_is_commented(request_id, is_commented)
     doctor_name = current_user.name
 
@@ -399,7 +399,7 @@ def edit_comment(data):
     user_id = current_user.id
     new_comment_id = Comment.add(user_id, request_id, updated_comment_text)
 
-    is_commented = Comment.is_request_commented(request_id)[0]
+    is_commented = Comment.is_request_commented(request_id)
     Request.update_is_commented(request_id, is_commented)
 
     comment = Comment.get_by_id(new_comment_id)
