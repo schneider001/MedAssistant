@@ -27,7 +27,6 @@ class Database:
             self.cursor.execute(sql_query, values)
             return self.cursor.fetchall()
         except Exception as e:
-            self.conn.rollback()
             self.logger.error(f"Failed to select from database: " + str(e))
     
     
@@ -39,7 +38,8 @@ class Database:
         except Exception as e:
             self.conn.rollback()
             # print("Can't execute update. Traceback:\n" + str(e))
-            self.logger.error(f"Failed to update database: " + str(e))
+            self.logger.error(f"Failed to update database: " + str(e) + \
+                "\\\\query = " + sql_query + "\\\\values = " + str(values))
         
 
     #------------------------------------------
