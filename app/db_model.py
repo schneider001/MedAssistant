@@ -50,10 +50,10 @@ class Patient:
             return Patient(*patient_data[0])
         
     @staticmethod
-    def find_all_search_lazyload(search, limit, start):
+
+    def find_all_search_lazyload(search, page, per_page):
         query = "SELECT id, name, insurance_certificate FROM patients WHERE MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) OR MATCH(insurance_certificate) AGAINST (%s IN BOOLEAN MODE) LIMIT %s OFFSET %s"
-        return db.execute_select(query, search, search, limit, start)
-    
+        return db.execute_select(query, search, search, per_page, (page - 1) * per_page)
     
     @staticmethod
     def insert_new_patient(name, insurance_certificate, born_date, sex):
@@ -115,7 +115,7 @@ class Symptom:
             WHERE LOWER(ru_name) LIKE %s or LOWER(name) LIKE %s"
         filter_string = f'%{filter.lower()}%'
         return db.execute_select(query, filter_string, filter_string)
-        
+
 
 class Request:
     def __init__(self, id, doctor_id, patient_id, predicted_disease_id,
@@ -142,13 +142,19 @@ class Request:
         db.execute_update(query_req_sym)
         return request_id
         
-        
     @staticmethod
     def update_status(id, status, predicted_disease_id):
         query = "UPDATE requests \
                  SET status = %s, predicted_disease_id = %s \
                  WHERE id = %s"
         db.execute_update(query, status, predicted_disease_id, id)
+
+    @staticmethod
+    def update_is_commented(id, is_commented):
+        query = "UPDATE requests \
+                 SET is_commented = %s \
+                 WHERE id = %s"
+        db.execute_update(query, is_commented, id)
         
     @staticmethod
     def get_symptom_ru_names(request_id):
@@ -186,7 +192,7 @@ class Request:
                      doctor_name, \
                      date, \
                      predicted_disease_name, \
-                     comment_status \
+                     is_commented \
                  FROM ( \
                      SELECT  \
                          doctors.id AS doctor_id, \
@@ -194,23 +200,20 @@ class Request:
                          requests.date AS date, \
                          diseases.ru_name AS predicted_disease_name, \
                          requests.id AS request_id, \
-                     FROM  \
-                         requests \
-                     JOIN  \
-                         doctors ON requests.doctor_id = doctors.id \
-                     JOIN  \
-                         diseases ON requests.predicted_disease_id = diseases.id \
+                         requests.is_commented AS is_commented \
+                     FROM requests \
+                     JOIN doctors ON requests.doctor_id = doctors.id \
+                     JOIN diseases ON requests.predicted_disease_id = diseases.id \
                  ) AS subquery \
                  WHERE  \
                      doctor_id = %s AND ( \
                          predicted_disease_name LIKE %s OR  \
-                         comment_status LIKE %s OR  \
                          date LIKE %s \
                      ) \
                  LIMIT %s OFFSET %s;"
         
         sub_str = '%' + search_text + '%'
-        return db.execute_select(query, doctor_id, sub_str, sub_str, sub_str, per_page, (page - 1) * per_page)
+        return db.execute_select(query, doctor_id, sub_str, sub_str, per_page, (page - 1) * per_page)
 
     @staticmethod
     def get_requests_page_by_patient_id(patient_id, page, per_page):
@@ -237,9 +240,9 @@ class Comment:
     
     @staticmethod
     def add(doctor_id, request_id, comment):
-        query = "INSERT INTO comments (doctor_id, request_id, comment) \
-                 VALUES (%s, %s, %s)"
-        return db.execute_update(query, doctor_id, request_id, comment)
+        query = "INSERT INTO comments (doctor_id, request_id, comment, status) \
+                 VALUES (%s, %s, %s, %s)"
+        return db.execute_update(query, doctor_id, request_id, comment, 'NEW')
     
     @staticmethod
     def get_by_id(id):
@@ -251,33 +254,35 @@ class Comment:
             return Comment(*result[0])
     
     @staticmethod
-    def delete_by_id(id):
-        query = "DELETE FROM comments \
-                 WHERE id = %s"
-        db.execute_update(query, id)
-    
-    @staticmethod
-    def update(id, comment_text):
+    def update_status_by_id(status, id):
         query = "UPDATE comments \
-                 SET comment = %s, date = NOW() \
+                 SET status = %s \
                  WHERE id = %s"
-        db.execute_update(query, comment_text, id)
+        return db.execute_update(query, status, id)
+
+    @staticmethod
+    def is_request_commented(request_id):
+        query = "SELECT IF(COUNT(*) > 0, 1, 0) FROM comments \
+                 WHERE request_id = %s AND status = 'NEW' LIMIT 1"
+        return db.execute_select(query, request_id)
     
     @staticmethod
     def get_comments_by_request_id(request_id, doctor_id):
         query = "SELECT \
+                     comments.id AS comments_id, \
                      doctors.name, \
                      comments.date, \
                      comments.comment, \
                      CASE \
                          WHEN doctors.id = %s THEN 1 \
                          ELSE 0 \
-                     END AS editable \
+                     END \
                  FROM \
                      comments \
                  JOIN doctors ON doctors.id = comments.doctor_id \
-                 WHERE comments.request_id = %s \
-                 ORDER BY editable DESC"
+                 WHERE comments.request_id = %s AND \
+                 comments.status = 'NEW' \
+                 ORDER BY comments_id DESC"
         return db.execute_select(query, doctor_id, request_id)
 
         
