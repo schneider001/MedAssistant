@@ -201,11 +201,12 @@ def get_request_info_by_id():
     symptoms = Request.get_symptom_ru_names(request_id)
     diagnosis_ru_name = Request.get_disease_ru_name(request_id)
     comments_values = Comment.get_comments_by_request_id(request_id, current_user.id)
-    doctor_comments = [{"id": 1,
-                        "doctor": comment_values[0], 
-                        "time": comment_values[1].strftime("%Y-%m-%d %H:%M:%S"),
-                        "comment": comment_values[2], 
-                        "editable": comment_values[3]} for comment_values in comments_values]
+
+    doctor_comments = [{"id": comment_values[0],
+                        "doctor": comment_values[1], 
+                        "time": comment_values[2].strftime("%Y-%m-%d %H:%M:%S"),
+                        "comment": comment_values[3], 
+                        "editable": comment_values[4]} for comment_values in comments_values]
 
     response_data = {
         "id": request_id,
@@ -233,7 +234,7 @@ def load_data_patients():
 
     per_page = 15
 
-    data = [[i, f'Name {i}', f'oms {i}'] for i in range(1, 101)]
+    data = [{"id": i, "name": f'Name {i}', "oms": f'oms {i}'} for i in range(1, 101)]
 
     if search_text == '':
         filtered_data = data
@@ -261,12 +262,15 @@ def load_data_requests():
     :param str page: Номер страницы.
     :return: JSON-ответ со списком запросов для указанной страницы, включая id запроса, имя пациента, дату, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
     """
-    search_text = request.args.get('search', '').lower()
+    term = request.args.get('search', '').lower()
     page = int(request.args.get('page'))
 
     per_page = 15
 
-    return jsonify(Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, search_text))
+    requests = Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, term)
+    requests = [{"id" : request[0], "name": request[1], "date": request[2], "diagnosis" : request[3], "is_commented": request[4]} for request in requests]
+
+    return jsonify({'results': requests, 'pagination': {'more': len(requests) > 0}})
 
 
 @app.route('/get_patient_info', methods=['GET'])
@@ -320,9 +324,11 @@ def load_patient_history():
 
     per_page = 15
 
-    data = Request.get_requests_page_by_patient_id(patient_id, page, per_page)
-    
-    return jsonify(data)
+    requests = Request.get_requests_page_by_patient_id(patient_id, page, per_page)
+    requests = [{"id" : request[0], "name": request[1], "date": request[2].strftime("%Y-%m-%d %H:%M:%S"), "diagnosis" : request[3], "is_commented": request[4]} for request in requests]
+
+    return jsonify({'results': requests, 'pagination': {'more': len(requests) > 0}})
+
 
 #---------------------------------------DONE-5-------------------------------------------
 @socketio.on('add_comment')
@@ -340,6 +346,7 @@ def add_comment(data):
     
     user_id = current_user.id
     comment_id = Comment.add(user_id, request_id, comment_text)
+    Request.update_is_commented(request_id, 1)
     comment = Comment.get_by_id(comment_id)
     if comment:
         response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment_text}
@@ -360,9 +367,12 @@ def delete_comment(data):
     :return: JSON-ответ с id комментария и именем текущего пользователя.
     """
     room_id = data['room_id']
+    request_id = data['request_id']
     comment_id = data['comment_id']
 
-    Comment.delete_by_id(comment_id)
+    Comment.update_status_by_id('OLD', comment_id)
+    is_commented = Comment.is_request_commented(request_id)
+    Request.update_is_commented(request_id, is_commented)
     doctor_name = current_user.name
 
     response = {"id": comment_id, "doctor": doctor_name}
@@ -379,13 +389,20 @@ def edit_comment(data):
     :return: JSON-ответ с информацией о комментарии, включая id комментария, имя доктора, время, текст комментария, является ли текущий пользователь автором.
     """
     room_id = data['room_id']
+    request_id = data['request_id']
     comment_id = data['comment_id']
     updated_comment_text = data['comment']
 
-    Comment.update(comment_id, updated_comment_text)
-    comment = Comment.get_by_id(comment_id)
+    Comment.update_status_by_id('OLD', comment_id)
+    user_id = current_user.id
+    new_comment_id = Comment.add(user_id, request_id, updated_comment_text)
+
+    is_commented = Comment.is_request_commented(request_id)
+    Request.update_is_commented(request_id, is_commented)
+
+    comment = Comment.get_by_id(new_comment_id)
     if comment:
-        response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment.comment}
+        response = {"id": comment.id, "old_id": comment_id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment.comment}
     else:
         response = {}
     user_id = current_user.id
@@ -429,20 +446,16 @@ def load_patients():
     :param str page: Номер страницы.
     :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, полис ОМС; также переменную more, указывающая о конце пагинации.
     """
-    #TODO сейчас есть похожая функция для таблицы, но в этой появляется обязательная переменная more, в будущем планирую убрать старую функцию без more и переиспользовать эту
     term = request.args.get('search', '')
     page = int(request.args.get('page', 1))
 
     per_page = 2 #небольшое значение для визуализации загрузки
-    count = Patient.count_all_search(term)[0][0]
-    start = (page - 1) * per_page
-    end = (start + per_page) if (start + per_page) < count else count
 
     time.sleep(1)
     
-    patients = Patient.find_all_search_lazyload(term, start, end)
-    patients = [{'id': patient[0], 'name': patient[1], 'snils':patient[2]} for patient in patients]
-    return jsonify({'results': patients, 'pagination': {'more': end < count}}) #и при этом нужно как то понять, была ли это последняя страница
+    patients = Patient.find_all_search_lazyload(term, page, per_page)
+    patients = [{'id': patient[0], 'name': patient[1], 'oms': patient[2]} for patient in patients]
+    return jsonify({'results': patients, 'pagination': {'more': len(patients) > 0}})
 
 
 @app.route('/load_symptoms', methods=['GET'])
@@ -460,10 +473,8 @@ def load_symptoms():
     
     symptoms = Symptom.get_page_by_filter(filter, page, per_page)
     symptoms = [{'id': item[0], 'name': item[1]} for item in symptoms]
-    symptoms_count = Symptom.get_count_by_filter(filter)[0][0]
-    more = page * per_page < symptoms_count
 
-    return jsonify({'results': symptoms, 'pagination': {'more': more}})
+    return jsonify({'results': symptoms, 'pagination': {'more': len(symptoms) > 0}})
 
 
 
