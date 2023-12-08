@@ -387,6 +387,10 @@ def delete_comment(data):
         request_id = data['request_id']
         comment_id = data['comment_id']
 
+        user_id = current_user.id
+        if not Comment.validate_comment_author(comment_id, user_id):
+            raise
+
         Comment.update_status_by_id('OLD', comment_id)
         is_commented = Comment.is_request_commented(request_id)[0][0]
         Request.update_is_commented(request_id, is_commented)
@@ -414,8 +418,11 @@ def edit_comment(data):
         comment_id = data['comment_id']
         updated_comment_text = data['comment']
 
-        Comment.update_status_by_id('OLD', comment_id)
         user_id = current_user.id
+        if not Comment.validate_comment_author(comment_id, user_id):
+            raise
+        
+        Comment.update_status_by_id('OLD', comment_id)
         new_comment_id = Comment.add(user_id, request_id, updated_comment_text)
 
         is_commented = Comment.is_request_commented(request_id)[0][0]

@@ -230,6 +230,12 @@ class Comment:
         self.request_id = request_id
         self.comment = comment
         self.date = date
+
+    @staticmethod
+    def validate_comment_author(comment_id, user_id):
+        query = "SELECT COUNT(*) FROM comments WHERE id = %s AND user_id = %s"
+        return db.execute_select(query, comment_id, user_id)
+
     
     @staticmethod
     def add(doctor_id, request_id, comment):
