@@ -1,7 +1,0 @@
-flask==2.3.0
-werkzeug==2.3.0
-flask_login
-flask-bcrypt
-flask_socketio
-mysql-connector-python
-flask_socketio
