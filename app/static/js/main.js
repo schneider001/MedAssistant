@@ -22,3 +22,9 @@ $(document).ready(function() {
         }
     })
 })
+
+export function showError(message) {
+    var errorAlert = new bootstrap.Toast(document.getElementById('error-alert'));
+    $('#error-message').text(message);
+    errorAlert.show();
+}

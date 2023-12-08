@@ -1,3 +1,5 @@
+import { showError } from "./main.js";
+
 class LazyLoadTable {
     constructor(tableId, dataUrl, searchData = '') {
         this.tableId = tableId;
@@ -77,6 +79,8 @@ class LazyLoadTable {
                 },
                 error: function(xhr, status, error) {
                     console.error(`Error fetching data: ${error}`);
+                    var errorMessage = "Произошла при загрузке таблицы на сервере. Пожалуйста, попробуйте еще раз.";
+                    showError(errorMessage);
                 }
             });
         }

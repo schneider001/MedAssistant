@@ -1,4 +1,5 @@
-import "./select2adapters.js"
+import "./select2adapters.js";
+import { showError } from "./main.js";
 
 export function openCreatePatientModal() {
     $('#patientname').select2('close');
@@ -96,6 +97,8 @@ export function openCreatePatientModal() {
             },
             error: function(xhr, status, error) {
                 console.error('Ошибка при создании нового пациента: ' + error);
+                var errorMessage = "Произошла ошибка при создании нового пациента. Пожалуйста, попробуйте еще раз.";
+                showError(errorMessage);
             }
         });
     };

@@ -1,5 +1,6 @@
 import { openRequestInfoModal } from "./requestInfoModal.js";
 import "./select2adapters.js";
+import { showError } from "./main.js";
 
 $(document).ready(function() {
     $('#symptoms').select2({
@@ -29,6 +30,12 @@ $(document).ready(function() {
                         more: data.pagination.more
                     }
                 };
+            },
+            params: {
+                error: function(response) {
+                    var errorMessage = "Произошла ошибка при загрузке симптомов на сервере. Пожалуйста, попробуйте еще раз.";
+                    showError(errorMessage);
+                }
             },
             cache: true
         },
@@ -80,6 +87,12 @@ $(document).ready(function() {
                         more: data.pagination.more
                     }
                 };
+            },
+            params: {
+                error: function(response) {
+                    var errorMessage = "Произошла ошибка при загрузке пациентов на сервере. Пожалуйста, попробуйте еще раз.";
+                    showError(errorMessage);
+                }
             },
             cache: true
         },

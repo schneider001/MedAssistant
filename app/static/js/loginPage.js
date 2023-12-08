@@ -1,3 +1,5 @@
+import { showError } from "./main.js";
+
 $(document).ready(function() {
     $('#loginForm').submit(function(e) {
         e.preventDefault();
@@ -15,8 +17,10 @@ $(document).ready(function() {
                     $('#errorMessage').text('Неправильный логин или пароль').show();
                 }
             },
-            error: function(error) {
-                console.log(error);
+            error: function(xhr, status, error) {
+                console.error(error);
+                var errorMessage = "Ошибка авторизации. Пожалуйста, попробуйте еще раз.";
+                showError(errorMessage);
             }
         });
     });
