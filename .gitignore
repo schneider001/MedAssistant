@@ -2,3 +2,4 @@
 configs/db_settings.json
 logs/*
 documentation/gen_db.txt
+static/patient_images
