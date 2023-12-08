@@ -23,8 +23,11 @@ class Database:
     #example 2: execute_select("SELECT id, name FROM users) -> [(id1, name1), (id2, name2), ...]
     #example 3: execute_select("SELECT * FROM users where id = -1") -> []
     def execute_select(self, sql_query, *values, one_expected=False) -> list[tuple]:
-        self.cursor = self.conn.cursor()
         try:
+            if not self.conn.is_connected():
+                self.logger.info("Reconnecting to the database...")
+                self.conn.reconnect()
+            self.cursor = self.conn.cursor()
             self.cursor.execute(sql_query, values)
             return self.cursor.fetchall()
         except Exception as e:
@@ -35,8 +38,11 @@ class Database:
     
     
     def execute_update(self, sql_query, *values):
-        self.cursor = self.conn.cursor()
         try:
+            if not self.conn.is_connected():
+                self.logger.info("Reconnecting to the database...")
+                self.conn.reconnect()
+            self.cursor = self.conn.cursor()
             self.cursor.execute(sql_query, values)
             self.conn.commit()
             return self.cursor.lastrowid 
