@@ -1,6 +1,0 @@
-*__pycache__
-configs/db_settings.json
-logs/*
-documentation/gen_db.txt
-app/static/patient_images/*
-env
