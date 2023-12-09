@@ -233,7 +233,7 @@ class Comment:
 
     @staticmethod
     def validate_comment_author(comment_id, user_id):
-        query = "SELECT COUNT(*) FROM comments WHERE id = %s AND user_id = %s"
+        query = "SELECT COUNT(*) FROM comments WHERE id = %s AND doctor_id = %s"
         return db.execute_select(query, comment_id, user_id)
 
     
