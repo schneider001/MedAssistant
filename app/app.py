@@ -512,6 +512,5 @@ def load_symptoms():
     return jsonify({'results': symptoms, 'pagination': {'more': len(symptoms) > 0}})
 
 
-
 if __name__ == "__main__":
     socketio.run(app, debug=True)
