@@ -1,4 +1,6 @@
 from flask_login import UserMixin
+from dataclasses import dataclass
+from typing import List, Optional
 
 
 from init import db
@@ -123,7 +125,6 @@ class Symptom:
             WHERE LOWER(ru_name) LIKE %s or LOWER(name) LIKE %s"
         filter_string = f'%{filter.lower()}%'
         return db.execute_select(query, filter_string, filter_string)
-
 
 class Request:
     def __init__(self, id, doctor_id, patient_id, predicted_disease_id,
@@ -320,3 +321,52 @@ class Disease:
         values = db.execute_select(query, name)
         if values:
             return Disease(*values[0])
+            
+
+@dataclass
+class DoctorComment:
+    id: int
+    doctor: str
+    time: str
+    comment: str
+    editable: bool
+
+@dataclass
+class ResponseData:
+    id: int
+    patient_name: str
+    doctor: str
+    symptoms: List[str]
+    diagnosis: str
+    doctor_comments: List[DoctorComment]
+    
+@dataclass
+class RequestData:
+    id: int
+    name: str
+    date: str
+    diagnosis: str
+    is_commented: bool
+
+@dataclass
+class PatientData:
+    id: int
+    name: str
+    oms: str
+    birthDate: Optional[str] = None
+    age: Optional[int] = None
+    sex: Optional[str] = None
+    photo_url: Optional[str] = None
+    
+@dataclass
+class CommentResponseData:
+    id: Optional[int] = None
+    old_id: Optional[int] = None
+    doctor: Optional[str] = None
+    time: Optional[str] = None
+    comment: Optional[str] = None
+    
+@dataclass
+class SymptomData:
+    id: int
+    name: str

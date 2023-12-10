@@ -50,7 +50,7 @@ CREATE TABLE `patients` (
   `name` varchar(255) NOT NULL,
   `insurance_certificate` varchar(255) UNIQUE NOT NULL,
   `born_date` timestamp,
-  `sex` ENUM ('MALE', 'FEMALE'),
+  `sex` ENUM ('MALE', 'FEMALE', 'OTHER'),
   FULLTEXT KEY(name),
   FULLTEXT KEY(insurance_certificate)
 );

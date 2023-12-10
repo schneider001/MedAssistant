@@ -79,7 +79,7 @@ def populate_database(): #использовать db методы в идеал
         name = f"'{choice(surnames)} {choice(first_names)} {choice(first_names)}ович'"
         snils = get_random_snils()
         timestamp = get_random_timestamp()
-        sex = randint(1, 2)
+        sex = randint(1, 3)
         query = f"INSERT INTO patients (name, insurance_certificate, born_date, sex) VALUES ({name}, {snils}, {timestamp}, {sex})"
         query_line += query + ';'
         
