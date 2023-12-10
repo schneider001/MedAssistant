@@ -31,33 +31,45 @@ connected_users = {}
 @socketio.on('connect')
 @authenticated_only
 def handle_connect():
-    user_id = current_user.id
-    if user_id not in connected_users:
-        connected_users[user_id] = set()
-    connected_users[user_id].add(request.sid)
-    emit('connected')
+    try:
+        user_id = current_user.id
+        if user_id not in connected_users:
+            connected_users[user_id] = set()
+        connected_users[user_id].add(request.sid)
+        emit('connected')
+    except:
+        emit('connect_error')
 
 
 @socketio.on('disconnect')
 @authenticated_only
 def handle_disconnect():
-    user_id = current_user.id
-    if user_id in connected_users and request.sid in connected_users[user_id]:
-        connected_users[user_id].remove(request.sid)
+    try:
+        user_id = current_user.id
+        if user_id in connected_users and request.sid in connected_users[user_id]:
+            connected_users[user_id].remove(request.sid)
+    except:
+        emit('disconnect_error')
 
 
 @socketio.on('join_room')
 @authenticated_only
 def handle_join_room(data):
-    room_id = data['room_id']
-    join_room(room_id)
+    try:
+        room_id = data['room_id']
+        join_room(room_id)
+    except:
+        emit('join_room_error')
 
 
 @socketio.on('leave_room')
 @authenticated_only
 def handle_leave_room(data):
-    room_id = data['room_id']
-    leave_room(room_id)
+    try:
+        room_id = data['room_id']
+        leave_room(room_id)
+    except:
+        emit('leave_room_error')
 
 
 @app.route('/static/js/<path:filename>')
@@ -151,7 +163,7 @@ def get_request_info():
 
     patient_id = data.get('id')
     patient_name = data.get('name')
-    snils = data.get('snils')
+    oms = data.get('oms')
     symptom_ids = data.get('symptoms')
     
     symptoms = [Symptom.get_by_id(id) for id in symptom_ids]
@@ -230,7 +242,7 @@ def load_data_patients():
     :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, Полис ОМС.
     """
     search_text = request.args.get('search', '').lower()
-    page = int(request.args.get('page'))
+    page = int(request.args.get('page', '1'))
 
     per_page = 15
 
@@ -263,7 +275,7 @@ def load_data_requests():
     :return: JSON-ответ со списком запросов для указанной страницы, включая id запроса, имя пациента, дату, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
     """
     term = request.args.get('search', '').lower()
-    page = int(request.args.get('page'))
+    page = int(request.args.get('page', '1'))
 
     per_page = 15
 
@@ -319,8 +331,11 @@ def load_patient_history():
     :param str page: Номер страницы.
     :return: JSON-ответ со списком запросов для указанной страницы, которые включают id запроса, имя доктора, предсказанный диагноз, информацию о комментариях докторов(Без комментариев/Прокомментирован).
     """
-    patient_id = int(request.args.get('search'))
-    page = int(request.args.get('page'))
+    patient_id = request.args.get('search')
+    if patient_id == '':
+        return
+    patient_id = int(patient_id)
+    page = int(request.args.get('page', '1'))
 
     per_page = 15
 
@@ -340,22 +355,26 @@ def add_comment(data):
     :param str comment: Текст комментария.
     :return: JSON-ответ с информацией о комментарии, включая id комментария, имя доктора, время, текст комментария, является ли текущий пользователь автором.
     """
-    room_id = data['room_id']
-    request_id = data['request_id']
-    comment_text = data['comment']
-    
-    user_id = current_user.id
-    comment_id = Comment.add(user_id, request_id, comment_text)
-    Request.update_is_commented(request_id, 1)
-    comment = Comment.get_by_id(comment_id)
-    if comment:
-        response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment_text}
-    else:
-        response = {"id": None, "doctor": None, "time": None, "comment": None}
-    if user_id in connected_users:
-        for sid in connected_users[user_id]:
-            emit('self_added_comment', response, to = sid)
-        emit('added_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))
+    try:
+        room_id = data['room_id']
+        request_id = data['request_id']
+        comment_text = data['comment']
+
+        user_id = current_user.id
+        comment_id = Comment.add(user_id, request_id, comment_text)
+        Request.update_is_commented(request_id, 1)
+        comment = Comment.get_by_id(comment_id)
+        if comment:
+            response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment_text}
+        else:
+            response = {"id": None, "doctor": None, "time": None, "comment": None}
+        if user_id in connected_users:
+            for sid in connected_users[user_id]:
+                emit('self_added_comment', response, to = sid)
+            emit('added_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))
+    except:
+        emit('add_comment_error')
+
 
 #---------------------------------------DONE-6-------------------------------------------
 @socketio.on('delete_comment')
@@ -366,17 +385,25 @@ def delete_comment(data):
     :param int comment_id: ID комментария.
     :return: JSON-ответ с id комментария и именем текущего пользователя.
     """
-    room_id = data['room_id']
-    request_id = data['request_id']
-    comment_id = data['comment_id']
+    try:
+        room_id = data['room_id']
+        request_id = data['request_id']
+        comment_id = data['comment_id']
 
-    Comment.update_status_by_id('OLD', comment_id)
-    is_commented = Comment.is_request_commented(request_id)
-    Request.update_is_commented(request_id, is_commented)
-    doctor_name = current_user.name
+        user_id = current_user.id
+        if not Comment.validate_comment_author(comment_id, user_id):
+            raise
 
-    response = {"id": comment_id, "doctor": doctor_name}
-    emit('deleted_comment', response, room = room_id)
+        Comment.update_status_by_id('OLD', comment_id)
+        is_commented = Comment.is_request_commented(request_id)
+        Request.update_is_commented(request_id, is_commented)
+        doctor_name = current_user.name
+
+        response = {"id": comment_id, "doctor": doctor_name}
+        emit('deleted_comment', response, room = room_id)
+    except:
+        emit('delete_comment_error')
+
 
 #---------------------------------------TODO-7-------------------------------------------
 @socketio.on('edit_comment')
@@ -388,28 +415,34 @@ def edit_comment(data):
     :param str comment: Текст комментария.
     :return: JSON-ответ с информацией о комментарии, включая id комментария, имя доктора, время, текст комментария, является ли текущий пользователь автором.
     """
-    room_id = data['room_id']
-    request_id = data['request_id']
-    comment_id = data['comment_id']
-    updated_comment_text = data['comment']
+    try:
+        room_id = data['room_id']
+        request_id = data['request_id']
+        comment_id = data['comment_id']
+        updated_comment_text = data['comment']
 
-    Comment.update_status_by_id('OLD', comment_id)
-    user_id = current_user.id
-    new_comment_id = Comment.add(user_id, request_id, updated_comment_text)
+        user_id = current_user.id
+        if not Comment.validate_comment_author(comment_id, user_id):
+            raise
 
-    is_commented = Comment.is_request_commented(request_id)
-    Request.update_is_commented(request_id, is_commented)
+        Comment.update_status_by_id('OLD', comment_id)
+        new_comment_id = Comment.add(user_id, request_id, updated_comment_text)
 
-    comment = Comment.get_by_id(new_comment_id)
-    if comment:
-        response = {"id": comment.id, "old_id": comment_id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment.comment}
-    else:
-        response = {}
-    user_id = current_user.id
-    if user_id in connected_users:
-        for sid in connected_users[user_id]:
-            emit('self_edited_comment', response, to = sid)
-        emit('edited_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))    
+        is_commented = Comment.is_request_commented(request_id)
+        Request.update_is_commented(request_id, is_commented)
+
+        comment = Comment.get_by_id(new_comment_id)
+        if comment:
+            response = {"id": comment.id, "old_id": comment_id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment.comment}
+        else:
+            response = {}
+        user_id = current_user.id
+        if user_id in connected_users:
+            for sid in connected_users[user_id]:
+                emit('self_edited_comment', response, to = sid)
+            emit('edited_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))    
+    except:
+        emit('edit_comment_error')
 
 
 @app.route('/create_patient', methods=['POST'])
@@ -432,8 +465,13 @@ def create_patient():
     Patient.insert_new_patient(fullname, oms, birthdate, sex)
     id = Patient.get_id_by_insurance_certificate(oms)
 
+    directory_path = './static/patient_images/'
+
+    if not os.path.exists(directory_path):
+        os.makedirs(directory_path)
+
     if image:
-        image.save(f'./static/patient_images/{id}.jpg')
+        image.save(os.path.join(directory_path, f'{id}.jpg'))
 
     return jsonify({'id': id, 'name': fullname, 'oms': oms})
 
@@ -475,7 +513,6 @@ def load_symptoms():
     symptoms = [{'id': item[0], 'name': item[1]} for item in symptoms]
 
     return jsonify({'results': symptoms, 'pagination': {'more': len(symptoms) > 0}})
-
 
 
 if __name__ == "__main__":

@@ -1,11 +1,13 @@
 import { openRequestInfoModal } from "./requestInfoModal.js";
 import "./select2adapters.js";
+import { showError } from "./main.js";
 
 $(document).ready(function() {
     $('#symptoms').select2({
         theme: 'bootstrap-5',
         closeOnSelect: false,
 	    allowClear: true,
+        minimumInputLength: 4,
         ajax: {
             url: '/load_symptoms',
             dataType: 'json',
@@ -30,12 +32,18 @@ $(document).ready(function() {
                     }
                 };
             },
+            params: {
+                error: function(response) {
+                    var errorMessage = "Произошла ошибка при загрузке симптомов на сервере. Пожалуйста, попробуйте еще раз.";
+                    showError(errorMessage);
+                }
+            },
             cache: true
         },
         language: {
             errorLoading: () => 'Невозможно загрузить симптомы',
             inputTooLong: () => 'Слишком много символов',
-            inputTooShort: () => 'Слишком мало символов',
+            inputTooShort: () => 'Введите минимум 4 символа',
             maximumSelected: () => 'Выбрано максимальное количество симптомов',
             noResults: () => $('<div>', { class: 'text-center' }).text('Нет результатов'),
             removeAllItems: () => 'Удалить все симптомы',
@@ -61,6 +69,7 @@ $(document).ready(function() {
         placeholderForSearch: 'Поиск...',
         dropdownAdapter: $.fn.select2.amd.require("PatientsDropdownAdapter"),
         closeOnSelect: true,
+        minimumInputLength: 4,
         ajax: {
             url: '/load_patients',
             dataType: 'json',
@@ -81,12 +90,18 @@ $(document).ready(function() {
                     }
                 };
             },
+            params: {
+                error: function(response) {
+                    var errorMessage = "Произошла ошибка при загрузке пациентов на сервере. Пожалуйста, попробуйте еще раз.";
+                    showError(errorMessage);
+                }
+            },
             cache: true
         },
         language: {
             errorLoading: () => 'Невозможно загрузить результаты',
             inputTooLong: () => 'Слишком много символов',
-            inputTooShort: () => 'Слишком мало символов',
+            inputTooShort: () => 'Введите минимум 4 символа',
             maximumSelected: () => 'Выбрано максимальное количество элементов',
             noResults: () => $('<div>', { class: 'text-center' }).text('Нет результатов'),
             removeAllItems: () => 'Удалить все элементы',

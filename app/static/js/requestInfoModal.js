@@ -1,13 +1,42 @@
+import { showError } from "./main.js";
+
 let requestId;
 let socket = io().connect(`http://'${document.domain}:${location.port}`);
 
 
 socket.on('connected', function() {
     if (requestId !== undefined) {
-        openRequestInfoModal('by_id', { request_id: requestId })
+        openRequestInfoModal('by_id', { request_id: requestId });
     }    
 });
 
+socket.on('connect_error', function() {
+    showError('Произошла ошибка при подключении к серверу.');
+});
+
+socket.on('disconnect_error', function() {
+    showError('Произошла ошибка при отключении от сервера.');
+});
+
+socket.on('join_room_error', function() {
+    showError('Произошла ошибка при подключении к комнате.');
+});
+
+socket.on('leave_room_error', function() {
+    showError('Произошла ошибка при отключении от комнаты.');
+});
+
+socket.on('add_comment_error', function() {
+    showError('Произошла ошибка при создании комментария.');
+});
+
+socket.on('edit_comment_error', function() {
+    showError('Произошла ошибка при редактировании комментария.');
+});
+
+socket.on('delete_comment_error', function() {
+    ('Произошла ошибка при удалении комментария.');
+});
 
 export function openRequestInfoModal(mode, data) {
            
@@ -31,6 +60,8 @@ export function openRequestInfoModal(mode, data) {
         },
         error: function(xhr, status, error) {
             console.error('Ошибка при получении информации о запросе: ' + error);
+            var errorMessage = "Произошла ошибка при получении информации о запросе на сервере. Пожалуйста, попробуйте еще раз.";
+            showError(errorMessage);
         }
     });
     

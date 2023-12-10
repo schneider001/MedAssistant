@@ -1,13 +1,14 @@
 import LazyLoadTable from './LazyLoadTable.js';
 import { openRequestInfoModal } from './requestInfoModal.js';
+import { showError } from "./main.js";
 
 $(document).ready(function() {
     const patientsTable = new LazyLoadTable('patients-table', '/load_patients');
     let requestHistoryTable;
 
     $('#patients-table').on('click', 'tbody tr', function() {
-        var patientId = $(this).find('td:first').text();
-    
+        const patientId = $(this).find('td:first').text();
+        
         if (isNaN(patientId)) {
             return;
         }
@@ -61,6 +62,8 @@ $(document).ready(function() {
             },
             error: function(xhr, status, error) {
                 console.error('Ошибка при получении информации о пациенте: ' + error);
+                var errorMessage = "Произошла ошибка при получении информации о пациенте на сервере. Пожалуйста, попробуйте еще раз.";
+                showError(errorMessage);
             }
         });
     
