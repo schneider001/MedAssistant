@@ -448,3 +448,11 @@ th, td {
 #patients-table table td:nth-child(1):not(#loading):not(#notfound) {
   display: none;
 }
+
+#search-input:valid {
+  color: black;
+}
+
+#search-input:invalid {
+  color: lightgray;
+}
