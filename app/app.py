@@ -267,12 +267,17 @@ def load_data_requests():
     term = request.args.get('search', '').lower()
     page = int(request.args.get('page'))
 
-    per_page = 15
-
-    requests = Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, term)
+    per_page = 5
+    limit = 25
+    
+    if (len(term) > 3):
+        requests = Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, term)
+    else:
+        requests = Request.get_requests_page_by_doctor_id(current_user.id, page, per_page)
+        
     requests = [{"id" : request[0], "name": request[1], "date": request[2], "diagnosis" : request[3], "is_commented": request[4]} for request in requests]
 
-    return jsonify({'results': requests, 'pagination': {'more': len(requests) > 0}})
+    return jsonify({'results': requests, 'pagination': {'more': len(requests) > 0 and page * per_page < limit}})
 
 
 @app.route('/get_patient_info', methods=['GET'])
@@ -456,10 +461,14 @@ def load_patients():
     limit = 20
     time.sleep(1)
     
-    patients = Patient.find_all_search_lazyload(term, page, per_page)
+    if (len(term) > 3):
+        patients = Patient.find_all_search_lazyload(term, page, per_page)
+    else:
+        patients = Patient.find_all_id_name_insurance_certificate(page, per_page)
+        
     patients = [{'id': patient[0], 'name': patient[1], 'oms': patient[2]} for patient in patients]
+    
     return jsonify({'results': patients, 'pagination': {'more': len(patients)==per_page and page * per_page < limit}})
-
 
 @app.route('/load_symptoms', methods=['GET'])
 @login_required

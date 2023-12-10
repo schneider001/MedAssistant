@@ -38,8 +38,10 @@ class Patient:
         self.sex = sex
         
     @staticmethod
-    def find_all_id_name_insurance_certificate():
-        query = "SELECT id, name, insurance_certificate FROM patients"
+    def find_all_id_name_insurance_certificate(page=False, per_page=False):
+        query = "SELECT id, name, insurance_certificate FROM patients ORDER BY name"
+        if page and per_page is not None:
+            query += f" LIMIT {per_page} OFFSET {(page - 1) * per_page}"
         return db.execute_select(query)
     
     @staticmethod
@@ -208,10 +210,30 @@ class Request:
                      (MATCH(diseases.ru_name) AGAINST (%s IN NATURAL LANGUAGE MODE) OR \
                      MATCH(patients.name) AGAINST (%s IN NATURAL LANGUAGE MODE)) \
                  ORDER BY (MATCH(diseases.ru_name) AGAINST (%s IN NATURAL LANGUAGE MODE) + MATCH(patients.name) AGAINST (%s IN NATURAL LANGUAGE MODE)) DESC, \
-                 patients.name ASC \
-                 LIMIT %s OFFSET %s;" #если произошла ошибка и болезнь не была предсказана, реквест не отобразится, баг или фича?
+                 patients.name ASC, requests.date DESC \
+                 LIMIT %s OFFSET %s;" 
                  
         return db.execute_select(query, doctor_id, search_text, search_text, search_text, search_text, per_page, (page - 1) * per_page)
+
+    @staticmethod
+    def get_requests_page_by_doctor_id(doctor_id, page, per_page):
+        query = "SELECT  \
+                     requests.id, \
+                     patients.name, \
+                     requests.date, \
+                     diseases.ru_name, \
+                     requests.is_commented \
+                 FROM requests \
+                 JOIN doctors ON requests.doctor_id = doctors.id \
+                 JOIN diseases ON requests.predicted_disease_id = diseases.id \
+                 JOIN patients ON requests.patient_id = patients.id \
+                 WHERE  \
+                     doctors.id = %s \
+                 ORDER BY requests.date DESC, \
+                 patients.name ASC \
+                 LIMIT %s OFFSET %s;" 
+                 
+        return db.execute_select(query, doctor_id, per_page, (page - 1) * per_page)
 
     @staticmethod
     def get_requests_page_by_patient_id(patient_id, page, per_page):
