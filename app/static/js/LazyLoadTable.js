@@ -56,10 +56,6 @@ class LazyLoadTable {
                 success: (data) => {
                     $loadingRow.remove();
 
-                    //if (String(data.term) !== this.searchData) {
-                    //    return;
-                    //}
-
                     const $tbody = $(`#${this.tableId} tbody`);
                 
                     if ($tbody.is(':empty') && data.results.length === 0) {
@@ -108,7 +104,8 @@ class LazyLoadTable {
     }
 
     filterData(searchText) {
-        if (searchText === this.searchData){
+        if (searchText === this.searchData || 
+            searchText.length < 4 && this.searchData.length < 4){
             return;
         }
 

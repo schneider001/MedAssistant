@@ -1,7 +1,7 @@
-DROP PROCEDURE IF EXISTS `drop_all_tables`;
+DROP PROCEDURE IF EXISTS drop_all_tables;
 
 DELIMITER $$
-CREATE PROCEDURE `drop_all_tables`()
+CREATE PROCEDURE drop_all_tables()
 BEGIN
     DECLARE _done INT DEFAULT FALSE;
     DECLARE _tableName VARCHAR(255);
@@ -41,7 +41,8 @@ CREATE TABLE `doctors` (
   `username` varchar(255) UNIQUE NOT NULL,
   `name` varchar(255),
   `password_hash` blob NOT NULL,
-  `last_login` timestamp
+  `last_login` timestamp,
+  FULLTEXT KEY(name)
 );
 
 CREATE TABLE `patients` (
@@ -49,7 +50,9 @@ CREATE TABLE `patients` (
   `name` varchar(255) NOT NULL,
   `insurance_certificate` varchar(255) UNIQUE NOT NULL,
   `born_date` timestamp,
-  `sex` ENUM ('MALE', 'FEMALE')
+  `sex` ENUM ('MALE', 'FEMALE', 'OTHER'),
+  FULLTEXT KEY(name),
+  FULLTEXT KEY(insurance_certificate)
 );
 
 CREATE TABLE `administrators` (
@@ -62,13 +65,15 @@ CREATE TABLE `administrators` (
 CREATE TABLE `symptoms` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) UNIQUE NOT NULL,
-  `ru_name` varchar(255) UNIQUE NOT NULL
+  `ru_name` varchar(255) UNIQUE NOT NULL,
+  FULLTEXT KEY(ru_name)
 );
 
 CREATE TABLE `diseases` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
   `name` varchar(255) UNIQUE NOT NULL,
-  `ru_name` varchar(255) UNIQUE NOT NULL
+  `ru_name` varchar(255) UNIQUE NOT NULL,
+  FULLTEXT KEY(ru_name)
 );
 
 CREATE TABLE `ml_model` (
@@ -110,3 +115,37 @@ CREATE TABLE `comments` (
   FOREIGN KEY (`doctor_id`) REFERENCES `doctors` (`id`),
   FOREIGN KEY (`request_id`) REFERENCES `requests` (`id`)
 );
+
+DROP TRIGGER IF EXISTS after_comment_insert;
+
+DELIMITER $$
+CREATE TRIGGER after_comment_insert
+AFTER INSERT
+ON comments FOR EACH ROW
+BEGIN
+   UPDATE requests
+   SET is_commented = TRUE
+   WHERE id = NEW.request_id;
+END;$$
+DELIMITER ;
+
+DROP TRIGGER IF EXISTS after_comment_update;
+
+DELIMITER $$
+CREATE TRIGGER after_comment_update
+AFTER UPDATE
+ON comments FOR EACH ROW
+BEGIN
+   IF OLD.status = 'NEW' AND NEW.status = 'OLD' THEN
+      IF NOT EXISTS (SELECT 1 FROM comments WHERE request_id = OLD.request_id AND status = 'NEW') THEN
+         UPDATE requests
+         SET is_commented = FALSE
+         WHERE id = OLD.request_id;
+      END IF;
+   ELSEIF OLD.status = 'OLD' AND NEW.status = 'NEW' THEN
+      UPDATE requests
+      SET is_commented = TRUE
+      WHERE id = NEW.request_id;
+   END IF;
+END;$$
+DELIMITER ;

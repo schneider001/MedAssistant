@@ -1,4 +1,6 @@
 from flask_login import UserMixin
+from dataclasses import dataclass
+from typing import List, Optional
 
 
 from init import db
@@ -38,8 +40,10 @@ class Patient:
         self.sex = sex
         
     @staticmethod
-    def find_all_id_name_insurance_certificate():
-        query = "SELECT id, name, insurance_certificate FROM patients"
+    def find_all_id_name_insurance_certificate(page=False, per_page=False):
+        query = "SELECT id, name, insurance_certificate FROM patients ORDER BY name"
+        if page and per_page is not None:
+            query += f" LIMIT {per_page} OFFSET {(page - 1) * per_page}"
         return db.execute_select(query)
     
     @staticmethod
@@ -50,9 +54,16 @@ class Patient:
             return Patient(*patient_data[0])
         
     @staticmethod
+
     def find_all_search_lazyload(search, page, per_page):
-        query = "SELECT id, name, insurance_certificate FROM patients WHERE name LIKE CONCAT('%', %s, '%') LIMIT %s OFFSET %s"
-        return db.execute_select(query, search, per_page, (page - 1) * per_page)
+        query = "SELECT id, name, insurance_certificate \
+         FROM patients \
+         WHERE MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) \
+         OR MATCH(insurance_certificate) AGAINST (%s IN BOOLEAN MODE) \
+         ORDER BY (MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) + MATCH(insurance_certificate) AGAINST (%s IN BOOLEAN MODE)) DESC, \
+         name ASC \
+         LIMIT %s OFFSET %s"
+        return db.execute_select(query, search, search, search, search, per_page, (page - 1) * per_page)
     
     @staticmethod
     def insert_new_patient(name, insurance_certificate, born_date, sex):
@@ -104,11 +115,16 @@ class Symptom:
     @staticmethod
     def get_page_by_filter(filter, page, per_page):
         query = "SELECT id, ru_name FROM symptoms \
-            WHERE LOWER(ru_name) LIKE %s or LOWER(name) LIKE %s \
-            LIMIT %s OFFSET %s;"
+            WHERE MATCH (ru_name) AGAINST (%s IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) \
+            LIMIT %s OFFSET %s;"  #тоже удалить можно по идее
+        return db.execute_select(query, filter, per_page, (page - 1) * per_page)
+    
+    @staticmethod
+    def get_count_by_filter(filter):
+        query = "SELECT COUNT(*) FROM symptoms \
+            WHERE LOWER(ru_name) LIKE %s or LOWER(name) LIKE %s"
         filter_string = f'%{filter.lower()}%'
-        return db.execute_select(query, filter_string, filter_string, per_page, (page - 1) * per_page)
-        
+        return db.execute_select(query, filter_string, filter_string)
 
 class Request:
     def __init__(self, id, doctor_id, patient_id, predicted_disease_id,
@@ -146,7 +162,7 @@ class Request:
     def update_is_commented(id, is_commented):
         query = "UPDATE requests \
                  SET is_commented = %s \
-                 WHERE id = %s"
+                 WHERE id = %s" # в бд создана процедура обновления стутса комментов, статус изменяется автоматически, необходимости делать это вручную по идее нет
         db.execute_update(query, is_commented, id)
 
     @staticmethod
@@ -192,11 +208,33 @@ class Request:
                  JOIN patients ON requests.patient_id = patients.id \
                  WHERE  \
                      doctors.id = %s AND \
-                     diseases.ru_name LIKE %s \
-                 LIMIT %s OFFSET %s;"
-        
-        sub_str = '%' + search_text + '%'
-        return db.execute_select(query, doctor_id, sub_str, per_page, (page - 1) * per_page)
+                     (MATCH(diseases.ru_name) AGAINST (%s IN NATURAL LANGUAGE MODE) OR \
+                     MATCH(patients.name) AGAINST (%s IN NATURAL LANGUAGE MODE)) \
+                 ORDER BY (MATCH(diseases.ru_name) AGAINST (%s IN NATURAL LANGUAGE MODE) + MATCH(patients.name) AGAINST (%s IN NATURAL LANGUAGE MODE)) DESC, \
+                 patients.name ASC, requests.date DESC \
+                 LIMIT %s OFFSET %s;" 
+                 
+        return db.execute_select(query, doctor_id, search_text, search_text, search_text, search_text, per_page, (page - 1) * per_page)
+
+    @staticmethod
+    def get_requests_page_by_doctor_id(doctor_id, page, per_page):
+        query = "SELECT  \
+                     requests.id, \
+                     patients.name, \
+                     requests.date, \
+                     diseases.ru_name, \
+                     requests.is_commented \
+                 FROM requests \
+                 JOIN doctors ON requests.doctor_id = doctors.id \
+                 JOIN diseases ON requests.predicted_disease_id = diseases.id \
+                 JOIN patients ON requests.patient_id = patients.id \
+                 WHERE  \
+                     doctors.id = %s \
+                 ORDER BY requests.date DESC, \
+                 patients.name ASC \
+                 LIMIT %s OFFSET %s;" 
+                 
+        return db.execute_select(query, doctor_id, per_page, (page - 1) * per_page)
 
     @staticmethod
     def get_requests_page_by_patient_id(patient_id, page, per_page):
@@ -289,3 +327,52 @@ class Disease:
         values = db.execute_select(query, name)
         if values:
             return Disease(*values[0])
+            
+
+@dataclass
+class DoctorComment:
+    id: int
+    doctor: str
+    time: str
+    comment: str
+    editable: bool
+
+@dataclass
+class ResponseData:
+    id: int
+    patient_name: str
+    doctor: str
+    symptoms: List[str]
+    diagnosis: str
+    doctor_comments: List[DoctorComment]
+    
+@dataclass
+class RequestData:
+    id: int
+    name: str
+    date: str
+    diagnosis: str
+    is_commented: bool
+
+@dataclass
+class PatientData:
+    id: int
+    name: str
+    oms: str
+    birthDate: Optional[str] = None
+    age: Optional[int] = None
+    sex: Optional[str] = None
+    photo_url: Optional[str] = None
+    
+@dataclass
+class CommentResponseData:
+    id: Optional[int] = None
+    old_id: Optional[int] = None
+    doctor: Optional[str] = None
+    time: Optional[str] = None
+    comment: Optional[str] = None
+    
+@dataclass
+class SymptomData:
+    id: int
+    name: str

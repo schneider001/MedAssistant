@@ -186,16 +186,17 @@ def get_request_info():
     Request.update_status(request_id, status, disease.id)
     doctor_comments = []
     
-    response_data = {
-        "id": request_id,
-        "patient_name": patient_name,
-        "doctor": current_user.name, 
-        "symptoms": [symptom.ru_name for symptom in symptoms],
-        "diagnosis": disease.ru_name,
-        "doctor_comments": doctor_comments
-    }
+    response_data = ResponseData(
+        id=request_id,
+        patient_name=patient_name,
+        doctor=current_user.name,
+        symptoms=[symptom.ru_name for symptom in symptoms],
+        diagnosis=disease.ru_name,
+        doctor_comments=doctor_comments
+    )
     
-    return jsonify(response_data)
+    return response_data.__dict__
+
 
 #------------------------------------------DONE-2----------------------------------------
 @app.route('/get_request_info_by_id', methods=['POST'])
@@ -214,22 +215,22 @@ def get_request_info_by_id():
     diagnosis_ru_name = Request.get_disease_ru_name(request_id)
     comments_values = Comment.get_comments_by_request_id(request_id, current_user.id)
 
-    doctor_comments = [{"id": comment_values[0],
-                        "doctor": comment_values[1], 
-                        "time": comment_values[2].strftime("%Y-%m-%d %H:%M:%S"),
-                        "comment": comment_values[3], 
-                        "editable": comment_values[4]} for comment_values in comments_values]
+    doctor_comments = [DoctorComment(id=comment_values[0],
+                         doctor=comment_values[1], 
+                         time=comment_values[2].strftime("%Y-%m-%d %H:%M:%S"),
+                         comment=comment_values[3], 
+                         editable=comment_values[4]) for comment_values in comments_values]
 
-    response_data = {
-        "id": request_id,
-        "patient_name": Patient.get_name_by_request_id(request_id),
-        "doctor": current_user.name, 
-        "symptoms": symptoms,
-        "diagnosis": diagnosis_ru_name,
-        "doctor_comments": doctor_comments
-    }
+    response_data = ResponseData(
+        id=request_id,
+        patient_name=Patient.get_name_by_request_id(request_id),
+        doctor=current_user.name, 
+        symptoms=symptoms,
+        diagnosis=diagnosis_ru_name,
+        doctor_comments=doctor_comments
+    )
     
-    return jsonify(response_data)
+    return response_data.__dict__
 
 
 #----------------------------------DONE-3---------------------------------------------------
@@ -245,12 +246,17 @@ def load_data_requests():
     term = request.args.get('search', '').lower()
     page = int(request.args.get('page', '1'))
 
-    per_page = 15
+    per_page = 5
+    limit = 25
+    
+    if (len(term) > 3):
+        requests = Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, term)
+    else:
+        requests = Request.get_requests_page_by_doctor_id(current_user.id, page, per_page)
+        
+    requests = [RequestData(id=request[0], name=request[1], date=request[2].strftime("%Y-%m-%d %H:%M:%S"), diagnosis=request[3], is_commented=request[4]) for request in requests]
 
-    requests = Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, term)
-    requests = [{"id" : request[0], "name": request[1], "date": request[2].strftime("%Y-%m-%d %H:%M:%S"), "diagnosis" : request[3], "is_commented": request[4]} for request in requests]
-
-    return jsonify({'results': requests, 'pagination': {'more': len(requests) > 0}})
+    return jsonify({'results': [request.__dict__ for request in requests], 'pagination': {'more': len(requests) > 0 and page * per_page < limit}})
 
 
 @app.route('/get_patient_info', methods=['GET'])
@@ -274,20 +280,20 @@ def get_patient_info():
     age = today.year - patient.born_date.year - \
         ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
 
-    patient_data = {
-        'id': patient.id,
-        'name': patient.name,
-        'birthDate': patient.born_date.strftime("%Y-%m-%d"),
-        'age': age, 
-        'oms': patient.insurance_certificate,
-        'sex' : patient.sex,
-    }
+    patient_data = PatientData(
+        id=patient.id,
+        name=patient.name,
+        birthDate=patient.born_date.strftime("%Y-%m-%d"),
+        age=age, 
+        oms=patient.insurance_certificate,
+        sex=patient.sex
+    )
 
     photo_filename = f'./static/patient_images/{patient_id}.jpg'
     if os.path.exists(photo_filename):
-        patient_data['photo_url'] = photo_filename
+        patient_data.photo_url = photo_filename
 
-    return jsonify(patient_data)
+    return patient_data.__dict__
 
 #---------------------------------------DONE-4-------------------------------------------
 @app.route('/load_patient_history', methods=['GET'])
@@ -308,9 +314,13 @@ def load_patient_history():
     per_page = 15
 
     requests = Request.get_requests_page_by_patient_id(patient_id, page, per_page)
-    requests = [{"id" : request[0], "name": request[1], "date": request[2].strftime("%Y-%m-%d %H:%M:%S"), "diagnosis" : request[3], "is_commented": request[4]} for request in requests]
+    requests = [RequestData(id=request[0], 
+                            name=request[1], 
+                            date=request[2].strftime("%Y-%m-%d %H:%M:%S"), 
+                            diagnosis=request[3], 
+                            is_commented=request[4]) for request in requests]
 
-    return jsonify({'results': requests, 'pagination': {'more': len(requests) > 0}})
+    return jsonify({'results': [request.__dict__ for request in requests], 'pagination': {'more': len(requests) > 0}})
 
 
 #---------------------------------------DONE-5-------------------------------------------
@@ -323,26 +333,26 @@ def add_comment(data):
     :param str comment: Текст комментария.
     :return: JSON-ответ с информацией о комментарии, включая id комментария, имя доктора, время, текст комментария, является ли текущий пользователь автором.
     """
-    try:
-        room_id = data['room_id']
-        request_id = data['request_id']
-        comment_text = data['comment']
+    room_id = data['room_id']
+    request_id = data['request_id']
+    comment_text = data['comment']
+    
+    user_id = current_user.id
+    comment_id = Comment.add(user_id, request_id, comment_text)
+    Request.update_is_commented(request_id, 1)
+    comment = Comment.get_by_id(comment_id)
+    if comment:
+        response = CommentResponseData(id=comment.id, 
+                               doctor=current_user.name, 
+                               time=comment.date.strftime("%Y-%m-%d %H:%M:%S"), 
+                               comment=comment_text)
+    else:
+        response = CommentResponseData()
 
-        user_id = current_user.id
-        comment_id = Comment.add(user_id, request_id, comment_text)
-        Request.update_is_commented(request_id, 1)
-        comment = Comment.get_by_id(comment_id)
-        if comment:
-            response = {"id": comment.id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment_text}
-        else:
-            response = {"id": None, "doctor": None, "time": None, "comment": None}
-        if user_id in connected_users:
-            for sid in connected_users[user_id]:
-                emit('self_added_comment', response, to = sid)
-            emit('added_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))
-    except:
-        emit('add_comment_error')
-
+    if user_id in connected_users:
+        for sid in connected_users[user_id]:
+            emit('self_added_comment', response.__dict__, to = sid)
+        emit('added_comment', response.__dict__, room = room_id, skip_sid = list(connected_users[user_id]))
 
 #---------------------------------------DONE-6-------------------------------------------
 @socketio.on('delete_comment')
@@ -364,11 +374,11 @@ def delete_comment(data):
 
         Comment.update_status_by_id('OLD', comment_id)
         is_commented = Comment.is_request_commented(request_id)
-        Request.update_is_commented(request_id, is_commented)
+        #Request.update_is_commented(request_id, is_commented) #в бд на это есть триггер, можно убрать
         doctor_name = current_user.name
 
-        response = {"id": comment_id, "doctor": doctor_name}
-        emit('deleted_comment', response, room = room_id)
+        response = CommentResponseData(id=comment_id, doctor=doctor_name)
+        emit('deleted_comment', response.__dict__, room = room_id)
     except:
         emit('delete_comment_error')
 
@@ -396,22 +406,22 @@ def edit_comment(data):
         Comment.update_status_by_id('OLD', comment_id)
         new_comment_id = Comment.add(user_id, request_id, updated_comment_text)
 
-        is_commented = Comment.is_request_commented(request_id)
-        Request.update_is_commented(request_id, is_commented)
-
         comment = Comment.get_by_id(new_comment_id)
         if comment:
-            response = {"id": comment.id, "old_id": comment_id, "doctor": current_user.name, "time": comment.date.strftime("%Y-%m-%d %H:%M:%S"), "comment": comment.comment}
+            response = CommentResponseData(id=comment.id, 
+                                           old_id=comment_id, 
+                                           doctor=current_user.name, 
+                                           time=comment.date.strftime("%Y-%m-%d %H:%M:%S"), 
+                                           comment=comment.comment)
         else:
-            response = {}
+            response = CommentResponseData()
         user_id = current_user.id
         if user_id in connected_users:
             for sid in connected_users[user_id]:
-                emit('self_edited_comment', response, to = sid)
-            emit('edited_comment', response, room = room_id, skip_sid = list(connected_users[user_id]))    
+                emit('self_edited_comment', response.__dict__, to = sid)
+            emit('edited_comment', response.__dict__, room = room_id, skip_sid = list(connected_users[user_id]))
     except:
         emit('edit_comment_error')
-
 
 @app.route('/create_patient', methods=['POST'])
 @login_required
@@ -432,6 +442,7 @@ def create_patient():
 
     Patient.insert_new_patient(fullname, oms, birthdate, sex)
     id = Patient.get_id_by_insurance_certificate(oms)
+    patient_data = PatientData(id=id, name=fullname, oms=oms)
 
     directory_path = './static/patient_images/'
 
@@ -441,7 +452,7 @@ def create_patient():
     if image:
         image.save(os.path.join(directory_path, f'{id}.jpg'))
 
-    return jsonify({'id': id, 'name': fullname, 'oms': oms})
+    return patient_data.__dict__
 
 
 @app.route('/load_patients', methods=['GET'])
@@ -455,14 +466,19 @@ def load_patients():
     term = request.args.get('search', '')
     page = int(request.args.get('page', 1))
 
-    per_page = 2 #небольшое значение для визуализации загрузки
 
+    per_page = 10
+    limit = 20
     time.sleep(1)
     
-    patients = Patient.find_all_search_lazyload(term, page, per_page)
-    patients = [{'id': patient[0], 'name': patient[1], 'oms': patient[2]} for patient in patients]
-    return jsonify({'results': patients, 'pagination': {'more': len(patients) > 0}})
+    if (len(term) > 3):
+        patients = Patient.find_all_search_lazyload(term, page, per_page)
+    else:
+        patients = Patient.find_all_id_name_insurance_certificate(page, per_page)
+        
+    patients = [PatientData(id=patient[0], name=patient[1], oms=patient[2]) for patient in patients]
 
+    return jsonify({'results': [patient.__dict__ for patient in patients], 'pagination': {'more': len(patients)==per_page and page * per_page < limit}})
 
 @app.route('/load_symptoms', methods=['GET'])
 @login_required
@@ -472,16 +488,22 @@ def load_symptoms():
     :param str page: Номер страницы.
     :return: JSON-ответ со списком симптомов для указанной страницы, включая id симптома, название, также переменную more, указывающая о конце пагинации.
     """
-    filter = request.args.get('search', '')
+    filter = request.args.get('search', '').lower()
     page = int(request.args.get('page', 1))
 
-    per_page = 15
-    
-    symptoms = Symptom.get_page_by_filter(filter, page, per_page)
-    symptoms = [{'id': item[0], 'name': item[1]} for item in symptoms]
+    per_page = 5
 
-    return jsonify({'results': symptoms, 'pagination': {'more': len(symptoms) > 0}})
+    symptoms = Symptom.find_all_symptoms()
+    symptoms = [SymptomData(id=item[0], name=item[1].lower()) for item in symptoms]
 
+    if filter != '':
+        symptoms = [row for row in symptoms if filter in row.name]
+
+    start = (page - 1) * per_page
+    end = start + per_page
+    filtered_data = symptoms[start:end]
+
+    return jsonify({'results': [symptom.__dict__ for symptom in filtered_data], 'pagination': {'more': len(filtered_data) == per_page}})
 
 if __name__ == "__main__":
     socketio.run(app, debug=True)
