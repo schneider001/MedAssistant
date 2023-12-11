@@ -6,16 +6,30 @@ class LazyLoadTable {
         this.dataUrl = dataUrl;
         this.page = 1;
         this.searchData = searchData;
+        this.pendingUserInput = null;
         this.noMoreData = false;
         this.isLoading = false;
         this.searchTimeout = null;
-    
+        var commonParent = document.getElementById(tableId).closest('form');
+        if (commonParent !== null) {
+            this.searchElement = commonParent.querySelector ('.search-input');
+        }
+
         this.init();
     }
 
     loadMoreData() {
         if (this.noMoreData) {
-            return;
+            if (this.pendingUserInput === null){
+                return;
+            }
+            else {
+                $(`#${this.tableId} tbody`).empty();
+                this.page = 1;
+                this.noMoreData = false;
+                this.searchData = this.pendingUserInput;
+                this.pendingUserInput = null;
+            }
         }
   
         function createLoadingRow(numColumns) {
@@ -31,25 +45,30 @@ class LazyLoadTable {
         const $loadingRow = createLoadingRow(numColumns);
   
         if (!this.isLoading) {
-            $loadingRow.animate({ opacity: 1 }, 1000);
-            $(`#${this.tableId} tbody`).append($loadingRow);
             this.isLoading = true;
 
+            $loadingRow.animate({ opacity: 1 }, 1000);
+            $(`#${this.tableId} tbody`).append($loadingRow);
+            
             $.ajax({
                 url: `${this.dataUrl}?page=${this.page}&search=${this.searchData}`,
                 method: 'GET',
                 success: (data) => {
                     $loadingRow.remove();
-                    
-                    const $tbody = $(`#${this.tableId} tbody`);
 
+                    //if (String(data.term) !== this.searchData) {
+                    //    return;
+                    //}
+
+                    const $tbody = $(`#${this.tableId} tbody`);
+                
                     if ($tbody.is(':empty') && data.results.length === 0) {
                         const $row = $('<tr>');
                         const $cell = $('<td>', { colspan: numColumns, style: 'text-align: center;', id: 'notfound' }).text('Ничего не найдено');
                         $row.append($cell);
                         $tbody.html($row);
                     }
-
+                
                     if (data.results.length > 0) {
                         data.results.forEach(row => {
                             let $row;
@@ -62,18 +81,20 @@ class LazyLoadTable {
                                 $row = convertPatientsToTableRow(row);
                                 break;
                             }
-
+                        
                             $tbody.append($row);
                         });
                         this.page++;
                     }
-                    
-                    this.noMoreData = !data.pagination.more;
-                    
-                    this.isLoading = false;
 
+                    this.noMoreData = !data.pagination.more;
+                    this.isLoading = false;
+                
                     const tableContainer = document.getElementById(this.tableId);
                     if (tableContainer.scrollHeight <= tableContainer.clientHeight) {
+                        this.loadMoreData();
+                    }
+                    if (this.pendingUserInput !== null) {
                         this.loadMoreData();
                     }
                 },
@@ -87,11 +108,14 @@ class LazyLoadTable {
     }
 
     filterData(searchText) {
-        $(`#${this.tableId} tbody`).empty();
-        this.page = 1;
-        this.noMoreData = false;
-        this.searchData = searchText;
-        this.loadMoreData();
+        if (searchText === this.searchData){
+            return;
+        }
+
+        this.pendingUserInput = searchText;
+        if (!this.isLoading) {
+            this.loadMoreData();
+        }
     }
 
     init() {
@@ -106,16 +130,24 @@ class LazyLoadTable {
         $(`#${this.tableId}`).scroll(this.scrollHandler);
       
         this.searchHandler = () => {
-            const searchText = $('#search-input').val();
+            if (this.searchElement === undefined || this.searchElement === null) {
+                return;
+            }
+            const searchText = $(this.searchElement).val();
             clearTimeout(this.searchTimeout);
             
             this.searchTimeout = setTimeout(() => {
                 this.filterData(searchText);
             }, 300);
         };
-        $('#search-input').on('input', this.searchHandler);
+
+        if (this.searchElement === undefined || this.searchElement === null) {
+            return;
+        }
+
+        $(this.searchElement).on('input', this.searchHandler);
       
-        document.getElementById('search-input').addEventListener('keydown', (event) => {
+        this.searchElement.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 event.preventDefault();
             }
@@ -124,8 +156,12 @@ class LazyLoadTable {
 
     removeEventListeners() {
         $(`#${this.tableId}`).off('scroll', this.scrollHandler);
-        $('#search-input').off('input', this.searchHandler);
-        document.getElementById('search-input').removeEventListener('keydown', this.keydownHandler);
+        if (this.searchElement === undefined || this.searchElement === null) {
+            return;
+        }
+
+        $(this.searchElement).off('input', this.searchHandler);
+        this.searchElement.removeEventListener('keydown', this.keydownHandler);
     }
 }
 

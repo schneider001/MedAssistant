@@ -232,38 +232,6 @@ def get_request_info_by_id():
     return jsonify(response_data)
 
 
-@app.route('/load_data_patients', methods=['GET'])
-@login_required
-def load_data_patients():
-    """
-    Получает список пациентов для указанной страницы в пагинации с использованием поиска.
-    :param str search: Фильтр.
-    :param str page: Номер страницы.
-    :return: JSON-ответ со списком пациентов для указанной страницы, включая id пациента, имя, Полис ОМС.
-    """
-    search_text = request.args.get('search', '').lower()
-    page = int(request.args.get('page', '1'))
-
-    per_page = 15
-
-    data = [{"id": i, "name": f'Name {i}', "oms": f'oms {i}'} for i in range(1, 101)]
-
-    if search_text == '':
-        filtered_data = data
-    else:
-        filtered_data = [] #TODO тут нужно реализовать поиск по бд с учетом страницы, я тут фильтрую и отбираю нужные элементы из массива для примера, но в идеале, если это возможно, это надо сделать средствами SQL
-        for row in data:
-            row_text = ' '.join(map(str, row)).lower()
-            if search_text in row_text:
-                filtered_data.append(row)
-
-    start = (page - 1) * per_page
-    end = start + per_page
-
-    paginated_data = filtered_data[start:end]
-
-    return jsonify(paginated_data)
-
 #----------------------------------DONE-3---------------------------------------------------
 @app.route('/load_data_requests', methods=['GET'])
 @login_required
@@ -280,7 +248,7 @@ def load_data_requests():
     per_page = 15
 
     requests = Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, term)
-    requests = [{"id" : request[0], "name": request[1], "date": request[2], "diagnosis" : request[3], "is_commented": request[4]} for request in requests]
+    requests = [{"id" : request[0], "name": request[1], "date": request[2].strftime("%Y-%m-%d %H:%M:%S"), "diagnosis" : request[3], "is_commented": request[4]} for request in requests]
 
     return jsonify({'results': requests, 'pagination': {'more': len(requests) > 0}})
 

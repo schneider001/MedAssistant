@@ -449,10 +449,10 @@ th, td {
   display: none;
 }
 
-#search-input:valid {
+.search-input:valid {
   color: black;
 }
 
-#search-input:invalid {
+.search-input:invalid {
   color: lightgray;
 }
