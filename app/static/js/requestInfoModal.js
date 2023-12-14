@@ -3,6 +3,9 @@ import { showError } from "./main.js";
 let requestId;
 let socket = io().connect(`http://'${document.domain}:${location.port}`);
 
+window.addEventListener('beforeunload', function() {
+    socket.disconnect();
+});
 
 socket.on('connected', function() {
     if (requestId !== undefined) {
