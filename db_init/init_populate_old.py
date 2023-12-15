@@ -58,10 +58,13 @@ def get_random_string(length = 10):
 def populate_database(): #использовать db методы в идеале
     global query_line
     query_line = ""
-    
-    first_names = ["Иван", "Петр", "Сидор", "Алексей", "Дмитрий", "Николай", "Василий", "Андрей", "Сергей", "Михаил"]
-    surnames = ["Иванов", "Петров", "Сидоров", "Алексеев", "Дмитриев", "Николаев", "Васильев", "Андреев", "Сергеев", "Михайлов"]
-    
+    people = [
+    ("'Иванов Иван Иванович'", get_random_snils(), get_random_timestamp(), 1),
+    ("'Петров Петр Петрович'", get_random_snils(), get_random_timestamp(), 2),
+    ("'Сидоров Сидор Сидорович'", get_random_snils(), get_random_timestamp(), 1),
+    ("'Алексеев Алексей Алексеевич'", get_random_snils(), get_random_timestamp(), 2),
+    ("'Дмитриев Дмитрий Дмитриевич'", get_random_snils(), get_random_timestamp(), 1)
+    ]
     doctors = [
     # ("'doctor1'", "'Николаев Николай Николаевич'", "'$2b$12$pT14zDz8TEpMRxJpo491L.Qmaof0UINo4zfl.b6yVU5PaMXeg4Dvu'", get_random_timestamp()), #hash pwd - 1
     ("'doctor1'", "'Николаев Николай Николаевич'", f"X'{gen_hashed_password('1').encode('utf8').hex()}'", get_random_timestamp()), #hash pwd - 1
@@ -75,13 +78,10 @@ def populate_database(): #использовать db методы в идеал
     ("'admin2'", "'Егоров Erop Егорович'", f"X'{gen_hashed_password('321').encode('utf8').hex()}'") #321
     ]
     
-    for i in range(100):  
-        name = f"'{choice(surnames)} {choice(first_names)} {choice(first_names)}ович'"
-        snils = get_random_snils()
-        timestamp = get_random_timestamp()
-        sex = randint(1, 3)
-        query = f"INSERT INTO patients (name, insurance_certificate, born_date, sex) VALUES ({name}, {snils}, {timestamp}, {sex})"
-        query_line += query + ';'
+    for person in people:
+        query = f"INSERT INTO patients (name, insurance_certificate, born_date, sex) VALUES ({person[0]}, {person[1]}, {person[2]}, {person[3]})"
+        query_line+=query
+        query_line+=';'
         
     for person in doctors:
         query = f"INSERT INTO doctors (username, name, password_hash, last_login) VALUES ({person[0]}, {person[1]}, {person[2]}, {person[3] if len(person)>3 else 'NULL'})"
@@ -93,28 +93,19 @@ def populate_database(): #использовать db методы в идеал
         query_line+=query
         query_line+=';'
         
-    for x in range(200):  
-        doctor_id = randint(1, len(doctors))
-        patient_id = randint(1, 100)  
-        predicted_disease_id = randint(1, 40)
-        status = randint(1, 3)
-        timestamp = get_random_timestamp()
-        query = f"INSERT INTO requests (doctor_id, patient_id, status, date, predicted_disease_id) VALUES ({doctor_id}, {patient_id}, {status}, {timestamp}, {predicted_disease_id})"
-        query_line += query + ';'
-        
-        used_symptoms = set()
+    for x in range(10):
+        query = f"INSERT INTO requests (doctor_id, patient_id, status, date) VALUES ({randint(1, 5)}, {randint(1, 5)}, {randint(1, 3)}, {get_random_timestamp()})"
+        query_line+=query
+        query_line+=';'
         for symt_num in range(randint(1, 6)):
-            symptom_id = randint(1, 130)
-            while symptom_id in used_symptoms:
-                symptom_id = randint(1, 130)
-            used_symptoms.add(symptom_id)
-            query = f"INSERT INTO request_symptoms (symptom_id, request_id) VALUES ({symptom_id}, {x+1})"
-            query_line += query + ';'
-        
-        rand_arr = sample(range(1, len(doctors) + 1), 3)
+            query = f"INSERT INTO request_symptoms (symptom_id, request_id) VALUES ({randint(1, 130)}, {x+1})" #an error may arise with a small probability
+            query_line+=query
+            query_line+=';'
+            rand_arr = sample(range(1, 5), 3)
         for comm_num in range(randint(0, 3)):
-            query = f"INSERT INTO comments (doctor_id, request_id, comment) VALUES ({rand_arr[comm_num]}, {x+1}, {get_random_string(25)})"
-            query_line += query + ';'
+            query = f"INSERT INTO comments (doctor_id, request_id, comment) VALUES ({rand_arr[comm_num]}, {x+1}, {get_random_string(25)})" 
+            query_line+=query
+            query_line+=';'
     
     query = f'INSERT INTO ml_model (version) VALUES (\'{ML_MODEL_VERSION}\')'
     query_line += query + ';'
@@ -126,4 +117,4 @@ def populate_database(): #использовать db методы в идеал
 purge_create_database()
 fill_sympt_diseases()
 populate_database()
-print('NO ERRORS ANYMORE (честно)')
+print('If ERROR - run again')
