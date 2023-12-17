@@ -42,7 +42,14 @@ class DiseasePredModel:
     
     def _get_weight_symptom(self):
         weight_symptoms = pd.read_csv(os.path.join(self.path, 'Symptom-severity.csv'))
-        symptoms_weight_dict = {symptom.lower() : weight_symptoms.loc[weight_symptoms['Symptom'] == symptom]['weight'] for symptom in weight_symptoms['Symptom']}
+        weight_symptoms['Symptom'] = weight_symptoms['Symptom'].str.lower()
+
+        symptoms_weight_dict = {}
+        for _, row in weight_symptoms.iterrows():
+            symptom = row['Symptom']
+            weight = row['weight']
+            symptoms_weight_dict[symptom] = weight
+
         symptoms_weight_dict['dischromic  patches'] = 0
         symptoms_weight_dict['spotting  urination'] = 0
         symptoms_weight_dict['foul smell of urine'] = 0
