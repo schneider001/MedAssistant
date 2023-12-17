@@ -10,6 +10,7 @@ import lightgbm
 from lightgbm import LGBMClassifier
 
 
+
 @dataclass
 class TrainTestData:
     X_train: pd.DataFrame
@@ -20,7 +21,7 @@ class TrainTestData:
 
 class LGBModel:
     
-    def init(self, lgb_params: Dict, test_size: float=.33):
+    def __init__(self, lgb_params: Dict, test_size: float=.33):
         self.test_size = test_size
         self.lgb_params = lgb_params
         
@@ -37,7 +38,7 @@ class LGBModel:
     
     def calc_auc(self, X: pd.DataFrame, y: pd.Series) -> float:
         predictions = self.predict(X)
-        return roc_auc_score(y, predictions)
+        return roc_auc_score(y, predictions, multi_class="ovr", average='micro')
         
     
     def fit(self, X: pd.DataFrame, y: pd.Series):
@@ -47,20 +48,20 @@ class LGBModel:
         model = LGBMClassifier(n_estimators = 10000, **self.lgb_params)
         model.fit(data.X_train, data.y_train, 
                   eval_set=[(data.X_train, data.y_train), (data.X_valid, data.y_valid)],
-                  eval_names = ['train', 'valid'],
-                  eval_metric='binary_logloss',
-                  callbacks=[lightgbm.early_stopping(100), lightgbm.log_evaluation(100)])
+                  eval_names = ['train', 'valid'],)
+                #   eval_metric='cross_entropy',)
+                #   callbacks=[lightgbm.early_stopping(100), lightgbm.log_evaluation(100)])
         
         self.model = model
     
-        auc_train = self.calc_auc(data.X_train, data.y_train)
-        auc_test = self.calc_auc(data.X_valid, data.y_valid)
+        # auc_train = self.calc_auc(data.X_train, data.y_train)
+        # auc_test = self.calc_auc(data.X_valid, data.y_valid)
         
-        print(f"\n\nauc_train = {auc_train:.3f}\nauc_test = {auc_test:.3f}\n")
+        # print(f"\n\nauc_train = {auc_train:.3f}\nauc_test = {auc_test:.3f}\n")
         
         self._y_valid = data.y_valid
         self._pr_valid = self.predict(data.X_valid)
-        self._columns = X.columns
+        # self._columns = X.columns
         
     def fit_with_grid_search(self, X: pd.DataFrame, y: pd.Series, param_grid: dict, rc_params: dict):
         
