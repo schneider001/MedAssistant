@@ -40,9 +40,9 @@ class Patient:
         self.sex = sex
         
     @staticmethod
-    def find_all_id_name_insurance_certificate(page, per_page):
-        query = "SELECT id, name, insurance_certificate FROM patients ORDER BY name LIMIT %s OFFSET %s"
-        return db.execute_select(query, per_page, (page - 1) * per_page)
+    def find_all_id_name_insurance_certificate(per_page):
+        query = "SELECT id, name, insurance_certificate FROM patients ORDER BY name LIMIT %s"
+        return db.execute_select(query, per_page)
     
     @staticmethod
     def get_by_id(id):
@@ -52,15 +52,15 @@ class Patient:
             return Patient(*patient_data[0])
         
     @staticmethod
-    def find_all_search_lazyload(search, page, per_page):
+    def find_all_search_lazyload(search, per_page):
         query = "SELECT id, name, insurance_certificate \
          FROM patients \
          WHERE MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) \
          OR MATCH(insurance_certificate) AGAINST (%s IN NATURAL LANGUAGE MODE) \
          ORDER BY (MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) + MATCH(insurance_certificate) AGAINST (%s IN NATURAL LANGUAGE MODE)) DESC, \
          name ASC \
-         LIMIT %s OFFSET %s"
-        return db.execute_select(query, search, search, search, search, per_page, (page - 1) * per_page)
+         LIMIT %s"
+        return db.execute_select(query, search, search, search, search, per_page)
     
     @staticmethod
     def insert_new_patient(name, insurance_certificate, born_date, sex):
@@ -110,11 +110,11 @@ class Symptom:
         return db.execute_select(query)
     
     @staticmethod
-    def get_page_by_filter(filter, page, per_page):
+    def get_page_by_filter(filter, per_page):
         query = "SELECT id, ru_name FROM symptoms \
             WHERE MATCH (ru_name) AGAINST (%s IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION) \
-            LIMIT %s OFFSET %s;"  #тоже удалить можно по идее
-        return db.execute_select(query, filter, per_page, (page - 1) * per_page)
+            LIMIT %s"
+        return db.execute_select(query, filter, per_page)
     
     @staticmethod
     def get_count_by_filter(filter):
@@ -192,7 +192,7 @@ class Request:
         return None
     
     @staticmethod
-    def get_requests_page_by_doctor_id_contain_substr(doctor_id, page, per_page, search_text):
+    def get_requests_page_by_doctor_id_contain_substr(doctor_id, per_page, search_text):
         query = "SELECT  \
                      requests.id, \
                      patients.name, \
@@ -209,12 +209,12 @@ class Request:
                      MATCH(patients.name) AGAINST (%s IN NATURAL LANGUAGE MODE)) \
                  ORDER BY (MATCH(diseases.ru_name) AGAINST (%s IN NATURAL LANGUAGE MODE) + MATCH(patients.name) AGAINST (%s IN NATURAL LANGUAGE MODE)) DESC, \
                  patients.name ASC, requests.date DESC \
-                 LIMIT %s OFFSET %s;" 
+                 LIMIT %s;" 
                  
-        return db.execute_select(query, doctor_id, search_text, search_text, search_text, search_text, per_page, (page - 1) * per_page)
+        return db.execute_select(query, doctor_id, search_text, search_text, search_text, search_text, per_page)
 
     @staticmethod
-    def get_requests_page_by_doctor_id(doctor_id, page, per_page):
+    def get_requests_page_by_doctor_id(doctor_id, per_page):
         query = "SELECT  \
                      requests.id, \
                      patients.name, \
@@ -229,12 +229,11 @@ class Request:
                      doctors.id = %s \
                  ORDER BY requests.date DESC, \
                  patients.name ASC \
-                 LIMIT %s OFFSET %s;" 
-                 
-        return db.execute_select(query, doctor_id, per_page, (page - 1) * per_page)
+                 LIMIT %s;" 
+        return db.execute_select(query, doctor_id, per_page)
 
     @staticmethod
-    def get_requests_page_by_patient_id(patient_id, page, per_page):
+    def get_requests_page_by_patient_id(patient_id, per_page):
         query = "SELECT requests.id, \
                         doctors.name, \
                         requests.date, \
@@ -244,8 +243,8 @@ class Request:
                 JOIN doctors ON requests.doctor_id = doctors.id \
                 JOIN diseases ON requests.predicted_disease_id = diseases.id \
                 WHERE requests.patient_id = %s \
-                LIMIT %s OFFSET %s;"
-        return db.execute_select(query, patient_id, per_page, (page - 1) * per_page)
+                LIMIT %s;"
+        return db.execute_select(query, patient_id, per_page)
     
 
 class Comment:
