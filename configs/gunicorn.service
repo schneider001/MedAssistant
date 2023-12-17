@@ -1,0 +1,17 @@
+[Unit]
+Description=gunicorn daemon
+After=network.target
+
+[Service]
+User=valeriy
+Group=valeriy
+WorkingDirectory=/home/valeriy/source/MedAssistant/app
+ExecStart=/home/valeriy/.local/bin/gunicorn \
+          -c /home/valeriy/source/MedAssistant/configs/gunicorn_config.py \
+          --worker-class eventlet \
+          --workers 1 \
+          --bind 127.0.0.1:5555 \
+          app:app
+
+[Install]
+WantedBy=multi-user.target
