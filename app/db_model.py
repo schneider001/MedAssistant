@@ -40,11 +40,9 @@ class Patient:
         self.sex = sex
         
     @staticmethod
-    def find_all_id_name_insurance_certificate(page=False, per_page=False):
-        query = "SELECT id, name, insurance_certificate FROM patients ORDER BY name"
-        if page and per_page is not None:
-            query += f" LIMIT {per_page} OFFSET {(page - 1) * per_page}"
-        return db.execute_select(query)
+    def find_all_id_name_insurance_certificate(page, per_page):
+        query = "SELECT id, name, insurance_certificate FROM patients ORDER BY name LIMIT %s OFFSET %s"
+        return db.execute_select(query, per_page, (page - 1) * per_page)
     
     @staticmethod
     def get_by_id(id):
@@ -54,7 +52,6 @@ class Patient:
             return Patient(*patient_data[0])
         
     @staticmethod
-
     def find_all_search_lazyload(search, page, per_page):
         query = "SELECT id, name, insurance_certificate \
          FROM patients \
