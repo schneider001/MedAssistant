@@ -59,8 +59,8 @@ class Patient:
         query = "SELECT id, name, insurance_certificate \
          FROM patients \
          WHERE MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) \
-         OR MATCH(insurance_certificate) AGAINST (%s IN BOOLEAN MODE) \
-         ORDER BY (MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) + MATCH(insurance_certificate) AGAINST (%s IN BOOLEAN MODE)) DESC, \
+         OR MATCH(insurance_certificate) AGAINST (%s IN NATURAL LANGUAGE MODE) \
+         ORDER BY (MATCH(name) AGAINST (%s IN NATURAL LANGUAGE MODE) + MATCH(insurance_certificate) AGAINST (%s IN NATURAL LANGUAGE MODE)) DESC, \
          name ASC \
          LIMIT %s OFFSET %s"
         return db.execute_select(query, search, search, search, search, per_page, (page - 1) * per_page)
