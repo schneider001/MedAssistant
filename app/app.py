@@ -469,7 +469,6 @@ def load_patients():
 
     per_page = 10
     limit = 20
-    time.sleep(1)
     
     if (len(term) > 3):
         patients = Patient.find_all_search_lazyload(term, page, per_page)
