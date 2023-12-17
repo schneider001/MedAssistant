@@ -5,6 +5,7 @@ import functools
 import time
 import os
 import random
+import re
 
 from init import *
 from db_model import *
@@ -249,6 +250,7 @@ def load_data_requests():
     per_page = 5
     limit = 25
     
+    term = re.sub(r'[^a-zA-Zа-яА-Я0-9 ]', '', term)
     if (len(term) > 3):
         requests = Request.get_requests_page_by_doctor_id_contain_substr(current_user.id, page, per_page, term)
     else:
@@ -339,7 +341,7 @@ def add_comment(data):
     
     user_id = current_user.id
     comment_id = Comment.add(user_id, request_id, comment_text)
-    Request.update_is_commented(request_id, 1)
+    #Request.update_is_commented(request_id, 1)
     comment = Comment.get_by_id(comment_id)
     if comment:
         response = CommentResponseData(id=comment.id, 
@@ -466,16 +468,18 @@ def load_patients():
     term = request.args.get('search', '')
     page = int(request.args.get('page', 1))
 
-
     per_page = 10
     limit = 20
-    time.sleep(1)
-    
-    if (len(term) > 3):
-        patients = Patient.find_all_search_lazyload(term, page, per_page)
-    else:
-        patients = Patient.find_all_id_name_insurance_certificate(page, per_page)
-        
+
+    term = re.sub(r'[^a-zA-Zа-яА-Я0-9 ]', '', term)
+    try:
+        if len(term) > 3:
+            patients = Patient.find_all_search_lazyload(term, page, per_page)
+        else:
+            patients = Patient.find_all_id_name_insurance_certificate(page, per_page)
+    except Exception as e:
+        patients = []
+
     patients = [PatientData(id=patient[0], name=patient[1], oms=patient[2]) for patient in patients]
 
     return jsonify({'results': [patient.__dict__ for patient in patients], 'pagination': {'more': len(patients)==per_page and page * per_page < limit}})

@@ -7,7 +7,6 @@ $(document).ready(function() {
         theme: 'bootstrap-5',
         closeOnSelect: false,
 	    allowClear: true,
-        minimumInputLength: 4,
         ajax: {
             url: '/load_symptoms',
             dataType: 'json',
@@ -43,7 +42,6 @@ $(document).ready(function() {
         language: {
             errorLoading: () => 'Невозможно загрузить симптомы',
             inputTooLong: () => 'Слишком много символов',
-            inputTooShort: () => 'Введите минимум 4 символа',
             maximumSelected: () => 'Выбрано максимальное количество симптомов',
             noResults: () => $('<div>', { class: 'text-center' }).text('Нет результатов'),
             removeAllItems: () => 'Удалить все симптомы',

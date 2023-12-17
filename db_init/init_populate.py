@@ -49,7 +49,7 @@ def get_random_timestamp():
     return f"'{datetime.now() - random() * timedelta(weeks=2000)}'"
 
 def get_random_snils():
-    return f"'{randint(100, 999)}-{randint(10, 99)}-{randint(100, 999)} {randint(10, 99)}'"
+    return f"'{randint(1000, 9999)} {randint(1000, 9999)} {randint(1000, 9999)} {randint(1000, 9999)}'"
     
 def get_random_string(length = 10):
     letters = string.ascii_lowercase
