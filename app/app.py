@@ -246,7 +246,7 @@ def load_data_requests():
     term = request.args.get('search', '').lower()
     page = int(request.args.get('page', '1'))
 
-    per_page = 25
+    per_page = 100
     #limit = 25
     
     if (len(term) > 3):
@@ -311,7 +311,7 @@ def load_patient_history():
     patient_id = int(patient_id)
     page = int(request.args.get('page', '1'))
 
-    per_page = 15
+    per_page = 100
 
     requests = Request.get_requests_page_by_patient_id(patient_id, per_page)
     requests = [RequestData(id=request[0], 
@@ -436,6 +436,7 @@ def create_patient():
     """
     fullname = request.form['fullname']
     birthdate = request.form['birthdate']
+    birthdate = datetime.strptime(birthdate, '%d.%m.%Y')
     oms = request.form['oms']
     sex = request.form['sex']
     image = request.files.get('image')
@@ -467,7 +468,7 @@ def load_patients():
     page = int(request.args.get('page', 1))
 
 
-    per_page = 10
+    per_page = 100
     limit = 20
     
     if (len(term) > 3):
@@ -490,7 +491,7 @@ def load_symptoms():
     filter = request.args.get('search', '').lower()
     page = int(request.args.get('page', 1))
 
-    per_page = 5
+    per_page = 10
 
     symptoms = Symptom.find_all_symptoms()
     symptoms = [SymptomData(id=item[0], name=item[1].lower()) for item in symptoms]
