@@ -2,7 +2,7 @@ import json
 import string
 from csv import reader
 from json import loads
-from os import system
+import subprocess
 from datetime import datetime, timedelta
 from random import randint, random, choice, sample
 
@@ -18,14 +18,16 @@ USERNAME = data['user']
 PASSWORD = data['password']
 DBNAME = data['database']
 FILE = "create_db_script.sql"
-file_command = """mysql -u %s -p"%s" %s < %s""" %(USERNAME, PASSWORD, DBNAME, FILE)
-single_command = """mysql -u %s -p"%s" %s --execute=""" %(USERNAME, PASSWORD, DBNAME)
+file_command = ["mysql", "-u", USERNAME, "-p"+PASSWORD, DBNAME]
+single_command = ["mysql", "-u", USERNAME, "-p"+PASSWORD, DBNAME]
 query_line=""
+
 def purge_create_database():
     try:
-        system(file_command)
+        with open(FILE, 'r', encoding='utf-8') as sql_file:
+            subprocess.call(file_command, stdin=sql_file)
     except Exception as e:
-        print(f"Unable to create database: {e}")
+        print("Unable to create database: %s", e)
 
 def fill_from_dataset (filepath, tablename):
     data_set = set()
@@ -43,7 +45,8 @@ def fill_from_dataset (filepath, tablename):
 def fill_sympt_diseases():
     fill_from_dataset("../datasets/Symptom-severity_ru.csv", "symptoms")
     fill_from_dataset("../datasets/symptom_Description_ru.csv", "diseases")
-    system(single_command+'"'+query_line+'"')
+    process = subprocess.Popen(file_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, encoding='utf8')
+    process.communicate(input=query_line)
 
 def get_random_timestamp():
     return f"'{datetime.now() - random() * timedelta(weeks=2000)}'"
@@ -119,7 +122,8 @@ def populate_database(): #использовать db методы в идеал
     query = f'INSERT INTO ml_model (version) VALUES (\'{ML_MODEL_VERSION}\')'
     query_line += query + ';'
         
-    system(single_command+'"'+query_line+'"')
+    process = subprocess.Popen(file_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, stdin=subprocess.PIPE, encoding='utf8')
+    process.communicate(input=query_line)
         
 
                     
