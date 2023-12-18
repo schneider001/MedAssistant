@@ -259,7 +259,11 @@ class Comment:
     def validate_comment_author(comment_id, user_id):
         query = "SELECT COUNT(*) FROM comments WHERE id = %s AND doctor_id = %s"
         return db.execute_select(query, comment_id, user_id)
-
+    
+    @staticmethod
+    def check_is_any_author_comment_exists(user_id, request_id):
+        query = "SELECT COUNT(*) FROM comments WHERE doctor_id = %s AND status = 'NEW' AND request_id = %s"
+        return db.execute_select(query, user_id, request_id)[0][0]
     
     @staticmethod
     def add(doctor_id, request_id, comment):
@@ -324,6 +328,10 @@ class Disease:
         if values:
             return Disease(*values[0])
             
+
+@dataclass
+class AuthenticationResult:
+    success: bool
 
 @dataclass
 class DoctorComment:

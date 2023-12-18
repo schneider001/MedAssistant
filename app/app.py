@@ -102,9 +102,9 @@ def login_post():
  
     if authorized:
         login_user(doctor)
-        return jsonify({'success': True})
+        return AuthenticationResult(success=True).__dict__
     else:
-        return jsonify({'success': False})
+        return AuthenticationResult(success=False).__dict__
     
     
 @app.route("/logout")
@@ -163,7 +163,6 @@ def get_request_info():
 
     patient_id = data.get('id')
     patient_name = data.get('name')
-    oms = data.get('oms')
     symptom_ids = data.get('symptoms')
     
     symptoms = [Symptom.get_by_id(id) for id in symptom_ids]
@@ -217,7 +216,7 @@ def get_request_info_by_id():
 
     doctor_comments = [DoctorComment(id=comment_values[0],
                          doctor=comment_values[1], 
-                         time=comment_values[2].strftime("%Y-%m-%d %H:%M:%S"),
+                         time=int(comment_values[2].timestamp()),
                          comment=comment_values[3], 
                          editable=comment_values[4]) for comment_values in comments_values]
 
@@ -254,7 +253,7 @@ def load_data_requests():
     else:
         requests = Request.get_requests_page_by_doctor_id(current_user.id, per_page)
         
-    requests = [RequestData(id=request[0], name=request[1], date=request[2].strftime("%Y-%m-%d %H:%M:%S"), diagnosis=request[3], is_commented=request[4]) for request in requests]
+    requests = [RequestData(id=request[0], name=request[1], date=int(request[2].timestamp()), diagnosis=request[3], is_commented=request[4]) for request in requests]
 
     return jsonify({'results': [request.__dict__ for request in requests], 'pagination': {'more': False }})
 
@@ -271,19 +270,16 @@ def get_patient_info():
 
     patient = Patient.get_by_id(patient_id)
     if not patient:
-        error_message = {"error": "Ошибка", "message": "Пациента не существует."}
-        response = jsonify(error_message)
-        response.status_code = 400
-        return response
+        raise
     
-    today = datetime.now()
+    today = datetime.utcnow()
     age = today.year - patient.born_date.year - \
         ((today.month, today.day) < (patient.born_date.month, patient.born_date.day))
 
     patient_data = PatientData(
         id=patient.id,
         name=patient.name,
-        birthDate=patient.born_date.strftime("%Y-%m-%d"),
+        birthDate=int(patient.born_date.timestamp()),
         age=age, 
         oms=patient.insurance_certificate,
         sex=patient.sex
@@ -316,7 +312,7 @@ def load_patient_history():
     requests = Request.get_requests_page_by_patient_id(patient_id, per_page)
     requests = [RequestData(id=request[0], 
                             name=request[1], 
-                            date=request[2].strftime("%Y-%m-%d %H:%M:%S"), 
+                            date=int(request[2].timestamp()), 
                             diagnosis=request[3], 
                             is_commented=request[4]) for request in requests]
 
@@ -333,26 +329,34 @@ def add_comment(data):
     :param str comment: Текст комментария.
     :return: JSON-ответ с информацией о комментарии, включая id комментария, имя доктора, время, текст комментария, является ли текущий пользователь автором.
     """
-    room_id = data['room_id']
-    request_id = data['request_id']
-    comment_text = data['comment']
-    
-    user_id = current_user.id
-    comment_id = Comment.add(user_id, request_id, comment_text)
-    Request.update_is_commented(request_id, 1)
-    comment = Comment.get_by_id(comment_id)
-    if comment:
-        response = CommentResponseData(id=comment.id, 
-                               doctor=current_user.name, 
-                               time=comment.date.strftime("%Y-%m-%d %H:%M:%S"), 
-                               comment=comment_text)
-    else:
-        response = CommentResponseData()
+    try:
+        room_id = data['room_id']
+        request_id = data['request_id']
+        comment_text = data['comment']
 
-    if user_id in connected_users:
-        for sid in connected_users[user_id]:
-            emit('self_added_comment', response.__dict__, to = sid)
-        emit('added_comment', response.__dict__, room = room_id, skip_sid = list(connected_users[user_id]))
+        user_id = current_user.id
+        print(Comment.check_is_any_author_comment_exists(user_id, request_id))
+        if Comment.check_is_any_author_comment_exists(user_id, request_id):
+            raise
+
+        comment_id = Comment.add(user_id, request_id, comment_text)
+        Request.update_is_commented(request_id, 1)
+        comment = Comment.get_by_id(comment_id)
+        if comment:
+            response = CommentResponseData(id=comment.id, 
+                                   doctor=current_user.name, 
+                                   time=int(comment.date.timestamp()), 
+                                   comment=comment_text)
+        else:
+            response = CommentResponseData()
+
+        if user_id in connected_users:
+            for sid in connected_users[user_id]:
+                emit('self_added_comment', response.__dict__, to = sid)
+            emit('added_comment', response.__dict__, room = room_id, skip_sid = list(connected_users[user_id]))
+    except Exception as e:
+        print(e)
+        emit('add_comment_error')
 
 #---------------------------------------DONE-6-------------------------------------------
 @socketio.on('delete_comment')
@@ -411,7 +415,7 @@ def edit_comment(data):
             response = CommentResponseData(id=comment.id, 
                                            old_id=comment_id, 
                                            doctor=current_user.name, 
-                                           time=comment.date.strftime("%Y-%m-%d %H:%M:%S"), 
+                                           time=int(comment.date.timestamp()) , 
                                            comment=comment.comment)
         else:
             response = CommentResponseData()
