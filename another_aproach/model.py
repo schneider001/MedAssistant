@@ -4,12 +4,13 @@ import pandas as pd
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-
+# function of saving the model in pickle
 def save_model(obj : Any, path : str):
     with open(path, 'wb') as handle:
         pickle.dump(obj, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+# function of loading the model in pickle
 def load_pickle(path : str):
     with open(path, 'rb') as handle:
         obj = pickle.load(handle)
@@ -17,6 +18,7 @@ def load_pickle(path : str):
     return obj
 
 
+# ML model class
 class DiseasePredModel:
     def __init__(self, path : str = ""):
         if path == "":
@@ -33,6 +35,7 @@ class DiseasePredModel:
         self.symptoms_weight_dict = self._get_weight_symptom()
 
     
+    # disease prediction function
     def predict(self, symptoms : List[str]) -> float:
         input_data = self._get_input(symptoms)
 
@@ -41,6 +44,7 @@ class DiseasePredModel:
         return result
 
     
+    # function of obtaining weights for symptoms
     def _get_weight_symptom(self):
         weight_symptoms = pd.read_csv('Symptom-severity.csv')
         symptoms_weight_dict = {symptom.lower() : weight_symptoms.loc[weight_symptoms['Symptom'] == symptom]['weight'] for symptom in weight_symptoms['Symptom']}
@@ -50,7 +54,7 @@ class DiseasePredModel:
 
         return symptoms_weight_dict
         
-    
+    # function of processing the input vector of siptoms
     def _get_input(self, symptoms : List[str]) -> List[int]:
         input_data = np.zeros(self.count_symptoms)
         for idx, symptom in enumerate(symptoms[:17]):
